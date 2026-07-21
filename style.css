@@ -1,0 +1,1488 @@
+/*RERuntime CSS */
+:root {
+    --main-cursor: url('/ArrowCursor.png') 0 0, auto;
+    --far-cursor: url('/ArrowFarCursor.png') 0 0, auto;
+}
+
+/* Ensure the game canvas area and any overlapping UI keep a consistent cursor by default.
+   Allow actual text input and contenteditable elements to keep their native/text cursors. */
+#container, 
+#container *:not(input):not(textarea):not(select):not([contenteditable="true"]) {
+    cursor: var(--main-cursor) !important;
+}
+
+/* Prevent text selection globally except for actual form controls and contenteditable elements */
+*:not(input):not(textarea):not(select):not([contenteditable="true"]) {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+}
+
+/* add ITC Eras font and enforce globally */
+@font-face {
+    font-family: 'ITC Eras Ultra';
+    src: url('/ITC Eras Ultra Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* force the ITC Eras Ultra across all UI elements (important to override previous families) */
+*,
+*::before,
+*::after {
+    font-family: 'ITC Eras Ultra' !important;
+    /* removed font smoothing to disable anti-aliased font rendering */
+}
+
+html, body, button, input, select, textarea, .safechat-option {
+    cursor: var(--main-cursor);
+}
+
+.cursor-far {
+    cursor: var(--far-cursor) !important;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #2c2c2c;
+    cursor: url('/roblox.png'), auto;
+    /* Ensure Arial is available and potentially default */
+    font-family: Verdana;
+
+    /* removed font smoothing and text-rendering properties */
+}
+
+@font-face {
+    /* removed custom font-face to avoid fallback/font swapping; UI uses Verdana only */
+}
+
+button {
+    cursor: var(--main-cursor);
+}
+
+#container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: none;
+    position: relative;
+    background-color: #2c2c2c;
+    overflow: hidden;
+}
+
+
+
+#caption-text {
+    position: absolute;
+    top: 4px; 
+    left: 4px; 
+    color: black; 
+    font-family: 'Verdana', sans-serif;
+    font-size: 16px; 
+    text-shadow: none; 
+    line-height: 1.2;
+    white-space: pre-wrap;
+}
+
+/* controls placed inside the container so they overlay the canvas */
+#controls-container {
+    position: absolute;
+    right: 18px;
+    /* bottom positioning handled by JS to account for chat bar */
+    z-index: 20;
+}
+
+/* inner controls active */
+/* Tight 2x2 grid: buttons keep their original 44px size but are nudged inward to remove the visible gutter */
+#zoom-controls {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    display: grid;
+    grid-template-columns: repeat(2, 44px);
+    grid-template-rows: repeat(2, 44px);
+    gap: 0px;
+    width: calc(44px * 2);
+    height: calc(44px * 2);
+    z-index: 12;
+    align-items: stretch;
+    justify-items: stretch;
+    place-items: stretch;
+}
+
+/* Reset button box model then use per-button transforms to pull corners inward without changing button size */
+#zoom-controls > button {
+    margin: 0;
+    padding: 0;
+    width: 44px;
+    height: 44px;
+    transform: none;
+    /* transition removed to disable animated movement */
+    cursor: var(--main-cursor);
+}
+
+/* Move each corner slightly toward the center so adjacency is tightened (visual size unchanged) */
+#zoom-controls > button:nth-child(1) { /* top-left */
+    transform: translate(6px, 6px);
+}
+#zoom-controls > button:nth-child(2) { /* top-right */
+    transform: translate(-6px, 6px);
+}
+#zoom-controls > button:nth-child(3) { /* bottom-left */
+    transform: translate(6px, -6px);
+}
+#zoom-controls > button:nth-child(4) { /* bottom-right */
+    transform: translate(-6px, -6px);
+}
+
+/* Keep hover/pressed states visually simple while preserving each button's inward offset (no hover/active overrides) */
+#zoom-controls > button:hover,
+#zoom-controls > button:active {
+    /* intentionally empty to avoid changing the button transforms on hover/active */
+}
+
+/* tighten button adjacency: keep sizes but remove all default margins and ensure no outline/padding affects layout */
+#zoom-in, #zoom-out, #pan-up, #pan-down {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 78%;
+    cursor: var(--main-cursor);
+    box-shadow: none;
+    outline: none;
+    margin: 0; /* Reset margins */
+    display: block;
+    line-height: 0;
+}
+
+/* Remove hover/active transforms and visual offsets that affect spacing */
+#zoom-in:hover, #zoom-out:hover, #pan-up:hover, #pan-down:hover,
+#zoom-in:active, #zoom-out:active, #pan-up:active, #pan-down:active {
+    transform: none;
+    opacity: 1;
+    box-shadow: none;
+}
+
+/* ensure pan buttons reuse the same visual sizing and have no extra box model offsets */
+#pan-up, #pan-down {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 78%;
+    box-shadow: none;
+    margin: 0;
+    outline: none;
+    cursor: var(--main-cursor);
+}
+
+#player-list-container {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 20;
+    /* no border, no rounded corners */
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    /* fixed width, but allow height to expand to fit more names */
+    width: 310px;   /* display size */
+    max-height: 60vh; /* prevent it from growing off-screen while allowing expansion */
+    height: auto;   /* let JS/canvas determine visual height */
+    image-rendering: auto;
+    -webkit-image-rendering: pixelated;
+    overflow: visible; /* allow canvas to expand; scrolling handled externally if needed */
+    pointer-events: auto;
+    transform-origin: top right;
+    font-family: Arial, Helvetica, sans-serif;
+    filter: none;
+    -webkit-filter: none;
+}
+
+#player-list-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    image-rendering: auto;
+    -webkit-image-rendering: auto;
+    -moz-image-rendering: auto;
+    background: transparent;
+    border: none;
+    outline: none;
+
+    filter: none;
+    -webkit-filter: none;
+}
+
+#health-bar-container {
+    position: absolute;
+    /* Positioned dynamically by JS */
+    z-index: 20;
+    pointer-events: none; /* non-interactive */
+    width: 12px;
+    height: 106px;
+    display: flex; /* Use flex to position label below canvas */
+    flex-direction: column;
+    align-items: center;
+    padding: 2px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #9f9f9f, #636363);
+    box-shadow:
+        inset 1px 1px 0 rgba(255,255,255,0.85),
+        inset -1px -1px 0 rgba(0,0,0,0.7),
+        0 1px 3px rgba(0,0,0,0.35);
+}
+
+/* Make the health bar canvas visually "fuzzy" by applying a small blur and slight saturation.
+   Keep pointer-events disabled so canvas remains non-interactive. Use vendor-prefixed filters
+   for broader browser coverage and preserve original layout rules. */
+#health-bar-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    image-rendering: auto;
+    -webkit-image-rendering: auto;
+    -moz-image-rendering: auto;
+    background: transparent;
+    pointer-events: none;
+    border: none; /* Ensure no border */
+    border-radius: 2px;
+
+    /* Skeuomorphic frame styling */
+    filter: blur(0.2px) saturate(1.04);
+    -webkit-filter: blur(0.2px) saturate(1.04);
+    box-shadow:
+        inset 1px 1px 0 rgba(255,255,255,0.18),
+        inset -1px -1px 0 rgba(0,0,0,0.6);
+}
+
+/* Health label is also deliberately fuzzy to match the requested UI style.
+   We preserve the Comic Sans font choice but add a small blur and slight opacity so it reads
+   like an older, softly-rendered UI text element. */
+#health-label {
+    margin-top: 4px;
+    /* use Comic Sans for health text as requested */
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+    font-size: 16px; /* Adjusted to 16px tall */
+    line-height: 16px; /* Constrained vertical space */
+    width: auto; /* let label size to its content so it centers under the canvas */
+    color: #0703f1;
+    text-shadow: none !important; /* Force remove any shadows looking like bold */
+    font-weight: normal !important; /* Force normal weight */
+    white-space: nowrap;
+    text-align: center; /* center the label text */
+    display: block; /* ensure block-level centering within the flex column */
+
+    /* Increased fuzzy treatment for the health text just a tiny bit */
+    filter: blur(0.40px) saturate(1.01);
+    -webkit-filter: blur(0.40px) saturate(1.01);
+    opacity: 0.96; /* slightly softened */
+}
+
+.player-list-header {
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    border-bottom: none;
+}
+
+#player-list-items {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#player-list-items li {
+    padding: 2px 0;
+}
+
+/* set each icon image (images themselves are the visible button) */
+#zoom-in { background-image: url('/CameraZoomIn.png'); }
+#zoom-out { background-image: url('/CameraZoomOut.png'); }
+#pan-up { background-image: url('/CameraTiltUp.png'); }
+#pan-down { background-image: url('/CameraTiltDown.png'); }
+
+#pan-up, #pan-down {
+    width: 44px; /* keep visual size in tight grid */
+    height: 44px; /* match the other buttons so layout is an even square */
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 78%;
+    box-shadow: none;
+    margin: 0;
+    outline: none;
+    cursor: var(--main-cursor);
+}
+
+/* Removed incorrect override that referenced non-existent Camera_pan_* assets */
+/* #pan-up { background-image: url('/Camera_pan_up.png'); } */
+/* #pan-down { background-image: url('/Camera_pan_down.png'); } */
+
+#game-canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    object-fit: fill;
+    image-rendering: auto;
+    -webkit-image-rendering: auto;
+    -moz-image-rendering: auto;
+}
+
+/* keep hover affordance but without heavy styling */
+#zoom-in:hover, #zoom-out:hover, #pan-up:hover, #pan-down:hover {
+    /* intentionally empty so hover does not change transform/opacity and no animations occur */
+}
+
+
+
+#place-spawn {
+    padding: 10px 15px;
+    font-size: 18px;
+    background: #0077cc;
+    color: white;
+    border: 1px solid #fff;
+    border-radius: 8px;
+    box-shadow: 
+        0 3px 0 rgba(0,0,0,0.3),
+        inset 0 0 10px rgba(255,255,255,0.5);
+    cursor: var(--main-cursor);
+}
+
+#place-spawn:hover {
+    background: #005fa8;
+}
+
+/* Build mode indicator */
+#place-spawn.build-mode {
+    background: #ee9900;
+}
+
+#place-spawn.build-mode:hover {
+    background: #d48800;
+}
+
+/* Position adjustments */
+#build-controls {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    z-index: 10;
+    display: none;
+}
+
+#customization-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: rgba(0,0,0,0.3);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #000; /* black border */
+    box-shadow: none; /* removed glow */
+}
+
+.control-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.control-box label {
+    color: white;
+    font-family: Verdana;
+    font-weight: bold;
+    text-shadow: none;
+}
+
+#color-picker {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 100px;
+    height: 30px;
+    background-color: transparent;
+    border: 1px solid #5a5a5a;
+    border-radius: 5px;
+    cursor: var(--main-cursor);
+}
+
+#color-picker::-webkit-color-swatch {
+    border-radius: 4px;
+    border: none;
+}
+
+#color-picker::-moz-color-swatch {
+    border-radius: 4px;
+    border: none;
+}
+
+#hat-button {
+    padding: 10px 15px;
+    font-size: 14px;
+    background: #bdbdbd;
+    border: 1px solid #000; /* black border */
+    color: #000;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: var(--main-cursor);
+    box-shadow: none; /* removed glow */
+    width: 100px;
+    margin-top: 5px;
+}
+
+#hat-button:hover {
+     background: #aeb0b0;
+}
+
+#hat-button:active {
+    transform: translateY(2px);
+    box-shadow: 
+        0 1px 0 rgba(0,0,0,0.2),
+        inset 0 0 8px rgba(255,255,255,0.5);
+}
+
+/* full-screen visual blur overlay: covers everything but is non-interactive */
+#global-blur {
+    position: fixed;
+    inset: 0;
+    pointer-events: none; /* allow clicks to pass through */
+    z-index: 9999;
+    backdrop-filter: blur(0.5px) saturate(1.02);
+    -webkit-backdrop-filter: blur(0.5px) saturate(1.02);
+    /* fallback visual (subtle) for browsers without backdrop-filter */
+    background: rgba(255,255,255,0.01);
+}
+
+/* CHAT BAR STYLES */
+#chat-bar-container {
+    position: absolute;
+    height: 20px;
+    background-color: #404040; /* Specified color */
+    z-index: 20;
+    /* width and dynamic positioning handled by JS */
+    display: flex;
+    align-items: center;
+    padding: 0 4px; /* small internal padding */
+    box-sizing: border-box;
+    justify-content: space-between; /* Space for phrase and send button */
+}
+
+/* Subtle "fuzzy" text treatment to reproduce older GUI rendering (no color changes).
+   Use a tiny CSS filter blur applied only to text containers so backgrounds/boxes remain sharp.
+   The blur radius is deliberately very small so legibility and layout are preserved. */
+.fuzzy-text {
+    filter: blur(0.35px);
+    -webkit-filter: blur(0.35px);
+    /* keep font smoothing behavior unchanged */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply the fuzz to the safechat choices and the chat-bar phrase while preserving color */
+#safechat-current-phrase {
+    font-family: Arial, sans-serif;
+    color: #ffffca; /* Specified color */
+    font-size: 13px; /* Scaled up from 12px */
+    line-height: 13px; /* Set line-height to match new font size */
+    height: 13px; /* Set explicit height to match new font size */
+    width: auto; /* Allow width to flex */
+    max-width: calc(100% - 60px); /* Leave space for Send button */
+    overflow: hidden; /* Ensure text fits within bounds */
+    /* Allow selection and interaction when editable */
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    white-space: nowrap;
+    transform: translateY(-1px); /* Move text up a tiny tiny bit */
+    cursor: text; /* show text cursor when editable */
+
+    /* Explicit subtle fuzz applied to the chat bar text and its inline children so both the prompt
+       and any text you type render with a light blur rather than relying on the nonstandard
+       `composes` rule. The blur radius is deliberately small to keep text legible while giving
+       the requested fuzzy look. */
+    filter: blur(0.45px) saturate(1.02);
+    -webkit-filter: blur(0.45px) saturate(1.02);
+    /* Also apply to any child nodes (covers wrapped/inner elements) */
+    filter: blur(0.45px) saturate(1.02);
+    -webkit-filter: blur(0.45px) saturate(1.02);
+}
+#safechat-current-phrase, #safechat-current-phrase * {
+    filter: blur(0.45px) saturate(1.02);
+    -webkit-filter: blur(0.45px) saturate(1.02);
+}
+
+/* Remove default focus outline/box when editing safechat so typing shows no browser focus ring */
+#safechat-current-phrase:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+}
+
+/* Ensure the safechat option boxes have the fuzz applied to their text only (keeps box borders crisp) */
+.safechat-option {
+    /* Define the 2006 Roblox safechat answer box (26pix tall, 142pix wide, white, 1px #3f3f3f border) */
+    color: #000000; /* Text should be black inside white box */
+    background-color: #ffffff; /* inside of the boxes #ffffff */
+    border: 1px solid #2a2a2a; /* 1 pix outline border color darkened to #2a2a2a */
+    width: 142px; /* 142pix wide */
+    height: 26px; /* 26pix tall */
+    box-sizing: border-box; /* Include border/padding in width/height */
+    
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive;
+    font-size: 11px; /* Smaller font size for authenticity */
+    padding: 1px 4px;
+    cursor: var(--main-cursor);
+    line-height: 22px; /* Set line height for vertical centering (26px height - 2*1px border - 2*1px padding = 22px content) */
+    margin: 0; /* Margin handled by parent gap */
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;            /* use flex to center content consistently */
+    align-items: center;
+    justify-content: flex-start;
+    flex: 0 0 26px;          /* prevent shrinking: fixed 26px height per option */
+    min-height: 26px;        /* ensure minimum height */
+    max-height: 26px;        /* clamp height to avoid compression */
+    /* apply fuzz to the text content area only */
+    filter: blur(0.6px) saturate(1.02);
+    -webkit-filter: blur(0.6px) saturate(1.02);
+}
+
+/* ensure child nodes (text wrappers) also receive the same subtle blur for consistent fuzzy rendering */
+.safechat-option > * {
+    filter: blur(0.6px) saturate(1.02);
+    -webkit-filter: blur(0.6px) saturate(1.02);
+}
+
+/* fallback: apply fuzzy filter to text node via pseudo-element to ensure effect in all browsers */
+.safechat-option::first-line {
+    /* pseudo affected browsers will show slight blur; keeps color unchanged */
+    filter: blur(0.5px);
+}
+
+/* Strong override to ensure safechat UI uses Comic Sans MS even though global rules try to force ITC Eras */
+.safechat-option,
+.safechat-option *,
+#safechat-current-phrase,
+#safechat-current-phrase * {
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Also apply fuzz to the chat bubble inner text so the bubble reads slightly softer like 2007 UI */
+#chat-bubble-inner {
+    background: #ffffff;
+    border: 2px solid #141414;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 3px 6px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    /* ensure the content looks pixel-crisp yet readable */
+    font-family: Verdana, sans-serif;
+    font-size: 12px;
+    color: #000;
+    line-height: 14px;
+    box-shadow: none;
+    /* apply slight fuzz to bubble text only */
+    composes: fuzzy-text;
+}
+
+/* small text container that can be updated dynamically */
+#chat-bubble-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Tail: a downward-pointing triangular pointer that matches the outline */
+#chat-bubble-tail {
+    width: 0;
+    height: 0;
+    margin: 0 auto;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 10px solid #ffffff; /* tail top color (matches bubble fill) */
+    position: relative;
+    top: -1px; /* tuck into the bottom edge slightly */
+    /* create an outline effect by using a pseudo-element */
+}
+#chat-bubble-tail::after {
+    content: "";
+    position: absolute;
+    left: -8px;
+    top: -10px;
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 13px solid #141414; /* thicker outline to match 2px dark-grey border */
+    z-index: -1;
+}
+
+/* helper class to show the bubble */
+#chat-bubble.show {
+    display: block;
+}
+
+/* position default near chat icon; JS will override precise placement to match canvas draw area */
+#chat-bubble {
+    left: 10px;
+    top: 200px;
+}
+
+/* Chat icon container (explicitly positioned so the safechat button is visible and clickable) */
+#chat-icon-container {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    z-index: 22;
+    pointer-events: auto;
+    display: block;
+    overflow: visible;
+    left: 12px; /* will be repositioned by JS/ui_positioner, but keep sensible default */
+    top: 12px;
+}
+
+/* The actual image inside the container */
+#chat-icon {
+    width: 100%;
+    height: 100%;
+    display: block;
+    image-rendering: auto;
+    -webkit-image-rendering: auto;
+    font-family: Verdana;
+    cursor: var(--main-cursor);
+    pointer-events: auto;
+}
+
+/* DOM speech bubble: hide by default and only show when JS toggles the .show class.
+   Positioned absolute so updateUIElementPositions and safechat can place it near the canvas. */
+#chat-bubble {
+    position: absolute;
+    z-index: 23;
+    display: none;
+    pointer-events: none; /* bubble is decorative; clicks pass through */
+    transform: translateZ(0);
+}
+
+/* show state used by scripts to reveal the bubble */
+#chat-bubble.show {
+    display: block;
+    pointer-events: none;
+}
+
+/* SAFECHAT MENU STYLES */
+#safechat-menu-wrapper {
+    position: absolute;
+    z-index: 21; /* Above the chat bar */
+    /* Positioning handled by JS to be beside the chat icon */
+    pointer-events: auto;
+    transform: translateY(-50%);
+    display: flex;               /* enable centering of the column container */
+    justify-content: center;     /* center columns horizontally */
+    align-items: center;         /* center columns vertically within wrapper area */
+}
+
+#safechat-menu-container {
+    display: flex;
+    flex-direction: row;
+    gap: 1px; /* 1px gap between menus */
+    box-shadow: none;
+}
+
+.safechat-menu {
+    /* Base style for a single safechat column: now container for separated boxes */
+    background-color: transparent; /* Make column background invisible */
+    border: none; /* Remove column border */
+    padding: 0;
+    width: 142px; /* Set column width to match options exactly */
+    /* Allow the menu to grow to show all items (no scrollbar by default) */
+    max-height: none;
+    overflow: visible;
+    box-sizing: border-box;
+    
+    /* Use flex container for vertical spacing of options (3px separation requested) */
+    display: flex;
+    flex-direction: column;
+    gap: 3px; /* 3px separation between answer boxes */
+
+    /* Center options vertically so shorter columns visually align with taller ones.
+       Final equal-height enforcement happens in JS so columns keep consistent sizing. */
+    justify-content: center;
+    align-items: stretch;
+}
+
+.safechat-menu::-webkit-scrollbar {
+    width: 6px;
+}
+.safechat-menu::-webkit-scrollbar-thumb {
+    background-color: #888;
+}
+
+
+
+.safechat-option:hover, .safechat-option.selected {
+    background-color: #b3b3b3; /* when clicked or hovered #b3b3b3 */
+    color: #000000; /* Ensure text remains black */
+    /* keep hover state fuzzy as well */
+    filter: blur(0.56px) saturate(1.02);
+    -webkit-filter: blur(0.56px) saturate(1.02);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Intentionally degrade UI text rendering quality (UI-only): disable font smoothing and prefer fast/pixelized text rasterization.
+   This affects DOM UI elements (buttons, labels, safechat boxes, chat bar, etc.) while leaving canvas drawing and game visuals untouched. */
+#ui-container, #build-controls, #controls-container,
+#chat-bar-container, #player-list-container, #health-bar-container,
+#safechat-menu-wrapper, #chat-icon-container, #customization-container,
+button, .safechat-option, #safechat-current-phrase, #place-spawn, #hat-button,
+.control-box label, #health-label {
+    /* prefer fastest text rasterization to produce harsher, lower-quality glyph edges */
+    text-rendering: optimizeSpeed;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+    /* fallback attempt to disable OS-level font smoothing */
+    font-smooth: never;
+    /* removed text-shadow which was making text appear bold */
+    text-shadow: none !important;
+    /* keep visual layout & image-rendering default so canvases and images are unaffected */
+    image-rendering: auto;
+    font-family: Verdana;
+}
+
+/* Prefer default smoothing for UI/canvases (no forced nearest-neighbor filtering) */
+#game-canvas,
+#player-list-canvas,
+#health-bar-canvas {
+    image-rendering: auto;
+}
+
+/* Canvas-top-left in-canvas buttons (horizontally stacked, no spacing) */
+#canvas-top-left-buttons {
+    position: absolute;
+    z-index: 30;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: row;
+    gap: 0; /* no spacing between buttons */
+    align-items: flex-start;
+    justify-content: flex-start; /* align left-to-right */
+    /* ensure flush layout: remove internal padding/margin */
+    left: 0;
+    top: 0;
+    padding: 0;
+    margin: 0;
+}
+
+/* 2007-style chat logs panel positioned under top row buttons inside canvas draw area.
+   Container remains a fixed-position panel but the inner list aligns items to the left
+   and each chat line is allowed to size itself independently so one long message doesn't
+   force all previous boxes to widen. */
+#chat-logs {
+    position: absolute;
+    z-index: 31; /* above top-row buttons */
+    width: auto;
+    max-width: 60vw;
+    max-height: none;
+    background: transparent;
+    border: none;
+    box-sizing: border-box;
+    padding: 0;
+    display: block; /* keep full-panel block to avoid shrinkwrap influencing sibling layouts */
+    pointer-events: auto;
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive;
+    font-size: 12px;
+    color: #ffffff;
+    box-shadow: none;
+    /* limit overall panel height while allowing internal scrolling */
+    max-height: 38vh;
+    overflow: visible;
+}
+
+/* inner scrollable area for chat lines; allowing scroll by wheel/touch */
+#chat-logs-inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; 
+    align-items: flex-start; 
+    vertical-align: top;
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+
+    /* Enable vertical scrolling when messages exceed the visual max height */
+    overflow-y: auto;
+    max-height: 38vh; 
+}
+
+/* Chat log: hide the visible scrollbar/thumb but keep scrolling functional */
+#chat-logs-inner {
+    /* preserve scrolling behavior */
+    overflow-y: auto;
+    /* hide scrollbar in Firefox */
+    scrollbar-width: none;
+    /* hide scrollbar in IE10+ */
+    -ms-overflow-style: none;
+}
+
+/* hide scrollbar in WebKit browsers while leaving scrolling intact */
+#chat-logs-inner::-webkit-scrollbar {
+    display: none;
+}
+
+/* individual chat lines: each message sizes to its own text width independently
+   and keeps the rendered text aligned to the bottom of the chat box */
+.chat-line {
+    display: inline-flex !important;
+    flex-direction: row;
+    align-items: flex-end !important;        /* force inner spans to the bottom of the line */
+    justify-content: flex-start;
+    vertical-align: bottom !important;
+    height: auto;                            /* allow JS to set explicit height based on measured text */
+    line-height: 1.2;
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+    background: rgba(190,190,190,0.60);
+    padding: 4px 6px;
+    margin: 0 0 4px 0;
+    border: none;
+    box-shadow: none;
+    pointer-events: auto;
+    gap: 6px;
+    border-radius: 0;
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive;
+    color: #ffffff;
+    max-width: 60vw;
+    box-sizing: border-box;
+}
+
+/* chat-text must size to its content; ensure it doesn't force the line height via margins */
+.chat-text {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-self: flex-end !important; /* explicitly bottom align the text span */
+    line-height: 1.2;
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* ensure chat-name also respects bottom alignment without adding extra height */
+.chat-name {
+    margin: 0 6px 0 0 !important;
+    padding: 0 !important;
+    align-self: flex-end !important;
+    line-height: 1.2;
+}
+
+/* Ensure name and message text align to the bottom edge of the chat-line flexbox */
+.chat-line .chat-name,
+.chat-line .chat-text {
+    display: inline-block !important;
+    align-self: flex-end !important;     /* explicit bottom alignment for both spans (force it) */
+    vertical-align: bottom !important;    /* defensive fallback */
+    line-height: 1.2;
+}
+
+/* If message text wraps to multiple lines, keep its bottom anchored to the chat-line bottom */
+.chat-line .chat-text {
+    word-break: break-word;
+    white-space: normal;
+}
+
+/* inner scrollable area (if later made interactive) */
+#chat-logs-inner {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; 
+    gap: 0; /* removed spacing so chat boxes sit flush */
+    pointer-events: auto;
+}
+
+/* individual chat lines (bottom-aligned text) */
+.chat-line {
+    /* use inline-flex so each message shrinkwraps its width while allowing vertical alignment */
+    display: inline-flex;
+    align-items: flex-end;        /* align the text content to the bottom of the option box */
+    vertical-align: bottom;
+    height: auto;
+    line-height: 1.2;
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+    background: rgba(190,190,190,0.60);
+    padding: 4px 6px;
+    margin: 0;                    /* keep minimal spacing */
+    border: none;
+    box-shadow: none;
+    pointer-events: auto;
+    gap: 0;
+    border-radius: 0;
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive;
+    color: #ffffff;
+    box-sizing: border-box;
+}
+
+/* Ensure minimal vertical spacing between lines and ensure container height is driven purely by content */
+#chat-logs, #chat-logs-inner {
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 0; /* reset line box spacing at container level */
+}
+#chat-logs-inner .chat-line {
+    line-height: 1.2; /* restore readable line-height per message */
+    margin: 0;         /* ensure no extra gap */
+    padding-top: 2px;
+    padding-bottom: 2px; /* minimal vertical padding while keeping text from touching borders */
+}
+
+/* name style: use normal weight for all names (no bold) */
+.chat-name {
+    font-weight: normal;
+    margin-right: 6px;
+    color: #ffffff;
+    /* Prevent player names from being split across lines; let long names push to the next line as a whole. */
+    white-space: nowrap;
+    word-break: normal;
+    overflow-wrap: normal;
+}
+
+
+/* Ensure all text inside chat-line (names, message spans, and any nested elements) uses Comic Sans MS */
+.chat-line, .chat-line * {
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+}
+
+.chat-line {
+    color: #ffffff;
+}
+
+/* When the safechat menu opens we keep visual parity (no changes required) but ensure logs remain under menu */
+#safechat-menu-wrapper + #chat-logs,
+#chat-logs + #safechat-menu-wrapper {
+    z-index: 21;
+}
+
+#canvas-top-left-buttons .tl-btn {
+    /* scaled up 1.2x from original 100x20 to 120x24 */
+    width: 120px;
+    height: 24px;
+    padding: 0 6px;
+    border: none; /* removed grey outline */
+    /* light grey background (60% opacity) */
+    background-color: rgba(190,190,190,0.60);
+    color: #4a4a4a; /* dark grey text (kept as base color; actual blur applied to text span) */
+    /* Match player list text: Comic Sans only affects the text, nothing else */
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+    font-weight: normal !important;
+    /* explicitly remove text shadow to prevent faux-bold effect */
+    text-shadow: none !important;
+    /* slightly larger font/line-height to match increased button size (1.1×) */
+    font-size: 15.4px;
+    line-height: 24.2px;
+    box-sizing: border-box;
+    cursor: var(--main-cursor);
+    margin: 0; /* ensure no gap from margins */
+    display: inline-block; /* keep strict inline layout */
+    /* align text to the left edge instead of centered */
+    text-align: left;
+    /* remove any implicit border-radius or extra spacing */
+    border-radius: 0;
+    outline: none; /* prevent focus outline */
+    box-shadow: none; /* ensure no shadow outline */
+    /* remove filter from the button so only text is blurred */
+    filter: none;
+    -webkit-filter: none;
+}
+
+/* Tiny increased blur applied to the button label only (text-only) */
+/* keep a simple fallback holder for legacy rules */
+.canvas-top-left-buttons-text-fallback {}
+
+/* Ensure top-row button text uses Comic Sans MS only (override global font-face rules) */
+.tl-btn-text {
+    display: inline-block; /* allow filter to affect just the text glyphs */
+    filter: blur(0.45px);
+    -webkit-filter: blur(0.45px);
+    line-height: 24.2px; /* align with button line-height */
+
+    /* Add a tiny, multi-layer text-shadow to create a faint "fuzzy" edge without changing the existing blur. */
+    /* Values chosen to be very subtle so the effect reads as fuzz rather than additional blur. */
+    text-shadow:
+        0 0 0.45px rgba(74,74,74,0.22),
+        0 0 0.65px rgba(74,74,74,0.10),
+        0 0 0.18px rgba(255,255,255,0.03);
+
+    /* Force Comic Sans for the label text only so the rest of the button styling is unchanged */
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+    font-weight: normal !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle darken on hover so buttons give clear but minimal feedback */
+#canvas-top-left-buttons .tl-btn:hover {
+    background-color: rgba(170,170,170,0.78);
+}
+
+/* Removed special-case override that set first two buttons' text to black so all tl-btns use the same dark grey */
+#canvas-top-left-buttons .tl-btn:nth-child(1),
+#canvas-top-left-buttons .tl-btn:nth-child(2) {
+    color: #4a4a4a;
+    background-color: rgba(190,190,190,0.60);
+}
+
+/* Make sure these buttons don't affect page layout when not positioned */
+#canvas-top-left-buttons.hidden { display: none !important; }
+
+/* HELP BOX (match leaderboard color/opacity, centered over canvas when shown) */
+#help-box {
+    position: fixed;
+    z-index: 500;
+    /* match top-row buttons background (60% opaque light grey) */
+    background: rgba(190,190,190,0.75);
+    border: none;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 18px;
+    box-sizing: border-box;
+    color: #4a4a4a; /* dark grey text for contrast on the light background */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    border-radius: 0; /* make the panel not rounded */
+    overflow: auto;
+    font-weight: normal !important;
+    text-shadow: none !important;
+
+    /* Subtle fuzzy treatment to visually match other UI elements (keeps text legible) */
+    filter: blur(0.5px) saturate(1.02);
+    -webkit-filter: blur(0.5px) saturate(1.02);
+    backdrop-filter: blur(0.2px); /* gentle backdrop blur for supporting browsers */
+    -webkit-backdrop-filter: blur(0.2px);
+}
+
+/* Close control in upper-right of help box */
+#help-box-close {
+    position: absolute;
+    right: 8px;
+    top: 6px;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    cursor: pointer;
+    color: #fff;
+    background: transparent;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+/* Content area */
+#help-box-content {
+    margin-top: 8px;
+    color: #fff;
+    /* Slightly reduce blur on text content so it remains clearer than the panel edge */
+    filter: blur(0.25px) saturate(1.01);
+    -webkit-filter: blur(0.25px) saturate(1.01);
+}
+
+/* ensure all text in help box uses Comic Sans and normal weight */
+#help-box,
+#help-box * {
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+    font-weight: normal !important;
+    text-shadow: none !important;
+}
+
+/* Hidden helper */
+#help-box.hidden { display: none !important; }
+
+#ui-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10;
+}
+
+/* Enforce no wrapping for chat logs: prevent any line/username/message from breaking,
+   allow horizontal overflow/scroll instead of wrapping or truncating with ellipsis.
+   This override is intentionally placed at the end so it wins over earlier rules. */
+#chat-logs {
+    overflow: visible; /* panel itself remains visible */
+}
+
+/* Inner chat scroll area: allow horizontal scrolling when messages are longer than view */
+#chat-logs-inner {
+    overflow-x: auto;        /* enable horizontal scroll */
+    overflow-y: auto;        /* keep vertical scroll for many messages */
+    white-space: nowrap;     /* prevent wrapping of inline content */
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Each chat-line should be single-line, not wrap or break; allow it to expand horizontally */
+.chat-line {
+    display: inline-block !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    word-break: normal !important;
+    max-width: none !important;
+    width: auto !important;
+    box-sizing: border-box;
+}
+
+/* Username never breaks across lines; preserve whole-name integrity */
+.chat-name {
+    white-space: nowrap !important;
+    word-break: normal !important;
+    overflow: visible !important;
+}
+
+/* Message text also must not wrap; allow it to extend horizontally */
+.chat-text {
+    white-space: nowrap !important;
+    word-break: normal !important;
+    overflow: visible !important;
+    display: inline-block !important;
+}
+
+/* Prevent ellipsis-style truncation; make sure text-overflow isn't applied */
+.chat-line .chat-text,
+.chat-line .chat-name {
+    text-overflow: clip !important;
+}
+
+/* When the chat content becomes wider than available space, the user can scroll horizontally.
+   Keep scrollbars hidden where previously hidden but preserve the scrolling behavior. */
+#chat-logs-inner::-webkit-scrollbar {
+    height: 8px;
+}
+#chat-logs-inner::-webkit-scrollbar-thumb {
+    background-color: rgba(120,120,120,0.35);
+    border-radius: 4px;
+}
+
+/* BACKPACK STYLES */
+#backpack-container {
+    position: absolute;
+    z-index: 21;
+    pointer-events: auto;
+    background: transparent; /* container background removed so slots sit directly on the scene */
+    padding: 0; /* removed padding so slots butt up to the container edge */
+    /* removed border to keep the container clean */
+    border: none;
+}
+
+.backpack-row {
+    display: flex;
+    flex-direction: row;
+    gap: 0; /* NO GAPS between slots */
+    margin: 0; /* ensure no external spacing */
+}
+
+.backpack-slot {
+    width: 84px;
+    height: 84px;
+    /* match top-row buttons background color and transparency (rgba(190,190,190,0.60)) */
+    background-color: rgba(190,190,190,0.60);
+    /* removed border/outlines to make slots visually borderless */
+    border: none;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: var(--main-cursor);
+    box-sizing: border-box;
+    overflow: visible;
+    margin: 0; /* ensure no margins that create gaps */
+    padding: 0; /* ensure the visual area is exactly the slot */
+}
+
+/* Selected slot shows a neon-green outline (no glow) to indicate current item */
+.backpack-slot.selected {
+    background-color: rgba(170,170,170,0.78); /* slightly darker hover/selected tone matching top-row hover */
+    outline: none;
+    box-shadow: none;
+    /* keep box model unchanged so icon doesn't shrink; use positioning to allow overlay */
+    position: relative;
+    border: none;
+    box-sizing: content-box;
+}
+
+/* Add a non-invasive overlay that draws the neon-green outline without affecting layout or inner sizing */
+.backpack-slot.selected::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-sizing: border-box;
+    border: 3px solid #39FF14; /* neon-green outline (no glow) */
+    /* place overlay above slot background but beneath any potential children overlays */
+    z-index: 2;
+}
+
+/* Make icon fill available interior space so there is no inner visual gap */
+.slot-icon {
+    width: 100%;
+    height: 100%;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    image-rendering: pixelated;
+    pointer-events: none;
+}
+
+/* Number badge moved inside the slot at bottom-left; preserve its background and keep it flush */
+.slot-number {
+    position: absolute;
+    bottom: 2px;            /* slightly raised from bottom edge */
+    left: 2px;              /* slightly inset from left edge */
+    width: 20px;            /* slightly smaller square size */
+    height: 20px;
+    transform: none;
+    /* Use a fully opaque light grey that matches the visual tone of the top-row buttons */
+    background-color: rgb(190,190,190);
+    color: #ffffff;
+    font-size: 12px;       /* slightly smaller text */
+    padding: 0;             /* remove padding so badge remains square */
+    border: none;
+    text-align: center;
+    pointer-events: none;
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+    border-radius: 0px;     /* square (no rounding) */
+    box-shadow: none;
+    line-height: 20px;      /* vertically center single-digit numbers */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.backpack-slot:hover {
+    /* keep hover subtle but borderless */
+    background-color: #777;
+    outline: none;
+    box-shadow: none;
+}
+
+/* Clean outlined HUD language: Arial typography, dark glass surfaces, and cyan guides. */
+:root {
+    --ui-font: Arial, Helvetica, sans-serif;
+    --ui-panel: rgba(8, 16, 31, 0.92);
+    --ui-line: #67d9ff;
+}
+
+/* Arial is the single UI typeface; canvas text sets its own Arial face explicitly. */
+body,
+body * {
+    font-family: var(--ui-font) !important;
+}
+
+#ui-container,
+#controls-container,
+#health-bar-container,
+#chat-icon-container,
+#backpack-container,
+#safechat-menu-wrapper,
+#chat-bar-container,
+#player-list-container,
+#help-box,
+button,
+label {
+    font-family: var(--ui-font) !important;
+}
+
+#player-list-container,
+#health-bar-container,
+#backpack-container,
+#controls-container {
+    color: #eef8ff;
+}
+
+#player-list-canvas {
+    height: auto;
+}
+
+#health-bar-container,
+#backpack-container {
+    background: var(--ui-panel);
+    border: 1px solid rgba(103, 217, 255, 0.75);
+    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.35);
+}
+
+#health-bar-container {
+    padding: 6px;
+}
+
+#health-label {
+    font-family: var(--ui-font) !important;
+    color: #9bdfff;
+    letter-spacing: 0.06em;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE CONTROLS
+   ═══════════════════════════════════════════════════════════ */
+#mobile-controls {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    touch-action: none;
+}
+
+/* Left joystick zone — bottom-left quarter */
+#joystick-zone {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 44vw;
+    height: 44vw;
+    max-width: 220px;
+    max-height: 220px;
+    pointer-events: auto;
+    touch-action: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#joystick-base {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: 2.5px solid rgba(255,255,255,0.35);
+    position: relative;
+    opacity: 0.55;
+    transition: opacity 0.15s;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.35);
+}
+
+#joystick-knob {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.72);
+    border: 2px solid rgba(255,255,255,0.9);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    transition: transform 0.04s;
+}
+
+/* Right camera drag zone — right half, full height, transparent */
+#camera-zone {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 56vw;
+    height: 100%;
+    pointer-events: auto;
+    touch-action: none;
+    /* fully transparent — just captures touch events */
+}
+
+/* Action buttons — bottom-right */
+#mobile-action-buttons {
+    position: absolute;
+    right: 18px;
+    bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    pointer-events: auto;
+    touch-action: none;
+    align-items: center;
+}
+
+#attack-btn,
+#jump-btn {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(255,255,255,0.55);
+    font-size: 26px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 0.07s, opacity 0.07s;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.45);
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+}
+
+#attack-btn {
+    background: rgba(220, 50, 50, 0.72);
+    border-color: rgba(255,120,120,0.7);
+    font-size: 28px;
+}
+
+#jump-btn {
+    background: rgba(50, 140, 220, 0.72);
+    border-color: rgba(120,180,255,0.7);
+}
+
+#attack-btn.pressed,
+#jump-btn.pressed {
+    transform: scale(0.88);
+    opacity: 0.82;
+}
+
+/* On mobile, hide desktop-only hints */
+@media (pointer: coarse) {
+    #canvas-top-left-buttons .tl-btn {
+        height: 32px;
+        font-size: 13px;
+        line-height: 32px;
+        width: 90px;
+    }
+    #backpack-container .backpack-slot {
+        width: 64px;
+        height: 64px;
+    }
+}

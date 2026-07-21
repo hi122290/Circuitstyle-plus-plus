@@ -1,0 +1,771 @@
+{
+	"roblox": {
+		"External": [
+			"null",
+			"nil"
+		],
+		"utterance": [
+			{
+				"utterance": [
+					{
+						"utterance": [
+							"Hi there!",
+							"Hi everyone"
+						],
+						"__text": "Hi"
+					},
+					{
+						"utterance": "Howdy partner!",
+						"__text": "Howdy"
+					},
+					{
+						"utterance": [
+							"Greetings eveyone",
+							"Greetings robloxians!",
+							"Seaons greetings!"
+						],
+						"__text": "Greetings"
+					},
+					{
+						"utterance": [
+							"Welcome to my place",
+							"Welcome to our base",
+							"Welcome to my barbecque"
+						],
+						"__text": "Welcome"
+					},
+					"Hey there!",
+					{
+						"utterance": [
+							"How are you doing?",
+							"How's it going?",
+							"What's new?"
+						],
+						"__text": "What's up?"
+					},
+					{
+						"utterance": [
+							"Good morning",
+							"Good afternoon",
+							"Good evening",
+							"Good night"
+						],
+						"__text": "Good day"
+					},
+					{
+						"utterance": [
+							"Waaaaaaaz up?!",
+							"Hullo!",
+							"Behold greatness, mortals!"
+						],
+						"__text": "Silly"
+					},
+					{
+						"utterance": [
+							"Happy New Year!",
+							"Happy Valentine's Day!",
+							"Beware the Ides of March!",
+							"Happy Easter!",
+							"Happy 4th of July!",
+							"Happy Thanksgiving!",
+							"Happy Halloween!",
+							"Happy Hanukkah!",
+							"Merry Christmas!",
+							"Happy Holidays!"
+						],
+						"__text": "Holidays"
+					}
+				],
+				"__text": "Hello"
+			},
+			{
+				"utterance": [
+					{
+						"utterance": [
+							"Sweet dreams",
+							"Go to sleep!",
+							"Lights out!",
+							"Bedtime"
+						],
+						"__text": "Good Night"
+					},
+					{
+						"utterance": [
+							"See ya later",
+							"Later gator!",
+							"See you tomorrow"
+						],
+						"__text": "Later"
+					},
+					{
+						"utterance": "Hasta la bye bye!",
+						"__text": "Bye"
+					},
+					"I'll be right back",
+					"I have to go",
+					{
+						"utterance": [
+							"Take care",
+							"Have a nice day",
+							"Goodluck!",
+							"Ta-ta for now!"
+						],
+						"__text": "Farewell"
+					},
+					{
+						"utterance": [
+							"Peace out!",
+							"Peace dudes!",
+							"Rest in pieces!"
+						],
+						"__text": "Peace"
+					},
+					{
+						"utterance": [
+							"To the batcave!",
+							"Over and out!",
+							"Happy trails!",
+							"I've got to book it!",
+							"Tootles!",
+							"Smell you later!",
+							"GG!",
+							"My house is on fire! gtg."
+						],
+						"__text": "Silly"
+					}
+				],
+				"__text": "Goodbye"
+			},
+			{
+				"utterance": [
+					"Wanna be friends?",
+					{
+						"utterance": [
+							"Come to my place!",
+							"Come to my base!",
+							"Follow me, team!"
+						],
+						"__text": "Follow me"
+					},
+					{
+						"utterance": [
+							"Your place is fun",
+							"Your place is awesome",
+							"Your place looks good"
+						],
+						"__text": "Your place is cool"
+					},
+					{
+						"utterance": [
+							"Thanks for playing",
+							"Thanks for visiting",
+							"Thanks for everything",
+							"No thank you"
+						],
+						"__text": "Thank you"
+					},
+					{
+						"utterance": [
+							"Don't worry",
+							"That's ok"
+						],
+						"__text": "No problem"
+					},
+					{
+						"utterance": [
+							"You are great!",
+							"You are good!",
+							"You are cool!",
+							"You are funny!",
+							"You are silly!",
+							"You are awesome!"
+						],
+						"__text": "You are ..."
+					},
+					{
+						"utterance": [
+							"I like your name",
+							"I like your shirt",
+							"I like your place",
+							"I like your style"
+						],
+						"__text": "I like ..."
+					},
+					{
+						"utterance": [
+							"My bad!",
+							"I'm sorry",
+							"Whoops!",
+							"Please forgive me",
+							"I forgive you"
+						],
+						"__text": "Sorry"
+					}
+				],
+				"__text": "Friend"
+			},
+			{
+				"utterance": [
+					{
+						"utterance": [
+							"Who wants to be my friend?",
+							"Who wants to be on my team?",
+							"Who made this brilliant game?"
+						],
+						"__text": "Who?"
+					},
+					{
+						"utterance": [
+							"What is your favorite animal?",
+							"What is your favorite game?",
+							"What is your favorite movie?",
+							"What is your favorite TV show?",
+							"What is your favorite music?",
+							"What are your hobbies?"
+						],
+						"__text": "What?"
+					},
+					{
+						"utterance": [
+							"When are you online?",
+							"When is the new version coming out?",
+							"When can we play again?",
+							"When will your place be done?"
+						],
+						"__text": "When?"
+					},
+					{
+						"utterance": [
+							"Where do you want to go?",
+							"Where are you going?",
+							"Where am I?!"
+						],
+						"__text": "Where?"
+					},
+					{
+						"utterance": [
+							"How are you today?",
+							"How did you make this cool place?"
+						],
+						"__text": "How?"
+					},
+					{
+						"utterance": [
+							"Can I have a tour?",
+							"Can I be on your team?",
+							"Can I be your friend?",
+							"Can I try something?"
+						],
+						"__text": "Can I..."
+					}
+				],
+				"__text": "Questions"
+			},
+			{
+				"utterance": [
+					{
+						"utterance": [
+							"Check out the news section",
+							"Check out the help section",
+							"Read the wiki!",
+							"All the answers are in the wiki!"
+						],
+						"__text": "You need help?"
+					},
+					{
+						"utterance": [
+							"Me",
+							"Not me",
+							"You",
+							"All of us",
+							"Everyone but you",
+							"Builderman!",
+							"Telamon!"
+						],
+						"__text": "Some people ..."
+					},
+					{
+						"utterance": [
+							"In the morning",
+							"In the afternoon",
+							"At night",
+							"Tomorrow",
+							"This week",
+							"This month",
+							"Sometime",
+							"Sometimes",
+							"Whenever you want",
+							"Never"
+						],
+						"__text": "Time ..."
+					},
+					{
+						"utterance": [
+							{
+								"utterance": [
+									"Lion",
+									"Tiger",
+									"Leopard",
+									"Cheetah"
+								],
+								"__text": "Cats"
+							},
+							{
+								"utterance": [
+									"Wolves",
+									"Beagle",
+									"Collie",
+									"Dalmatian",
+									"Poodle",
+									"Spaniel",
+									"Shepherd",
+									"Terrier",
+									"Retriever"
+								],
+								"__text": "Dogs"
+							},
+							{
+								"utterance": [
+									"Ponies",
+									"Stallions"
+								],
+								"__text": "Horses"
+							},
+							{
+								"utterance": [
+									"Dinosaurs",
+									"Lizards",
+									"Snakes",
+									"Turtles!"
+								],
+								"__text": "Reptiles"
+							},
+							"Hamster",
+							"Monkey",
+							"Bears",
+							{
+								"utterance": [
+									"Goldfish",
+									"Sharks",
+									"Sea Bass",
+									"Halibut"
+								],
+								"__text": "Fish"
+							},
+							{
+								"utterance": [
+									"Eagles",
+									"Penguins",
+									"Turkeys"
+								],
+								"__text": "Birds"
+							},
+							"Elephants",
+							{
+								"utterance": [
+									"Dragons",
+									"Unicorns",
+									"Sea Serpents",
+									"Sphinx",
+									"Cyclops",
+									"Minotaurs",
+									"Goblins",
+									"Honest Politicians",
+									"Ghosts",
+									"Scylla and Charybdis"
+								],
+								"__text": "Mythical Beasts"
+							}
+						],
+						"__text": "Animals"
+					},
+					{
+						"utterance": [
+							{
+								"utterance": [
+									"BrickBattle",
+									"Community Building",
+									"Roblox Minigames"
+								],
+								"__text": "Roblox"
+							},
+							"Action",
+							"Puzzle",
+							"Strategy",
+							"Racing",
+							"RPG",
+							{
+								"utterance": [
+									"Chess",
+									"Checkers",
+									"Settlers of Catan",
+									"Tigris and Euphrates",
+									"El Grande",
+									"Stratego",
+									"Carcassonne"
+								],
+								"__text": "Board games"
+							}
+						],
+						"__text": "Games"
+					},
+					{
+						"utterance": [
+							"Hockey",
+							"Soccer",
+							"Football",
+							"Baseball",
+							"Basketball",
+							"Volleyball",
+							"Tennis",
+							{
+								"utterance": [
+									"Surfing",
+									"Swimming",
+									"Water Polo"
+								],
+								"__text": "Watersports"
+							},
+							{
+								"utterance": [
+									"Skiing",
+									"Snowboarding",
+									"Sledding",
+									"Skating"
+								],
+								"__text": "Winter sports"
+							},
+							{
+								"utterance": [
+									"Rock climbing",
+									"Hiking",
+									"Fishing"
+								],
+								"__text": "Adventure"
+							},
+							{
+								"utterance": [
+									"Foosball",
+									"Calvinball",
+									"Croquet",
+									"Cricket",
+									"Dodgeball",
+									"Squash"
+								],
+								"__text": "Wacky"
+							}
+						],
+						"__text": "Sports"
+					},
+					{
+						"utterance": [
+							"Science Fiction",
+							{
+								"utterance": "Anime",
+								"__text": "Animated"
+							},
+							"Comedy",
+							"Romantic",
+							"Action",
+							"Fantasy"
+						],
+						"__text": "Movies/TV"
+					},
+					{
+						"utterance": [
+							"Country",
+							"Jazz",
+							"Rap",
+							"Hip-hop",
+							"Techno",
+							"Classical",
+							"Pop",
+							"Rock"
+						],
+						"__text": "Music"
+					},
+					{
+						"utterance": [
+							{
+								"utterance": [
+									"Building computers",
+									"Videogames",
+									"Coding",
+									"Hacking"
+								],
+								"__text": "Computers"
+							},
+							{
+								"utterance": "lol. teh internets!",
+								"__text": "The Internet"
+							},
+							"Dance",
+							"Gynastics",
+							{
+								"utterance": [
+									"Karate",
+									"Judo",
+									"Taikwon Do",
+									"Wushu",
+									"Street fighting"
+								],
+								"__text": "Martial Arts"
+							},
+							"Listening to music",
+							{
+								"utterance": [
+									"Playing in my band",
+									"Playing piano",
+									"Playing guitar",
+									"Playing violin",
+									"Playing drums",
+									"Playing a weird instrument"
+								],
+								"__text": "Music lessons"
+							},
+							"Arts and crafts"
+						],
+						"__text": "Hobbies"
+					},
+					{
+						"utterance": [
+							{
+								"utterance": [
+									{
+										"utterance": [
+											"Alaska",
+											"Arizona",
+											"California",
+											"Colorado",
+											"Hawaii",
+											"Idaho",
+											"Montana",
+											"Nevada",
+											"New Mexico",
+											"Oregon",
+											"Utah",
+											"Washington",
+											"Wyoming"
+										],
+										"__text": "West"
+									},
+									{
+										"utterance": [
+											"Illinois",
+											"Indiana",
+											"Iowa",
+											"Kansas",
+											"Michigan",
+											"Minnesota",
+											"Missouri",
+											"Nebraska",
+											"North Dakota",
+											"Ohio",
+											"South Dakota",
+											"Wisconsin"
+										],
+										"__text": "Midwest"
+									},
+									{
+										"utterance": [
+											"Connecticut",
+											"Delaware",
+											"Maine",
+											"Maryland",
+											"Massachusetts",
+											"New Hampshire",
+											"New Jersey",
+											"New York",
+											"Pennsylvania",
+											"Rhode Island",
+											"Vermont",
+											"Virginia",
+											"West Virginia"
+										],
+										"__text": "Northeast"
+									},
+									{
+										"utterance": [
+											"Alabama",
+											"Arkansas",
+											"Florida",
+											"Georgia",
+											"Kentucky",
+											"Louisiana",
+											"Mississippi",
+											"North Carolina",
+											"Oklahoma",
+											"South Carolina",
+											"Tennessee",
+											"Texas"
+										],
+										"__text": "South"
+									}
+								],
+								"__text": "USA"
+							},
+							{
+								"utterance": [
+									"Alberta",
+									"British Columbia",
+									"Manitoba",
+									"New Brunswick",
+									"Newfoundland",
+									"Northwest Territories",
+									"Nova Scotia",
+									"Nunavut",
+									"Ontario",
+									"Prince Edward Island",
+									"Quebec",
+									"Saskatchewan",
+									"Yukon"
+								],
+								"__text": "Canada"
+							},
+							"Mexico",
+							"Central America",
+							{
+								"utterance": [
+									{
+										"utterance": [
+											"England",
+											"Scotland",
+											"Wales",
+											"Northern Ireland"
+										],
+										"__text": "Great Britain"
+									},
+									"France",
+									"Germany",
+									"Spain",
+									"Italy",
+									"Poland",
+									"Switzerland",
+									"Greece",
+									"Romania"
+								],
+								"__text": "Europe"
+							},
+							{
+								"utterance": [
+									"China",
+									"India",
+									"Japan",
+									"Korea"
+								],
+								"__text": "Asia"
+							},
+							{
+								"utterance": [
+									"Argentina",
+									"Brazil"
+								],
+								"__text": "South America"
+							},
+							{
+								"utterance": [
+									"Eygpt",
+									"Swaziland"
+								],
+								"__text": "Africa"
+							},
+							"Australia",
+							"Middle East",
+							"Antarctica"
+						],
+						"__text": "Location"
+					},
+					{
+						"utterance": [
+							"Rugrat",
+							"Kid",
+							"Teen",
+							"Twenties",
+							"Old",
+							"Ancient",
+							"Mesozoic"
+						],
+						"__text": "Age"
+					},
+					{
+						"utterance": [
+							"Good",
+							"Great!",
+							"Not bad",
+							"Sad",
+							"Hyper",
+							"Chill"
+						],
+						"__text": "Mood"
+					},
+					"Boy",
+					"Girl"
+				],
+				"__text": "Answers"
+			},
+			{
+				"utterance": [
+					"Let's build",
+					"Let's battle",
+					"Nice one!",
+					"So far so good!",
+					"Lucky shot!",
+					"Oh man!"
+				],
+				"__text": "Game"
+			},
+			{
+				"utterance": [
+					"Muahahahaha!",
+					{
+						"utterance": [
+							"i r teh pwnz0r!",
+							"w00t!",
+							"z0mg h4x!",
+							"ub3rR0xXorzage!",
+							"all your base are belong to me!"
+						],
+						"__text": "1337"
+					}
+				],
+				"__text": "Silly"
+			},
+			{
+				"utterance": [
+					"Absolutely!",
+					"Rock on!",
+					"Totally!",
+					"Juice!"
+				],
+				"__text": "Yes"
+			},
+			{
+				"utterance": [
+					"Ummm. No.",
+					"..."
+				],
+				"__text": "No"
+			},
+			{
+				"utterance": [
+					"Well... ok",
+					"Sure"
+				],
+				"__text": "Ok"
+			},
+			{
+				"utterance": [
+					":-(",
+					":D",
+					":-O",
+					"lol"
+				],
+				"__text": ":-)"
+			}
+		],
+		"_xmlns:xmime": "http://www.w3.org/2005/05/xmlmime",
+		"_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+		"_xsi:noNamespaceSchemaLocation": "http://www.roblox.com/roblox.xsd",
+		"_version": "4"
+	}
+}

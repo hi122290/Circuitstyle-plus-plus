@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RERuntime</title> <!--(means Roblox Engine Replicated if you are wondering!) -->
+  
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="container">
+        <canvas id="game-canvas"></canvas>
+        <!-- Canvas-top-left in-canvas buttons -->
+        <div id="canvas-top-left-buttons" aria-hidden="true">
+            <button class="tl-btn"><span class="tl-btn-text">Tools</span></button>
+            <button class="tl-btn"><span class="tl-btn-text">Insert</span></button>
+            <button class="tl-btn" id="help-btn"><span class="tl-btn-text">Help...</span></button>
+            <button class="tl-btn" id="exit-btn"><span class="tl-btn-text">Exit</span></button>
+        </div>
+
+        <!-- 2007-style chat logs (positioned inside canvas draw area below the top-row buttons) -->
+        <div id="chat-logs" aria-hidden="false">
+            <div id="chat-logs-inner">
+                <!-- Chat lines will be added at runtime -->
+            </div>
+        </div>
+
+        <!-- Help box (hidden by default) -->
+        <div id="help-box" class="hidden" role="dialog" aria-modal="true" aria-label="Help window">
+            <div id="help-box-content">
+                <h2>Help</h2>
+                <p>This is the help panel.</p>
+            </div>
+        </div>
+
+
+        <div id="player-list-container">
+            <canvas id="player-list-canvas" width="160" height="90" aria-label="Player list"></canvas>
+        </div>
+        <div id="controls-container">
+            <div id="zoom-controls">
+                <button id="pan-up" aria-label="Pan up"></button>
+                <button id="zoom-in" aria-label="Zoom in"></button>
+                <button id="pan-down" aria-label="Pan down"></button>
+                <button id="zoom-out" aria-label="Zoom out"></button>
+            </div>
+        </div>
+    </div>
+    <!-- New Health Bar Container -->
+    <div id="health-bar-container">
+        <canvas id="health-bar-canvas" width="8" height="106" aria-label="Player Health"></canvas>
+        <div id="health-label">Health</div>
+    </div>
+    <!-- Chat Icon Container -->
+    <div id="chat-icon-container">
+        <img src="/Chat icon.png" alt="Chat" id="chat-icon">
+    </div>
+
+    <!-- Backpack / Item Selector (slots generated dynamically by JS; hidden when empty) -->
+    <div id="backpack-container" class="hidden">
+        <div class="backpack-row" id="backpack-row">
+            <!-- Slots inserted here by modules/backpack.js -->
+        </div>
+    </div>
+
+
+    <!-- SAFE CHAT INTERFACE MENU -->
+    <div id="safechat-menu-wrapper" class="hidden">
+        <div id="safechat-menu-container">
+            <div class="safechat-menu level-1"></div>
+            <div class="safechat-menu level-2 hidden"></div>
+            <div class="safechat-menu level-3 hidden"></div>
+        </div>
+    </div>
+    <!-- Safe Chat Display Bar (reusing old chat bar container ID) - Starts hidden -->
+    <div id="chat-bar-container" class="hidden">
+        <div id="safechat-current-phrase" contenteditable="false" role="textbox" aria-label="Chat input">To chat click here or press the "/" key</div>
+    </div>
+    <!-- Mobile Controls (hidden on desktop, shown on touch devices by JS) -->
+    <div id="mobile-controls" class="hidden">
+        <!-- Left: joystick -->
+        <div id="joystick-zone">
+            <div id="joystick-base">
+                <div id="joystick-knob"></div>
+            </div>
+        </div>
+        <!-- Right: camera drag zone (transparent, covers right half) -->
+        <div id="camera-zone"></div>
+        <!-- Action buttons -->
+        <div id="mobile-action-buttons">
+            <button id="jump-btn">&#x2B06;</button>
+            <button id="attack-btn">&#x2694;</button>
+        </div>
+    </div>
+
+    <!-- build controls visible by default (removed click-to-start overlay) -->
+    <div id="build-controls" class="hidden">
+        <button id="place-spawn">Place Spawn Point</button>
+    </div>
+
+    <!-- full-screen visual blur overlay (non-interactive, lets clicks pass through) -->
+    <div id="global-blur" aria-hidden="true"></div>
+
+
+
+    <script>
+        // Canvas-top-left button behaviors: fullscreen toggle, Exit redirect, and Help box toggle
+        document.addEventListener('click', (e) => {
+            // Use closest so clicks on child elements (span, icon, etc.) are handled as if on the button itself.
+            const btnExit = e.target && e.target.closest && e.target.closest('#exit-btn');
+            if (btnExit) {
+                window.location.href = 'place_select.html';
+                return;
+            }
+
+            const btnHelp = e.target && e.target.closest && e.target.closest('#help-btn');
+            if (btnHelp) {
+                const help = document.getElementById('help-box');
+                if (!help) return;
+                // If currently hidden -> show and center it over the canvas; otherwise hide it.
+                if (help.classList.contains('hidden')) {
+                    const canvas = document.getElementById('game-canvas');
+                    const rect = canvas.getBoundingClientRect();
+                    const w = 600, h = 400;
+                    // Clamp to viewport if canvas smaller than help box
+                    const left = Math.max(0, rect.left + (rect.width - w) / 2);
+                    const top = Math.max(0, rect.top + (rect.height - h) / 2);
+                    help.style.left = `${left}px`;
+                    help.style.top = `${top}px`;
+                    help.style.width = `${w}px`;
+                    help.style.height = `${h}px`;
+                    help.classList.remove('hidden');
+                    // make sure keyboard focus lands in box for accessibility
+                    const focusable = help.querySelector('#help-box-content') || help;
+                    try { focusable.tabIndex = -1; focusable.focus(); } catch (e) {}
+                } else {
+                    help.classList.add('hidden');
+                }
+                return;
+            }
+
+            // Close help when clicking the close button (also support clicks on its children)
+            const closeBtn = e.target && e.target.closest && e.target.closest('#help-box-close');
+            if (closeBtn) {
+                const help = document.getElementById('help-box');
+                if (help) help.classList.add('hidden');
+            }
+        }, { passive: true });
+
+        // Also close help on Escape
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const help = document.getElementById('help-box');
+                if (help && !help.classList.contains('hidden')) help.classList.add('hidden');
+            }
+        });
+
+        // Prevent native right-click context menu anywhere inside the main #container UI (so no context menu appears on UI right-click)
+        window.addEventListener('contextmenu', (e) => {
+            try {
+                const t = e.target;
+                if (!t) return;
+                const container = document.getElementById('container');
+                // If right-click happened inside the main container or any of its children, suppress the menu.
+                if (container && container.contains(t)) {
+                    e.preventDefault();
+                }
+            } catch (err) {
+                // Fail safe: if any error occurs, do not block default behavior.
+            }
+        }, { passive: false });
+    </script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.163.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.163.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>

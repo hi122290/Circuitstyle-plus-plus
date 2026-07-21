@@ -1,0 +1,12 @@
+node_modules/
+package-lock.json
+package.json
+server.log
+server.js
+start-server.bat
+.venv/
+.agents/
+agents/
+*.log
+.DS_Store
+Thumbs.db
