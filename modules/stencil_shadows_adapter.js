@@ -11,7 +11,7 @@
 export async function registerStencilHelper(renderer, scene) {
     if (typeof window === 'undefined') return;
     try {
-        const res = await fetch('/modules/stencil_shadows.lua', { cache: 'no-store' });
+        const res = await fetch('./modules/stencil_shadows.lua', { cache: 'no-store' });
         if (!res.ok) throw new Error('stencil_shadows.lua not found');
         const src = await res.text();
 

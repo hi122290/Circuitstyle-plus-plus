@@ -447,7 +447,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         // Create an efficient overlay decal using a single mesh (plane) that uses the decal texture,
         // rendered after the torso and with depthWrite disabled to avoid z-fighting and heavy material cost.
         // Load decal texture asynchronously to avoid marking textures 'needsUpdate' before image is available.
-        textureLoader.load('/Roblox Decal.png', (decalTex) => {
+        textureLoader.load('./Roblox Decal.png', (decalTex) => {
             try {
                 if (!decalTex || !decalTex.image) {
                     // If no image data, skip creating the decal
@@ -1788,8 +1788,8 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
     const canvas = document.getElementById('game-canvas');
 
     // Cursor constants & helper to ensure consistent cursor switching across handlers
-    const CURSOR_WALK = "url('/ArrowCursor.png'), auto";
-    const CURSOR_FAR = "url('/ArrowFarCursor.png'), auto";
+    const CURSOR_WALK = "url('./ArrowCursor.png'), auto";
+    const CURSOR_FAR = "url('./ArrowFarCursor.png'), auto";
     function setCanvasCursor(cursorStr) {
         try { canvas.style.cursor = cursorStr; } catch (e) {}
     }
@@ -2307,7 +2307,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                 });
                 // overlay stud pattern
                 try {
-                    const studTex = textureLoader.load('/Studs_Texture.png', (t) => {
+                    const studTex = textureLoader.load('./Studs_Texture.png', (t) => {
                         t.wrapS = THREE.RepeatWrapping;
                         t.wrapT = THREE.RepeatWrapping;
                         t.repeat.set(3, 3);

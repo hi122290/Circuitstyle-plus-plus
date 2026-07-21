@@ -6,18 +6,18 @@ export function setupWorld(scene) {
     const wcfg = Global.world;
     const sky = wcfg.skybox;
 
-    const texPx = textureLoader.load('/' + sky.faces.px);
-    const texNx = textureLoader.load('/' + sky.faces.nx);
-    const texPy = textureLoader.load('/' + sky.faces.py);
-    const texNy = textureLoader.load('/' + sky.faces.ny, (t) => {
+    const texPx = textureLoader.load('./' + sky.faces.px);
+    const texNx = textureLoader.load('./' + sky.faces.nx);
+    const texPy = textureLoader.load('./' + sky.faces.py);
+    const texNy = textureLoader.load('./' + sky.faces.ny, (t) => {
         try {
             t.center.set(0.5, 0.5);
             t.rotation = sky.bottomRotation;
             t.needsUpdate = true;
         } catch (e) {}
     });
-    const texPz = textureLoader.load('/' + sky.faces.pz);
-    const texNz = textureLoader.load('/' + sky.faces.nz);
+    const texPz = textureLoader.load('./' + sky.faces.pz);
+    const texNz = textureLoader.load('./' + sky.faces.nz);
 
     function softenSkyTexture(t) {
         try {
@@ -152,7 +152,7 @@ export function setupWorld(scene) {
     scene.add(killFloor);
 
     // ── Shared material helpers ────────────────────────────────────────────
-    const studTex = textureLoader.load('/Studs_Texture.png', t => {
+    const studTex = textureLoader.load('./Studs_Texture.png', t => {
         t.wrapS = t.wrapT = THREE.RepeatWrapping;
         t.minFilter = THREE.NearestFilter; t.magFilter = THREE.NearestFilter;
         t.generateMipmaps = false;

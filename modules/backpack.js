@@ -1,12 +1,12 @@
 import { playSound } from './audio.js';
 
 export const ITEM_DATA = {
-    sword: { name: 'Sword', icon: '/sword_icon.png', model: '/sword.glb' },
-    slingshot: { name: 'Slingshot', icon: '/slingshot_icon.png', model: '/slingshot.glb' },
-    missile: { name: 'Gun', icon: '/missile_icon.png', model: '/rocketlauncher.glb' },
-    brick: { name: 'Brick', icon: '/brick_icon.png', model: '/trowel.glb' },
-    bomb: { name: 'Bomb', icon: '/bomb_icon.png', model: '/timebomb.glb' },
-    marbles: { name: 'Marbles', icon: '/marbles_icon.png' }
+    sword: { name: 'Sword', icon: './sword_icon.png', model: './sword.glb' },
+    slingshot: { name: 'Slingshot', icon: './slingshot_icon.png', model: './slingshot.glb' },
+    missile: { name: 'Gun', icon: './missile_icon.png', model: './rocketlauncher.glb' },
+    brick: { name: 'Brick', icon: './brick_icon.png', model: './trowel.glb' },
+    bomb: { name: 'Bomb', icon: './bomb_icon.png', model: './timebomb.glb' },
+    marbles: { name: 'Marbles', icon: './marbles_icon.png' }
 };
 
 /**

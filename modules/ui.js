@@ -66,10 +66,10 @@ export function setupUI(renderer, cameraState, onZoomDelta, onPanDelta) {
     }
 
     // wire each camera control to its images (press variants exist in project assets)
-    attachPressBehavior(zoomInBtn, '/CameraZoomIn.png', '/CameraZoomIn_hover.png', '/CameraZoomIn_press.png');
-    attachPressBehavior(zoomOutBtn, '/CameraZoomOut.png', '/CameraZoomOut_hover.png', '/CameraZoomOut_press.png');
-    attachPressBehavior(panUpBtn, '/CameraTiltUp.png', '/CameraTiltUp_hover.png', '/CameraTiltUp_press.png');
-    attachPressBehavior(panDownBtn, '/CameraTiltDown.png', '/CameraTiltDown_hover.png', '/CameraTiltDown_press.png');
+    attachPressBehavior(zoomInBtn, './CameraZoomIn.png', './CameraZoomIn_hover.png', './CameraZoomIn_press.png');
+    attachPressBehavior(zoomOutBtn, './CameraZoomOut.png', './CameraZoomOut_hover.png', './CameraZoomOut_press.png');
+    attachPressBehavior(panUpBtn, './CameraTiltUp.png', './CameraTiltUp_hover.png', './CameraTiltUp_press.png');
+    attachPressBehavior(panDownBtn, './CameraTiltDown.png', './CameraTiltDown_hover.png', './CameraTiltDown_press.png');
 
 
 
@@ -77,9 +77,9 @@ export function setupUI(renderer, cameraState, onZoomDelta, onPanDelta) {
     (function wireChatIcon() {
         const img = document.getElementById('chat-icon');
         if (!img) return;
-        const NORMAL = '/Chat icon.png';
-        const HOVER = '/Chat_ovr.png';
-        const CLICK = '/Chat_dn.png';
+    const NORMAL = './Chat icon.png';
+    const HOVER = './Chat_ovr.png';
+    const CLICK = './Chat_dn.png';
 
         const setSrc = (url) => { try { img.src = url; } catch (e) {} };
 

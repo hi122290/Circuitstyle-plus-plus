@@ -56,7 +56,7 @@ export function setupAudio() {
         // Note: also attempt to fetch modules/stencil_shadows.lua so the project explicitly uses the Lua stencil helper
         try {
             (function fetchStencilLua(){
-                fetch('/modules/stencil_shadows.lua', {cache: 'no-store'}).then(r => {
+                fetch('./modules/stencil_shadows.lua', {cache: 'no-store'}).then(r => {
                     if (!r.ok) return null;
                     return r.text();
                 }).then(txt => {

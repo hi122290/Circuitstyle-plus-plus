@@ -32,7 +32,7 @@ let _SWEAR_REGEX = null;
 
 async function loadSwears() {
     try {
-        const res = await fetch('/swears.json', { cache: 'no-store' });
+        const res = await fetch('./swears.json', { cache: 'no-store' });
         if (!res.ok) throw new Error('swears.json fetch failed');
         const js = await res.json();
         if (js && Array.isArray(js.swears)) {
@@ -100,7 +100,7 @@ function deepSanitizePhrases(obj) {
 // Attempt to fetch and parse the project's safechat.json and transform it into a simple nested map
 async function loadSafeChatJSON() {
     try {
-        const res = await fetch('/safechat.json', { cache: 'no-store' });
+        const res = await fetch('./safechat.json', { cache: 'no-store' });
         if (!res.ok) throw new Error('fetch failed');
         const raw = await res.json();
         // The project's safechat.json structure nests entries under roblox.utterance[*]
@@ -604,12 +604,12 @@ export function setupSafeChat(renderer) {
             updateSafeChatDisplay();
             safeChatState.menuOpen = true;
             // ensure chat icon shows pressed/open state while menu is visible
-            try { if (img) img.src = '/Chat_dn.png'; } catch (e) {}
+            try { if (img) img.src = './Chat_dn.png'; } catch (e) {}
         } else {
             wrapper.classList.add('hidden');
             safeChatState.menuOpen = false;
             // restore chat icon to normal when menu is closed
-            try { if (img) img.src = '/Chat icon.png'; } catch (e) {}
+            try { if (img) img.src = './Chat icon.png'; } catch (e) {}
         }
         // Keep input/menu states separate
         safeChatState.isOpen = safeChatState.isOpen;

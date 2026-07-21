@@ -1230,7 +1230,7 @@ function updateRemotePlayers() {
                                 const ballColor = MARBLE_COLORS[Math.floor(Math.random() * MARBLE_COLORS.length)];
                                 const ballMat = new THREE.MeshStandardMaterial({ color: ballColor, emissive: ballColor, emissiveIntensity: 0.12, roughness: 0.45, metalness: 0.08 });
                                 try {
-                                    const t = new THREE.TextureLoader().load('/Studs_Texture.png', (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3,3); t.needsUpdate = true; });
+                                    const t = new THREE.TextureLoader().load('./Studs_Texture.png', (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3,3); t.needsUpdate = true; });
                                     ballMat.map = t;
                                 } catch(e) {}
                                 mesh = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), ballMat);

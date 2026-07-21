@@ -18,7 +18,7 @@ export const Global = {
             anisotropy: 1
         },
         ground: {
-            texture: '/Studs_Texture.png',
+            texture: './Studs_Texture.png',
             repeat: { x: 96, y: 96 },
             roughness: 0.35,
             metalness: 0.05,
@@ -30,7 +30,7 @@ export const Global = {
             }
         },
         spawn: {
-            texture: '/spawn.png',
+            texture: './spawn.png',
             topRoughness: 0.08,
             topMetalness: 0.25,
             sideColor: 0x808080,
@@ -39,23 +39,23 @@ export const Global = {
     },
     audio: {
         paths: {
-            bg: '/The Great Strategy (2005) Roblox Theme 2006.mp3',
-            click: '/roblox-button-made-with-Voicemod.mp3',
-            walk: '/walk.mp3',
-            spawn: '/roblox-spawn.mp3',
-            jump: '/roblox-classic-jump.mp3',
-            roblox_click: '/roblox-click-sound-(made-by-oliverleader08)-made-with-Voicemod.mp3',
-            oof: '/bannythecoolio-retro-hit-sound-425135.mp3'
+            bg: './The Great Strategy (2005) Roblox Theme 2006.mp3',
+            click: './roblox-button-made-with-Voicemod.mp3',
+            walk: './walk.mp3',
+            spawn: './roblox-spawn.mp3',
+            jump: './roblox-classic-jump.mp3',
+            roblox_click: './roblox-click-sound-(made-by-oliverleader08)-made-with-Voicemod.mp3',
+            oof: './bannythecoolio-retro-hit-sound-425135.mp3'
         },
         bgVolume: 0.28
     },
     assets: {
-        decal: '/Roblox Decal.png',
-        head: '/head.glb',
-        face: '/face.png',
-        studs: '/Studs_Texture.png',
-        studsBottom: '/Studs_Bottom_Texture.png',
-        glueStuds: '/Glue_Studs_texture.png'
+        decal: './Roblox Decal.png',
+        head: './head.glb',
+        face: './face.png',
+        studs: './Studs_Texture.png',
+        studsBottom: './Studs_Bottom_Texture.png',
+        glueStuds: './Glue_Studs_texture.png'
     },
     render: {
         targetDt: 1000 / 26,

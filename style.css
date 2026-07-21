@@ -1,7 +1,7 @@
 /*RERuntime CSS */
 :root {
-    --main-cursor: url('/ArrowCursor.png') 0 0, auto;
-    --far-cursor: url('/ArrowFarCursor.png') 0 0, auto;
+    --main-cursor: url('./ArrowCursor.png') 0 0, auto;
+    --far-cursor: url('./ArrowFarCursor.png') 0 0, auto;
 }
 
 /* Ensure the game canvas area and any overlapping UI keep a consistent cursor by default.
@@ -22,7 +22,7 @@
 /* add ITC Eras font and enforce globally */
 @font-face {
     font-family: 'ITC Eras Ultra';
-    src: url('/ITC Eras Ultra Regular.otf') format('opentype');
+    src: url('./ITC Eras Ultra Regular.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -48,7 +48,7 @@ body {
     margin: 0;
     overflow: hidden;
     background-color: #2c2c2c;
-    cursor: url('/roblox.png'), auto;
+    cursor: url('./roblox.png'), auto;
     /* Ensure Arial is available and potentially default */
     font-family: Verdana;
 
@@ -308,10 +308,10 @@ button {
 }
 
 /* set each icon image (images themselves are the visible button) */
-#zoom-in { background-image: url('/CameraZoomIn.png'); }
-#zoom-out { background-image: url('/CameraZoomOut.png'); }
-#pan-up { background-image: url('/CameraTiltUp.png'); }
-#pan-down { background-image: url('/CameraTiltDown.png'); }
+#zoom-in { background-image: url('./CameraZoomIn.png'); }
+#zoom-out { background-image: url('./CameraZoomOut.png'); }
+#pan-up { background-image: url('./CameraTiltUp.png'); }
+#pan-down { background-image: url('./CameraTiltDown.png'); }
 
 #pan-up, #pan-down {
     width: 44px; /* keep visual size in tight grid */
