@@ -11,7 +11,7 @@ import Global from './modules/Global.js';
 import { registerStencilHelper } from './modules/stencil_shadows_adapter.js';
 import { setupMobileControls, isMobile } from './modules/mobile_controls.js';
 import { appendChatMessage } from './modules/safechat.js';
-import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost } from './modules/build.js';
+import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost, deleteBlockByMesh, deleteBlockById, findBlockAtPoint, stampBuild, toggleSaveMenu, closeSaveMenu } from './modules/build.js';
 
 window.THREE_REF = THREE;
 
@@ -1058,6 +1058,29 @@ async function init() {
     }
     window._buildMouse = { x: () => _mouseX, y: () => _mouseY };
 
+    if (_canvas) {
+        _canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (!camera || !scene || !world) return;
+            const rect = _canvas.getBoundingClientRect();
+            const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            const ndcY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
+            const targets = (world.collidables || []).slice();
+            const hits = raycaster.intersectObjects(targets, true);
+            const hitMesh = findBlockAtPoint(hits);
+            if (hitMesh) {
+                const blockId = hitMesh.userData.blockId;
+                if (deleteBlockByMesh(hitMesh, scene, world)) {
+                    if (window._pendingPresence) {
+                        window._pendingPresence.lastDelete = { blockId: blockId, t: Date.now() };
+                    }
+                }
+            }
+        }, { passive: false });
+    }
+
     //init. list of players, yeah
     updateMultiplayerPlayerList();
 
@@ -1361,6 +1384,15 @@ function updateRemotePlayers() {
                     }
                 }
 
+                if (pData.lastDelete) {
+                    const ld = pData.lastDelete;
+                    const ldKey = `${clientId}_del_${ld.t}`;
+                    if (!remote._lastDeleteKey || remote._lastDeleteKey !== ldKey) {
+                        remote._lastDeleteKey = ldKey;
+                        try { deleteBlockById(ld.blockId, scene, world); } catch(e) {}
+                    }
+                }
+
                 // arm pivot sync is now handled inside updateModelAnimations
             } catch (e) {}
         }
@@ -1462,7 +1494,7 @@ function animate(now) {
 
         // push our transform + anim. state into presence so everyone else sees us or else we a ghost
         if (player && player.model) {
-            const hasCombatEvent = _pendingPresence.lastProjectile || _pendingPresence.lastSwordHit || _pendingPresence.lastExplosion || _pendingPresence.lastChat || _pendingPresence.lastBuild;
+            const hasCombatEvent = _pendingPresence.lastProjectile || _pendingPresence.lastSwordHit || _pendingPresence.lastExplosion || _pendingPresence.lastChat || _pendingPresence.lastBuild || _pendingPresence.lastDelete;
             const presenceData = {
                 x: player.model.position.x,
                 y: player.model.position.y,
@@ -1489,6 +1521,7 @@ function animate(now) {
             if (_pendingPresence.lastExplosion) { presenceData.lastExplosion = _pendingPresence.lastExplosion; delete _pendingPresence.lastExplosion; }
             if (_pendingPresence.lastChat) { presenceData.lastChat = _pendingPresence.lastChat; delete _pendingPresence.lastChat; }
             if (_pendingPresence.lastBuild) { presenceData.lastBuild = _pendingPresence.lastBuild; delete _pendingPresence.lastBuild; }
+            if (_pendingPresence.lastDelete) { presenceData.lastDelete = _pendingPresence.lastDelete; delete _pendingPresence.lastDelete; }
             room.updatePresence(presenceData);
             // If a combat event was just broadcast, immediately process remote players on this tab too
             // (subscribePresence won't fire for our own updatePresence on the same tab)
@@ -1518,6 +1551,18 @@ function animate(now) {
                 hideGhost();
             }
         } catch(e) {}
+
+        if (window._pendingStampSave && player && player.model && scene && world) {
+            const saveData = window._pendingStampSave;
+            window._pendingStampSave = null;
+            const pos = player.model.position.clone();
+            const placed = stampBuild(scene, world, saveData, pos);
+            for (const p of placed) {
+                if (window._pendingPresence) {
+                    window._pendingPresence.lastBuild = p.buildData;
+                }
+            }
+        }
 
         renderer.render(scene, camera);
 
