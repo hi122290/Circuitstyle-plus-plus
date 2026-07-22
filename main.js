@@ -38,6 +38,7 @@ if (typeof WebsimSocket === 'undefined') {
             this._statusEl = null;
             this._initializing = false;
             this._reconnectTimer = null;
+            this._buildHistory = [];
             this._createStatusIndicator();
         }
 
@@ -80,6 +81,9 @@ if (typeof WebsimSocket === 'undefined') {
                             this.presence[p.id] = p.presence || {};
                         }
                     });
+                    if (msg.buildHistory && msg.buildHistory.length > 0) {
+                        this._pendingBuildHistory = msg.buildHistory;
+                    }
                     if (this._lastPresence && Object.keys(this._lastPresence).length > 0) {
                         this.send({ type: 'presence', data: this._lastPresence });
                         this.presence[this.clientId] = this._lastPresence;
@@ -300,6 +304,9 @@ if (typeof WebsimSocket === 'undefined') {
                                 this.presence[p.id] = p.presence || {};
                             }
                         });
+                        if (msg.buildHistory && msg.buildHistory.length > 0) {
+                            this._pendingBuildHistory = msg.buildHistory;
+                        }
                         if (this._lastPresence && Object.keys(this._lastPresence).length > 0) {
                             this.send({ type: 'presence', data: this._lastPresence });
                             this.presence[this.clientId] = this._lastPresence;
@@ -379,7 +386,8 @@ if (typeof WebsimSocket === 'undefined') {
                     id: newId,
                     username: 'Player',
                     onlineCount: this._getOnlineCount(),
-                    players: welcomePlayers
+                    players: welcomePlayers,
+                    buildHistory: this._buildHistory
                 }));
 
                 this.peers[newId] = { username: 'Player' };
@@ -417,6 +425,9 @@ if (typeof WebsimSocket === 'undefined') {
                     case 'presence':
                         if (this.peers[senderId]) {
                             this.presence[senderId] = msg.data || {};
+                            if (msg.data && msg.data.lastBuild) {
+                                this._buildHistory.push(msg.data.lastBuild);
+                            }
                             this._broadcastToClients({
                                 type: 'presence',
                                 id: senderId,
@@ -495,6 +506,9 @@ if (typeof WebsimSocket === 'undefined') {
             if (this.peers[this.clientId]) this.peers[this.clientId].username = username;
             this.presence[this.clientId] = data;
             this._lastPresence = { ...data };
+            if (data && data.lastBuild) {
+                this._buildHistory.push(data.lastBuild);
+            }
             this.send({ type: 'presence', data });
             this._notifyPresence();
         }
@@ -563,7 +577,7 @@ const TARGET_DT = Global.render.targetDt;
 let lastFrameTime = 0;
 
 // grab the lighting numbers straight out of thy (yes i love using "thy" it's a very cool word) Lua file (no full Lua VM, jst regex magic!)
-async function loadLightingFromLua(path = '/modules/lighting.lua') {
+async function loadLightingFromLua(path = './modules/lighting.lua') {
     try {
         const res = await fetch(path, { cache: 'no-store' });
         if (!res.ok) throw new Error('failed to fetch lua lighting');
@@ -688,10 +702,10 @@ async function init() {
     // pull the lighting knobs out of lua so we match the 2007 lighting or whatever as much as possible.
     let luaLighting;
     try {
-        luaLighting = await retryAsync(() => loadLightingFromLua('/modules/lighting.lua'), 3, 700);
+        luaLighting = await retryAsync(() => loadLightingFromLua('./modules/lighting.lua'), 3, 700);
     } catch (e) {
         console.warn('Failed to load lighting.lua after retries, using fallback defaults:', e);
-        luaLighting = await loadLightingFromLua('/modules/lighting.lua').catch(() => ({
+        luaLighting = await loadLightingFromLua('./modules/lighting.lua').catch(() => ({
             ambient: { r: 0.9, g: 0.9, b: 0.9, intensity: 1.0 },
             directional: { r: 1, g: 1, b: 1, intensity: 2.0, position: { x: 5, y: 10, z: 7.5 } },
             shadows: false,
@@ -1054,6 +1068,14 @@ async function init() {
     });
 
     renderHealthBar(PlayerModule.getHealth());
+
+    if (room._pendingBuildHistory && room._pendingBuildHistory.length > 0) {
+        const hist = room._pendingBuildHistory;
+        room._pendingBuildHistory = null;
+        for (const b of hist) {
+            try { spawnRemoteBuild(scene, b, world); } catch(e) {}
+        }
+    }
 
     animate();
 }

@@ -131,12 +131,33 @@ function computeSnappedPosition(targetPoint, targetNormal) {
     const { w, h, d } = getBuildDimensions();
     const gridSize = getGridSize();
 
-    const rawPos = targetPoint.clone().add(normal.clone().multiplyScalar(h / 2 + 0.01));
+    let offset = h / 2 + 0.01;
+    if (settings.shape === 'wall' && Math.abs(normal.y) < 0.5) {
+        offset = d / 2 + 0.01;
+    }
+
+    const rawPos = targetPoint.clone().add(normal.clone().multiplyScalar(offset));
     return new THREE.Vector3(
         snapToGrid(rawPos.x, gridSize),
         snapToGrid(rawPos.y, gridSize),
         snapToGrid(rawPos.z, gridSize)
     );
+}
+
+function computeWallRotation(targetNormal) {
+    if (!targetNormal) return { rx: 0, ry: 0, rz: 0, rw: 1 };
+    const n = targetNormal.clone().normalize();
+    const quat = new THREE.Quaternion();
+
+    if (Math.abs(n.y) > 0.9) {
+        quat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0);
+    } else if (Math.abs(n.x) > Math.abs(n.z)) {
+        quat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+    } else {
+        quat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0);
+    }
+
+    return { rx: quat.x, ry: quat.y, rz: quat.z, rw: quat.w };
 }
 
 function ensureGhost(scene) {
@@ -170,6 +191,12 @@ function updateBuildGhost(scene, targetPoint, targetNormal) {
     const snapped = computeSnappedPosition(targetPoint, targetNormal);
     if (snapped) {
         ghostMesh.position.copy(snapped);
+        if (settings.shape === 'wall' && targetNormal) {
+            const rot = computeWallRotation(targetNormal);
+            ghostMesh.quaternion.set(rot.rx, rot.ry, rot.rz, rot.rw);
+        } else {
+            ghostMesh.quaternion.identity();
+        }
         ghostMesh.visible = true;
     } else {
         ghostMesh.visible = false;
@@ -188,6 +215,13 @@ function placeBuild(scene, targetPoint, targetNormal, world) {
         new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.05 })
     );
     mesh.position.copy(snapped);
+
+    let rotData = { rx: 0, ry: 0, rz: 0, rw: 1 };
+    if (settings.shape === 'wall' && targetNormal) {
+        rotData = computeWallRotation(targetNormal);
+        mesh.quaternion.set(rotData.rx, rotData.ry, rotData.rz, rotData.rw);
+    }
+
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.userData.isCollidable = true;
@@ -196,6 +230,8 @@ function placeBuild(scene, targetPoint, targetNormal, world) {
     return {
         px: mesh.position.x, py: mesh.position.y, pz: mesh.position.z,
         sx: w, sy: h, sz: d,
+        rx: rotData.rx, ry: rotData.ry, rz: rotData.rz, rw: rotData.rw,
+        shape: settings.shape,
         color: settings.color,
         t: Date.now()
     };
@@ -208,6 +244,9 @@ function spawnRemoteBuild(scene, data, world) {
         new THREE.MeshStandardMaterial({ color: new THREE.Color(data.color), roughness: 0.8, metalness: 0.05 })
     );
     mesh.position.set(data.px, data.py, data.pz);
+    if (data.rw !== undefined) {
+        mesh.quaternion.set(data.rx || 0, data.ry || 0, data.rz || 0, data.rw);
+    }
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.userData.isCollidable = true;
