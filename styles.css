@@ -1,0 +1,227 @@
+html, body{
+	-webkit-font-smoothing:antialiased;
+	font-family: "Comic Sans MS", sans-serif;
+	line-height:1.4;
+	margin:0 auto;
+	height: 100%;
+	background-color: #1a1a2e;
+	color: yellow;
+}
+.center{
+	text-align: center;
+}
+.intro{
+	font-size:4em;
+}
+.max {
+    display: block;
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    word-wrap: break-word;
+    padding: 0 12px;
+    box-sizing: border-box;
+}
+.bg1{
+	background-image: url("https://i.imgur.com/YUPql5N.gif");
+	background-size: cover;
+	background-attachment: fixed;
+}
+.bg2{
+	background-image: url("https://i.imgur.com/SHZe50s.gif");
+	background-size: cover;
+	background-attachment: fixed;
+}
+a{
+	color: #000000;
+	text-decoration: none;
+}
+a:hover{
+	text-decoration: underline;
+}
+#wm-ipp #wm-ipp-inside {
+  margin: 0 6px;
+  border:5px solid #000;
+  border-top:none;
+  background-color:rgba(255,255,255,0.9);
+  -moz-box-shadow:1px 1px 4px #333;
+  -webkit-box-shadow:1px 1px 4px #333;
+  box-shadow:1px 1px 4px #333;
+  border-radius:0 0 8px 8px;
+}
+.container {
+    width: 1000px;
+    max-width: 100%;
+    height: 100%;
+    border: 2px solid black;
+    box-sizing: border-box;
+}
+h1, h2, h3, p, a {
+  color: yellow;
+}
+h4 a {
+  color: yellow;
+  font-size: 1.1em;
+  padding: 0 8px;
+}
+h4 a:hover {
+  color: #fff;
+}
+span.line{
+  color: red;
+}
+.cursor{
+    cursor: url(https://i.imgur.com/RUE567I.gif), auto;
+}
+
+/* @group Blink */
+.blink {
+	-webkit-animation: blink .75s linear infinite;
+	-moz-animation: blink .75s linear infinite;
+	-ms-animation: blink .75s linear infinite;
+	-o-animation: blink .75s linear infinite;
+	 animation: blink .75s linear infinite;
+}
+@-webkit-keyframes blink {
+	0% { opacity: 1; }
+	50% { opacity: 1; }
+	50.01% { opacity: 0; }
+	100% { opacity: 0; }
+}
+@-moz-keyframes blink {
+	0% { opacity: 1; }
+	50% { opacity: 1; }
+	50.01% { opacity: 0; }
+	100% { opacity: 0; }
+}
+@-ms-keyframes blink {
+	0% { opacity: 1; }
+	50% { opacity: 1; }
+	50.01% { opacity: 0; }
+	100% { opacity: 0; }
+}
+@-o-keyframes blink {
+	0% { opacity: 1; }
+	50% { opacity: 1; }
+	50.01% { opacity: 0; }
+	100% { opacity: 0; }
+}
+@keyframes blink {
+	0% { opacity: 1; }
+	50% { opacity: 1; }
+	50.01% { opacity: 0; }
+	100% { opacity: 0; }
+}
+/* @end */
+
+/*for footer*/
+#main{
+	min-height: 90vh;
+}
+
+/* Game cards */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    padding: 16px 0;
+}
+.game-card {
+    background: rgba(0,0,0,0.5);
+    border: 2px solid yellow;
+    padding: 0;
+    text-align: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    color: yellow;
+}
+.game-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 12px rgba(255,255,0,0.4);
+    text-decoration: none;
+}
+.game-card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+    border-bottom: 2px solid yellow;
+}
+.game-card .card-body {
+    padding: 10px 8px;
+}
+.game-card h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.1em;
+    color: yellow;
+}
+.game-card p {
+    margin: 0;
+    font-size: 0.85em;
+    color: #ccc;
+}
+.play-btn {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 20px;
+    background: yellow;
+    color: #000;
+    font-weight: bold;
+    font-family: "Comic Sans MS", sans-serif;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+}
+.play-btn:hover {
+    background: #fff;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 16px 8px;
+    border-top: 1px solid rgba(255,255,0,0.3);
+    margin-top: 20px;
+}
+footer img {
+    max-width: 200px;
+    height: auto;
+    margin: 4px 0;
+}
+footer p {
+    font-size: 0.85em;
+    color: #aaa;
+    margin: 4px 0;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .max {
+        padding: 0 8px;
+    }
+    h1 {
+        font-size: 1.8em;
+    }
+    h2 {
+        font-size: 1.1em;
+    }
+    h4 a {
+        font-size: 0.9em;
+        padding: 0 4px;
+    }
+    .games-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .game-card img {
+        height: 140px;
+    }
+    .intro {
+        font-size: 2.5em;
+    }
+    footer img {
+        max-width: 140px;
+    }
+}
