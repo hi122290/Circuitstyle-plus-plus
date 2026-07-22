@@ -28,6 +28,12 @@ const settings = {
 };
 
 let panel = null;
+let ghostMesh = null;
+let ghostScene = null;
+
+function snapToGrid(val, gridSize) {
+    return Math.round(val / gridSize) * gridSize;
+}
 
 function initBuildUI() {
     panel = document.getElementById('build-controls');
@@ -55,6 +61,7 @@ function buildPanelDOM() {
             settings.color = c.hex;
             palette.querySelectorAll('.build-swatch').forEach(s => s.classList.remove('selected'));
             swatch.classList.add('selected');
+            updateGhostColor();
         });
         palette.appendChild(swatch);
     });
@@ -73,6 +80,7 @@ function buildPanelDOM() {
             settings.size = s;
             sizeGroup.querySelectorAll('.build-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
+            updateGhostSize();
         });
         sizeGroup.appendChild(btn);
     });
@@ -90,6 +98,7 @@ function buildPanelDOM() {
             settings.shape = key;
             shapeGroup.querySelectorAll('.build-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
+            updateGhostSize();
         });
         shapeGroup.appendChild(btn);
     });
@@ -99,7 +108,7 @@ function buildPanelDOM() {
 }
 
 function showBuildUI() { if (panel) { panel.classList.remove('hidden'); buildPanelDOM(); } }
-function hideBuildUI() { if (panel) panel.classList.add('hidden'); }
+function hideBuildUI() { if (panel) panel.classList.add('hidden'); hideGhost(); }
 
 function getBuildSettings() {
     return { ...settings };
@@ -111,9 +120,66 @@ function getBuildDimensions() {
     return { w: d[0], h: d[1], d: d[2] };
 }
 
-function placeBuild(scene, targetPoint, targetNormal, world) {
+function getGridSize() {
+    const { h } = getBuildDimensions();
+    return h;
+}
+
+function computeSnappedPosition(targetPoint, targetNormal) {
     if (!targetPoint) return null;
     const normal = targetNormal ? targetNormal.clone().normalize() : new THREE.Vector3(0, 1, 0);
+    const { w, h, d } = getBuildDimensions();
+    const gridSize = getGridSize();
+
+    const rawPos = targetPoint.clone().add(normal.clone().multiplyScalar(h / 2 + 0.01));
+    return new THREE.Vector3(
+        snapToGrid(rawPos.x, gridSize),
+        snapToGrid(rawPos.y, gridSize),
+        snapToGrid(rawPos.z, gridSize)
+    );
+}
+
+function ensureGhost(scene) {
+    if (ghostMesh && ghostScene === scene) return;
+    ghostScene = scene;
+    const { w, h, d } = getBuildDimensions();
+    ghostMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(w, h, d),
+        new THREE.MeshBasicMaterial({ color: settings.color, transparent: true, opacity: 0.35, depthWrite: false })
+    );
+    ghostMesh.visible = false;
+    ghostMesh.renderOrder = 999;
+    scene.add(ghostMesh);
+}
+
+function updateGhostColor() {
+    if (ghostMesh) ghostMesh.material.color.set(settings.color);
+}
+
+function updateGhostSize() {
+    if (!ghostScene) return;
+    if (ghostMesh) { ghostScene.remove(ghostMesh); ghostMesh.geometry.dispose(); ghostMesh.material.dispose(); ghostMesh = null; }
+    ensureGhost(ghostScene);
+}
+
+function showGhost(scene) { ensureGhost(scene); if (ghostMesh) ghostMesh.visible = true; }
+function hideGhost() { if (ghostMesh) ghostMesh.visible = false; }
+
+function updateBuildGhost(scene, targetPoint, targetNormal) {
+    if (!ghostMesh) return;
+    const snapped = computeSnappedPosition(targetPoint, targetNormal);
+    if (snapped) {
+        ghostMesh.position.copy(snapped);
+        ghostMesh.visible = true;
+    } else {
+        ghostMesh.visible = false;
+    }
+}
+
+function placeBuild(scene, targetPoint, targetNormal, world) {
+    if (!targetPoint) return null;
+    const snapped = computeSnappedPosition(targetPoint, targetNormal);
+    if (!snapped) return null;
     const { w, h, d } = getBuildDimensions();
     const color = new THREE.Color(settings.color);
 
@@ -121,7 +187,7 @@ function placeBuild(scene, targetPoint, targetNormal, world) {
         new THREE.BoxGeometry(w, h, d),
         new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.05 })
     );
-    mesh.position.copy(targetPoint).add(normal.multiplyScalar(h / 2 + 0.01));
+    mesh.position.copy(snapped);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.userData.isCollidable = true;
@@ -149,4 +215,4 @@ function spawnRemoteBuild(scene, data, world) {
     scene.add(mesh);
 }
 
-export { initBuildUI, showBuildUI, hideBuildUI, getBuildSettings, placeBuild, spawnRemoteBuild, BUILD_COLORS };
+export { initBuildUI, showBuildUI, hideBuildUI, getBuildSettings, placeBuild, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost, BUILD_COLORS };

@@ -11,7 +11,7 @@ import Global from './modules/Global.js';
 import { registerStencilHelper } from './modules/stencil_shadows_adapter.js';
 import { setupMobileControls, isMobile } from './modules/mobile_controls.js';
 import { appendChatMessage } from './modules/safechat.js';
-import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild } from './modules/build.js';
+import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost } from './modules/build.js';
 
 window.THREE_REF = THREE;
 
@@ -1035,6 +1035,15 @@ async function init() {
     window.addEventListener('resize', onWindowResize, false);
     onWindowResize();
 
+    // Track mouse for build ghost preview
+    let _mouseX = 0, _mouseY = 0;
+    const _canvas = document.getElementById('game-canvas');
+    if (_canvas) {
+        _canvas.addEventListener('mousemove', (e) => { _mouseX = e.clientX; _mouseY = e.clientY; }, { passive: true });
+        _canvas.addEventListener('pointermove', (e) => { _mouseX = e.clientX; _mouseY = e.clientY; }, { passive: true });
+    }
+    window._buildMouse = { x: () => _mouseX, y: () => _mouseY };
+
     //init. list of players, yeah
     updateMultiplayerPlayerList();
 
@@ -1463,6 +1472,30 @@ function animate(now) {
             // (subscribePresence won't fire for our own updatePresence on the same tab)
             if (hasCombatEvent) updateRemotePlayers();
         }
+
+        // Update build ghost preview when brick tool is equipped
+        try {
+            const heldItem = window.backpack && window.backpack.getSelectedItem ? window.backpack.getSelectedItem() : null;
+            if (heldItem === 'brick' && camera && scene && world) {
+                const mPos = window._buildMouse;
+                if (mPos) {
+                    const canvas = document.getElementById('game-canvas');
+                    const rect = canvas.getBoundingClientRect();
+                    const ndcX = ((mPos.x() - rect.left) / rect.width) * 2 - 1;
+                    const ndcY = -((mPos.y() - rect.top) / rect.height) * 2 + 1;
+                    const raycaster = new THREE.Raycaster();
+                    raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
+                    const targets = (world.collidables || []).slice();
+                    if (world.ground) targets.push(world.ground);
+                    const hits = raycaster.intersectObjects(targets, true);
+                    const hit = hits[0] || null;
+                    showGhost(scene);
+                    updateBuildGhost(scene, hit ? hit.point.clone() : null, hit && hit.face ? hit.face.normal.clone() : null);
+                }
+            } else {
+                hideGhost();
+            }
+        } catch(e) {}
 
         renderer.render(scene, camera);
 
