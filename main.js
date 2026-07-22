@@ -1059,8 +1059,8 @@ async function init() {
     window._buildMouse = { x: () => _mouseX, y: () => _mouseY };
 
     if (_canvas) {
-        _canvas.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
+        _canvas.addEventListener('mousedown', (e) => {
+            if (e.button !== 1) return;
             if (!camera || !scene || !world) return;
             const rect = _canvas.getBoundingClientRect();
             const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
