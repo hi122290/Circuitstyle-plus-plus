@@ -299,6 +299,18 @@ export function updateUIElementPositions(renderer) {
         }
     }
 
+    // BUILD CONTROLS positioning (above backpack when brick tool is equipped)
+    const buildControls = document.getElementById('build-controls');
+    if (buildControls) {
+        const backpackEl = document.getElementById('backpack-container');
+        if (backpackEl && !backpackEl.classList.contains('hidden')) {
+            const bpRect = backpackEl.getBoundingClientRect();
+            buildControls.style.left = `${bpRect.left}px`;
+            buildControls.style.bottom = 'auto';
+            buildControls.style.top = `${bpRect.top - 36}px`;
+        }
+    }
+
     // CHAT BAR positioning (used for SafeChat display/send button)
     const chatBarEl = document.getElementById('chat-bar-container');
     if (chatBarEl) {

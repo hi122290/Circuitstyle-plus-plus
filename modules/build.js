@@ -1,0 +1,152 @@
+import * as THREE from 'three';
+
+const BUILD_COLORS = [
+    { name: 'White',  hex: '#ffffff' },
+    { name: 'Grey',   hex: '#808080' },
+    { name: 'Black',  hex: '#222222' },
+    { name: 'Red',    hex: '#cc3333' },
+    { name: 'Orange', hex: '#dd7722' },
+    { name: 'Yellow', hex: '#dddd33' },
+    { name: 'Green',  hex: '#33aa33' },
+    { name: 'Cyan',   hex: '#33cccc' },
+    { name: 'Blue',   hex: '#3366cc' },
+    { name: 'Purple', hex: '#8833cc' },
+    { name: 'Pink',   hex: '#ee66aa' },
+    { name: 'Brown',  hex: '#8b5a2b' }
+];
+
+const SIZES = {
+    small:  { block: [0.8, 0.8, 0.8],           wall: [2.4, 0.8, 0.4] },
+    medium: { block: [1.6, 1.6, 1.6],           wall: [3.2, 1.6, 0.4] },
+    large:  { block: [3.2, 3.2, 3.2],           wall: [4.8, 3.2, 0.4] }
+};
+
+const settings = {
+    color: '#8b5a2b',
+    size: 'medium',
+    shape: 'block'
+};
+
+let panel = null;
+
+function initBuildUI() {
+    panel = document.getElementById('build-controls');
+    if (!panel) return;
+    buildPanelDOM();
+    panel.classList.add('hidden');
+}
+
+function buildPanelDOM() {
+    panel.innerHTML = '';
+
+    const row = document.createElement('div');
+    row.className = 'build-row';
+
+    const palette = document.createElement('div');
+    palette.className = 'build-palette';
+    BUILD_COLORS.forEach(c => {
+        const swatch = document.createElement('div');
+        swatch.className = 'build-swatch';
+        if (c.hex === settings.color) swatch.classList.add('selected');
+        swatch.style.backgroundColor = c.hex;
+        swatch.title = c.name;
+        swatch.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settings.color = c.hex;
+            palette.querySelectorAll('.build-swatch').forEach(s => s.classList.remove('selected'));
+            swatch.classList.add('selected');
+        });
+        palette.appendChild(swatch);
+    });
+    row.appendChild(palette);
+
+    const sizeGroup = document.createElement('div');
+    sizeGroup.className = 'build-group';
+    ['small', 'medium', 'large'].forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'build-btn build-size-btn';
+        if (s === settings.size) btn.classList.add('selected');
+        btn.textContent = s.charAt(0).toUpperCase();
+        btn.title = s.charAt(0).toUpperCase() + s.slice(1);
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settings.size = s;
+            sizeGroup.querySelectorAll('.build-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        });
+        sizeGroup.appendChild(btn);
+    });
+    row.appendChild(sizeGroup);
+
+    const shapeGroup = document.createElement('div');
+    shapeGroup.className = 'build-group';
+    [['block', 'Block'], ['wall', 'Wall']].forEach(([key, label]) => {
+        const btn = document.createElement('button');
+        btn.className = 'build-btn build-shape-btn';
+        if (key === settings.shape) btn.classList.add('selected');
+        btn.textContent = label;
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settings.shape = key;
+            shapeGroup.querySelectorAll('.build-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        });
+        shapeGroup.appendChild(btn);
+    });
+    row.appendChild(shapeGroup);
+
+    panel.appendChild(row);
+}
+
+function showBuildUI() { if (panel) { panel.classList.remove('hidden'); buildPanelDOM(); } }
+function hideBuildUI() { if (panel) panel.classList.add('hidden'); }
+
+function getBuildSettings() {
+    return { ...settings };
+}
+
+function getBuildDimensions() {
+    const dims = SIZES[settings.size] || SIZES.medium;
+    const d = dims[settings.shape] || dims.block;
+    return { w: d[0], h: d[1], d: d[2] };
+}
+
+function placeBuild(scene, targetPoint, targetNormal, world) {
+    if (!targetPoint) return null;
+    const normal = targetNormal ? targetNormal.clone().normalize() : new THREE.Vector3(0, 1, 0);
+    const { w, h, d } = getBuildDimensions();
+    const color = new THREE.Color(settings.color);
+
+    const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(w, h, d),
+        new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.05 })
+    );
+    mesh.position.copy(targetPoint).add(normal.multiplyScalar(h / 2 + 0.01));
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.isCollidable = true;
+    try { world && world.collidables && world.collidables.push(mesh); } catch(e) {}
+    scene.add(mesh);
+    return {
+        px: mesh.position.x, py: mesh.position.y, pz: mesh.position.z,
+        sx: w, sy: h, sz: d,
+        color: settings.color,
+        t: Date.now()
+    };
+}
+
+function spawnRemoteBuild(scene, data, world) {
+    if (!data || !scene) return;
+    const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(data.sx, data.sy, data.sz),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(data.color), roughness: 0.8, metalness: 0.05 })
+    );
+    mesh.position.set(data.px, data.py, data.pz);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.isCollidable = true;
+    try { world && world.collidables && world.collidables.push(mesh); } catch(e) {}
+    scene.add(mesh);
+}
+
+export { initBuildUI, showBuildUI, hideBuildUI, getBuildSettings, placeBuild, spawnRemoteBuild, BUILD_COLORS };

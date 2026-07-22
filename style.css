@@ -375,13 +375,83 @@ button {
     background: #d48800;
 }
 
-/* Position adjustments */
+/* Build controls panel (shown when brick tool is equipped) */
 #build-controls {
     position: absolute;
-    left: 20px;
-    bottom: 20px;
-    z-index: 10;
-    display: none;
+    z-index: 22;
+    pointer-events: auto;
+    background: linear-gradient(180deg, #e8e8e8 0%, #c8c8c8 45%, #b0b0b0 55%, #c0c0c0 100%);
+    border: 1px solid #888;
+    border-top-color: #ddd;
+    border-left-color: #ddd;
+    border-bottom-color: #666;
+    border-right-color: #666;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 1px 3px rgba(0,0,0,0.3);
+    padding: 4px 6px;
+    border-radius: 0;
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+    font-size: 12px;
+    color: #333;
+}
+.build-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+.build-palette {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+}
+.build-swatch {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #666;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.build-swatch.selected {
+    border-color: #ff0;
+    box-shadow: 0 0 0 1px #000;
+}
+.build-group {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+}
+.build-btn {
+    padding: 2px 6px;
+    font-size: 12px;
+    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+    border: 1px solid #888;
+    border-top-color: #ccc;
+    border-left-color: #ccc;
+    border-bottom-color: #555;
+    border-right-color: #555;
+    background: linear-gradient(180deg, #ddd 0%, #bbb 100%);
+    color: #333;
+    cursor: pointer;
+    border-radius: 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+    line-height: 1.4;
+}
+.build-btn.selected {
+    background: linear-gradient(180deg, #999 0%, #aaa 100%);
+    border-top-color: #555;
+    border-left-color: #555;
+    border-bottom-color: #ccc;
+    border-right-color: #ccc;
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.3);
+    color: #111;
+}
+.build-btn:active {
+    background: linear-gradient(180deg, #999 0%, #aaa 100%);
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.3);
+}
+@media (pointer: coarse) {
+    .build-swatch { width: 28px; height: 28px; }
+    .build-btn { padding: 4px 10px; font-size: 14px; }
 }
 
 #customization-container {

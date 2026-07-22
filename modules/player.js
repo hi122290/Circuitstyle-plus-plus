@@ -6,6 +6,7 @@ import { playSound, sounds } from './audio.js';
 import PlayerModule from './PlayerModule.js';
 import Global from './Global.js';
 import { ITEM_DATA } from './backpack.js';
+import { getBuildSettings, placeBuild } from './build.js';
 
 
 export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
@@ -2252,18 +2253,11 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                 return true;
             }
             case 'brick': {
-                if (!targetPoint) return false;
-                const normal = targetNormal ? targetNormal.clone().normalize() : new THREE.Vector3(0, 1, 0);
-                const brick = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.8, 0.8, 0.8),
-                    new THREE.MeshStandardMaterial({ color: 0x9b6b2e, roughness: 0.8, metalness: 0.05 })
-                );
-                brick.position.copy(targetPoint).add(normal.multiplyScalar(0.45));
-                brick.castShadow = true;
-                brick.receiveShadow = true;
-                brick.userData.isCollidable = true;
-                try { world && world.collidables && world.collidables.push(brick); } catch (e) {}
-                scene.add(brick);
+                const buildData = placeBuild(scene, targetPoint, targetNormal, world);
+                if (!buildData) return false;
+                if (window._pendingPresence) {
+                    window._pendingPresence.lastBuild = buildData;
+                }
                 playSound('click');
                 return true;
             }

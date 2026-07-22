@@ -11,6 +11,7 @@ import Global from './modules/Global.js';
 import { registerStencilHelper } from './modules/stencil_shadows_adapter.js';
 import { setupMobileControls, isMobile } from './modules/mobile_controls.js';
 import { appendChatMessage } from './modules/safechat.js';
+import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild } from './modules/build.js';
 
 window.THREE_REF = THREE;
 
@@ -937,6 +938,7 @@ async function init() {
     });
 
     backpack.init();
+    initBuildUI();
 
     // Give all items to the player immediately on spawn
     Object.keys(ITEM_DATA).forEach(itemId => backpack.addItem(itemId));
@@ -949,11 +951,10 @@ async function init() {
     backpack.selectSlot = (index) => {
         originalSelectSlot(index);
         const selectedId = backpack.getSelectedItem();
-        //thy local tool equip
         if (player && player.setHeldItem) {
             player.setHeldItem(selectedId);
         }
-        // tell the room what we’re holding, so room sees it too, literally a bandaid
+        if (selectedId === 'brick') { showBuildUI(); } else { hideBuildUI(); }
         try {
             if (window.room) {
                 window.room.updatePresence({
@@ -1320,6 +1321,15 @@ function updateRemotePlayers() {
                     }
                 }
 
+                if (pData.lastBuild) {
+                    const lb = pData.lastBuild;
+                    const lbKey = `${clientId}_build_${lb.t}`;
+                    if (!remote._lastBuildKey || remote._lastBuildKey !== lbKey) {
+                        remote._lastBuildKey = lbKey;
+                        try { spawnRemoteBuild(scene, lb, world); } catch(e) {}
+                    }
+                }
+
                 // arm pivot sync is now handled inside updateModelAnimations
             } catch (e) {}
         }
@@ -1421,7 +1431,7 @@ function animate(now) {
 
         // push our transform + anim. state into presence so everyone else sees us or else we a ghost
         if (player && player.model) {
-            const hasCombatEvent = _pendingPresence.lastProjectile || _pendingPresence.lastSwordHit || _pendingPresence.lastExplosion || _pendingPresence.lastChat;
+            const hasCombatEvent = _pendingPresence.lastProjectile || _pendingPresence.lastSwordHit || _pendingPresence.lastExplosion || _pendingPresence.lastChat || _pendingPresence.lastBuild;
             const presenceData = {
                 x: player.model.position.x,
                 y: player.model.position.y,
@@ -1447,6 +1457,7 @@ function animate(now) {
             if (_pendingPresence.lastSwordHit) { presenceData.lastSwordHit = _pendingPresence.lastSwordHit; delete _pendingPresence.lastSwordHit; }
             if (_pendingPresence.lastExplosion) { presenceData.lastExplosion = _pendingPresence.lastExplosion; delete _pendingPresence.lastExplosion; }
             if (_pendingPresence.lastChat) { presenceData.lastChat = _pendingPresence.lastChat; delete _pendingPresence.lastChat; }
+            if (_pendingPresence.lastBuild) { presenceData.lastBuild = _pendingPresence.lastBuild; delete _pendingPresence.lastBuild; }
             room.updatePresence(presenceData);
             // If a combat event was just broadcast, immediately process remote players on this tab too
             // (subscribePresence won't fire for our own updatePresence on the same tab)
