@@ -64,10 +64,16 @@
     </div>
 </div>
 
-<img class="intro" id="about" src="">
-<h2>This is a web game based off of early roblox, call it circuitstyle! We have our web based game on: Phones (Android), PC (Laptops, Box PC, All in one, mini box, portable Box PC, etc.)</h2>
+<!-- Player Search -->
+<h2 id="about">Player Search</h2>
+<div id="player-search-box" style="max-width:400px; margin:12px auto;">
+    <input id="player-search-input" type="text" placeholder="Enter a username..." style="width:100%; box-sizing:border-box; padding:8px 10px; border:2px solid yellow; background:rgba(0,0,0,0.6); color:#fff; font-size:1em; font-family:inherit;">
+    <button id="player-search-btn" style="width:100%; margin-top:6px; padding:8px; background:yellow; color:#000; border:none; font-weight:bold; font-size:1em; cursor:pointer; font-family:inherit;">Search</button>
+    <div id="player-search-results" style="margin-top:10px; text-align:left;"></div>
+</div>
 
-<h2 id="working">Games (alternate section)</h2>
+<!-- Games -->
+<h2 id="working">Games</h2>
 <div class="games-grid">
     <a class="game-card" href="./index.html">
         <img src="./Studs_Texture.png" alt="Baseplate">
@@ -79,8 +85,46 @@
     </a>
 </div>
 
-<h2 id="made">New players</h2>
-<p>Join in and start building! Use the backpack to equip tools, place blocks, and play with friends online.</p>
+<!-- About Us -->
+<h2 id="made">About Us</h2>
+<div style="background:rgba(0,0,0,0.5); border:2px solid yellow; padding:16px; margin:12px 0; text-align:left;">
+    <p style="color:#ddd; margin:0 0 10px 0;">Circuitstyle is a free web-based building and fighting game inspired by early 2000s block games. Build structures, equip tools, and play with others — all from your browser.</p>
+    <p style="color:#ddd; margin:0 0 10px 0;">No downloads. No installs. Just open the site and play.</p>
+    <p style="color:yellow; font-weight:bold; margin:12px 0 6px 0;">Platforms we support:</p>
+    <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:center; padding:8px 0;">
+        <div style="text-align:center;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Android_Logo.svg/120px-Android_Logo.svg.png" alt="Android" style="height:40px;">
+            <div style="color:#aaa; font-size:0.8em;">Android</div>
+        </div>
+        <div style="text-align:center;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Windows_logo_%282012%29.svg/120px-Windows_logo_%282012%29.svg.png" alt="Windows" style="height:40px;">
+            <div style="color:#aaa; font-size:0.8em;">Windows</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:2em; line-height:1;">&#128241;</div>
+            <div style="color:#aaa; font-size:0.8em;">iOS</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:2em; line-height:1;">&#128187;</div>
+            <div style="color:#aaa; font-size:0.8em;">Linux / macOS</div>
+        </div>
+    </div>
+    <p style="color:#aaa; font-size:0.85em; margin:10px 0 0 0;">Built with Three.js, PeerJS, and Firebase. Inspired by early Roblox.</p>
+</div>
+
+<!-- New Players -->
+<h2>New Players</h2>
+<div style="background:rgba(0,0,0,0.5); border:2px solid yellow; padding:16px; margin:12px 0; text-align:left;">
+    <p style="color:#ddd; margin:0 0 8px 0;">Welcome to Circuitstyle! Here's how to get started:</p>
+    <ol style="color:#ddd; margin:0; padding-left:20px;">
+        <li style="margin-bottom:6px;"><b style="color:yellow;">Sign up</b> above with a username and password to save your progress.</li>
+        <li style="margin-bottom:6px;">Click <b style="color:yellow;">Play</b> on Baseplate to join the game.</li>
+        <li style="margin-bottom:6px;">Use the <b style="color:yellow;">backpack</b> to equip tools — blocks, swords, slingshots, and more.</li>
+        <li style="margin-bottom:6px;">Press <b style="color:yellow;">/</b> or click the chat icon to chat with other players.</li>
+        <li style="margin-bottom:6px;">Right-click to open the build menu and place blocks.</li>
+    </ol>
+    <p style="color:#aaa; font-size:0.85em; margin:12px 0 0 0;">Your account is shared across all devices. Sign in anywhere to pick up where you left off.</p>
+</div>
 </div>
 <footer id="footer">
 <img src="https://i.imgur.com/i6hvJjx.gif" alt="footer gif">
@@ -214,6 +258,40 @@ authLogout.addEventListener('click', async (e) => {
     authUser.value = '';
     authPass.value = '';
 });
+
+// Player Search
+const searchInput = document.getElementById('player-search-input');
+const searchBtn = document.getElementById('player-search-btn');
+const searchResults = document.getElementById('player-search-results');
+
+async function doPlayerSearch() {
+    const q = searchInput.value.trim().toLowerCase();
+    if (!q) { searchResults.innerHTML = '<p style="color:#aaa;">Type a username to search.</p>'; return; }
+    searchResults.innerHTML = '<p style="color:#aaa;">Searching...</p>';
+    try {
+        const snap = await db.ref('accounts').orderByKey().startAt(q).endAt(q + '\uf8ff').once('value');
+        const exactSnap = await db.ref('accounts/' + q).once('value');
+        const results = [];
+        snap.forEach(child => { results.push({ username: child.key, ...child.val() }); });
+        if (exactSnap.exists() && !results.find(r => r.username === q)) {
+            results.unshift({ username: q, ...exactSnap.val() });
+        }
+        if (results.length === 0) {
+            searchResults.innerHTML = '<p style="color:#aaa;">No players found.</p>';
+            return;
+        }
+        searchResults.innerHTML = results.map(r =>
+            '<div style="background:rgba(0,0,0,0.5); border:1px solid yellow; padding:8px 12px; margin-bottom:6px; display:flex; align-items:center; gap:10px;">' +
+            '<div style="width:36px; height:36px; background:#444; border:2px solid yellow; display:flex; align-items:center; justify-content:center; font-size:1.2em; color:yellow; font-weight:bold;">' + r.name.charAt(0).toUpperCase() + '</div>' +
+            '<div><div style="color:yellow; font-weight:bold;">' + r.name + '</div><div style="color:#aaa; font-size:0.8em;">@' + r.username + '</div></div></div>'
+        ).join('');
+    } catch(e) {
+        console.error(e);
+        searchResults.innerHTML = '<p style="color:#ff4444;">Search failed. Try again.</p>';
+    }
+}
+searchBtn.addEventListener('click', doPlayerSearch);
+searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doPlayerSearch(); });
 
 // Check existing session on load
 auth.onAuthStateChanged(async (user) => {
