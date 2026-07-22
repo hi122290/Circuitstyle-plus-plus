@@ -113,7 +113,9 @@
 </div>
 
 <!-- New Players -->
-<h2>New Players</h2>
+<h2 id="new-players">New Players</h2>
+<canvas id="newplayer-head-canvas" width="200" height="200" style="display:block; margin:0 auto 12px; background:transparent;"></canvas>
+<div id="new-players-list" style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:12px 0;"></div>
 <div style="background:rgba(0,0,0,0.5); border:2px solid yellow; padding:16px; margin:12px 0; text-align:left;">
     <p style="color:#ddd; margin:0 0 8px 0;">Welcome to Circuitstyle! Here's how to get started:</p>
     <ol style="color:#ddd; margin:0; padding-left:20px;">
@@ -446,6 +448,112 @@ function tick() {
     renderer.render(scene, cam);
 }
 tick();
+
+// --- New Players Section ---
+function renderPlayerHead(canvasEl, colorHex) {
+    const w = canvasEl.width, h = canvasEl.height;
+    const r = new THREE.WebGLRenderer({ canvas: canvasEl, antialias: true, alpha: true });
+    r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    r.setSize(w, h, false);
+    r.setClearColor(0x000000, 0);
+
+    const s = new THREE.Scene();
+    const c = new THREE.PerspectiveCamera(35, w / h, 0.1, 100);
+    c.position.set(0, 0, 4);
+    c.lookAt(0, 0, 0);
+
+    s.add(new THREE.AmbientLight(0xffffff, 1.1));
+    const dl = new THREE.DirectionalLight(0xffffff, 1.2);
+    dl.position.set(3, 5, 4);
+    s.add(dl);
+
+    const mat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.18, metalness: 0.03 });
+    const grp = new THREE.Group();
+    s.add(grp);
+
+    const sz = 0.5;
+    const headLoader2 = new GLTFLoader();
+    headLoader2.load('./head.glb', (gltf) => {
+        const head = gltf.scene;
+        const bbox = new THREE.Box3().setFromObject(head);
+        const size = new THREE.Vector3();
+        bbox.getSize(size);
+        const sc = (sz * 2) / (size.x || 1);
+        head.scale.setScalar(sc);
+        head.traverse(n => {
+            if (n.isMesh) {
+                n.material = mat.clone();
+                n.castShadow = true;
+            }
+        });
+        try {
+            const faceTex = new THREE.TextureLoader().load('./face.png');
+            head.traverse(n => {
+                if (n.isMesh) {
+                    const overlay = n.clone();
+                    overlay.material = new THREE.MeshBasicMaterial({ map: faceTex, transparent: true, opacity: 0.9, depthWrite: false });
+                    overlay.scale.set(1.01, 1.01, 1.01);
+                    n.add(overlay);
+                }
+            });
+        } catch(e) {}
+        grp.add(head);
+    }, undefined, () => {
+        const fb = new THREE.Mesh(new THREE.BoxGeometry(sz, sz, sz), mat);
+        grp.add(fb);
+    });
+
+    let t = 0;
+    function anim() {
+        requestAnimationFrame(anim);
+        t += 0.02;
+        grp.rotation.y = Math.sin(t) * 0.3;
+        r.render(s, c);
+    }
+    anim();
+}
+
+// Render the big new-players head
+const npHeadCanvas = document.getElementById('newplayer-head-canvas');
+if (npHeadCanvas) renderPlayerHead(npHeadCanvas, 0x808080);
+
+// Load recent accounts from Firebase
+async function loadNewPlayers() {
+    const listEl = document.getElementById('new-players-list');
+    if (!listEl) return;
+    try {
+        const snap = await db.ref('accounts').orderByChild('created').limitToLast(8).once('value');
+        if (!snap.exists()) { listEl.innerHTML = '<p style="color:#aaa;">No players yet. Be the first!</p>'; return; }
+        const accounts = [];
+        snap.forEach(child => { accounts.push({ username: child.key, ...child.val() }); });
+        accounts.reverse();
+
+        const colors = [0xff4444, 0x44aaff, 0x44ff44, 0xffaa00, 0xff44ff, 0x44ffff, 0xffff44, 0xaa44ff];
+        listEl.innerHTML = '';
+        accounts.forEach((acc, i) => {
+            const card = document.createElement('div');
+            card.style.cssText = 'background:rgba(0,0,0,0.5); border:1px solid yellow; padding:8px; text-align:center; width:110px;';
+            const cv = document.createElement('canvas');
+            cv.width = 100; cv.height = 100;
+            cv.style.cssText = 'display:block; margin:0 auto 4px; background:transparent;';
+            card.appendChild(cv);
+            const nm = document.createElement('div');
+            nm.style.cssText = 'color:yellow; font-weight:bold; font-size:0.85em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+            nm.textContent = acc.name || acc.username;
+            card.appendChild(nm);
+            const un = document.createElement('div');
+            un.style.cssText = 'color:#aaa; font-size:0.75em;';
+            un.textContent = '@' + acc.username;
+            card.appendChild(un);
+            listEl.appendChild(card);
+            renderPlayerHead(cv, colors[i % colors.length]);
+        });
+    } catch(e) {
+        console.error(e);
+        listEl.innerHTML = '<p style="color:#aaa;">Could not load players.</p>';
+    }
+}
+loadNewPlayers();
 </script>
 </body>
 </html>
