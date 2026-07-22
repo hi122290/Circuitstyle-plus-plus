@@ -224,6 +224,7 @@ authSubmit.addEventListener('click', async () => {
             }
 
             showWelcomeUI(name);
+            localStorage.setItem('cs_username', user);
         } else {
             const snap = await db.ref('accounts/' + user).once('value');
             if (!snap.exists()) { showError('Wrong username or password.'); authSubmit.disabled = false; authSubmit.textContent = 'Log In'; return; }
@@ -240,6 +241,7 @@ authSubmit.addEventListener('click', async () => {
             }
 
             showWelcomeUI(acc.name);
+            localStorage.setItem('cs_username', user);
         }
     } catch(e) {
         console.error(e);
@@ -256,6 +258,7 @@ authLogout.addEventListener('click', async (e) => {
         if (uid) await db.ref('sessions/' + uid).remove();
         await auth.signOut();
     } catch(e) {}
+    localStorage.removeItem('cs_username');
     showForm();
     authUser.value = '';
     authPass.value = '';
@@ -306,6 +309,7 @@ auth.onAuthStateChanged(async (user) => {
     if (sessSnap.exists()) {
         const sess = sessSnap.val();
         showWelcomeUI(sess.name);
+        localStorage.setItem('cs_username', sess.username);
     } else {
         showForm();
     }

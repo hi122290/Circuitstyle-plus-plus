@@ -570,6 +570,12 @@ async function retryAsync(fn, attempts = 3, delayMs = 500) {
 window.currentPlayerColor = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
 const remotePlayers = new Map();
 
+// Restore username from place_select.html login
+try {
+    const savedUser = localStorage.getItem('cs_username');
+    if (savedUser) window.currentPlayerName = savedUser;
+} catch(e) {}
+
 PlayerModule.init();
 try { window.playerHealth = PlayerModule.getHealth(); } catch (e) { window.playerHealth = 100; }
 
@@ -651,6 +657,11 @@ async function init() {
     const myId = room.clientId;
     const myPeer = room.peers[myId];
     window.currentPlayerName = myPeer ? myPeer.username : 'Guest';
+
+    // Tell the host our real username (from place_select.html login)
+    if (window.currentPlayerName && window.currentPlayerName !== 'Player' && window.currentPlayerName !== 'Guest') {
+        room.send({ type: 'set_username', username: window.currentPlayerName });
+    }
 
     // le scene boot
     scene = new THREE.Scene();
