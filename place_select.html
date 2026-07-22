@@ -13,6 +13,9 @@
             }
         }
     </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body class="center bg2 max">
 <div id="main">
@@ -29,7 +32,8 @@
     <canvas id="char-canvas" width="300" height="320" style="display:block; margin:0 auto 12px; background:transparent;"></canvas>
 
     <div id="auth-box" style="display:inline-block; text-align:left; background:rgba(0,0,0,0.5); border:2px solid yellow; padding:16px 20px; min-width:260px;">
-        <div id="auth-form">
+        <div id="auth-loading" style="text-align:center; color:#aaa; padding:20px 0;">Loading...</div>
+        <div id="auth-form" style="display:none;">
             <div id="auth-title" style="color:yellow; font-size:1.2em; font-weight:bold; margin-bottom:10px; text-align:center;">Log In</div>
             <div id="auth-error" style="color:#ff4444; font-size:0.85em; margin-bottom:8px; display:none;"></div>
             <div id="signup-fields" style="display:none;">
@@ -41,7 +45,7 @@
             <label style="color:#ccc; font-size:0.9em; display:block; margin-bottom:2px;">Password</label>
             <input id="auth-pass" type="password" placeholder="Password" style="width:100%; box-sizing:border-box; padding:6px 8px; margin-bottom:8px; border:1px solid #888; background:#222; color:#fff; font-family:inherit;">
             <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
-                <input id="auth-remember" type="checkbox" style="accent-color:yellow;">
+                <input id="auth-remember" type="checkbox" style="accent-color:yellow;" checked>
                 <label for="auth-remember" style="color:#ccc; font-size:0.85em; cursor:pointer;">Remember me</label>
             </div>
             <button id="auth-submit" style="width:100%; padding:8px; background:yellow; color:#000; border:none; font-weight:bold; font-size:1em; cursor:pointer; font-family:inherit;">Log In</button>
@@ -84,34 +88,30 @@
 <span><img src="https://i.imgur.com/QkBkUkC.gif" alt="footer gif 2"></span>
 </footer>
 
-<script type="module">
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
-const ACC = 'cs_accounts';
-const SESS = 'cs_session';
-const LEG_W = 15.9664, LEG_H = 38.0, LEG_D = 15.9664;
-const TORSO_W = 31.9949, TORSO_H = 38.0, TORSO_D = 15.9664;
-const ARM_W = 15.9664, ARM_H = 38.0, ARM_D = 15.9664;
-const HEAD_SCALE = 0.68;
-const S = 0.032;
-const LIMB_COLOR = 0x808080;
+<script>
+// Firebase init
+const firebaseConfig = {
+    apiKey: "AIzaSyC2B1EkIViWa5VVtU0CLogGam-7ATCjEQQ",
+    authDomain: "circuitstyle-21c1f.firebaseapp.com",
+    databaseURL: "https://circuitstyle-21c1f-default-rtdb.firebaseio.com",
+    projectId: "circuitstyle-21c1f",
+    storageBucket: "circuitstyle-21c1f.firebasestorage.app",
+    messagingSenderId: "969222018125",
+    appId: "1:969222018125:web:7bab7a3572045f13ec7804"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
 
 async function sha256(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function getAccounts() {
-    try { return JSON.parse(localStorage.getItem(ACC)) || {}; } catch(e) { return {}; }
-}
-function saveAccounts(a) { localStorage.setItem(ACC, JSON.stringify(a)); }
-function getSession() {
-    try { return JSON.parse(localStorage.getItem(SESS)); } catch(e) { return null; }
-}
-function saveSession(s) { if (s) localStorage.setItem(SESS, JSON.stringify(s)); else localStorage.removeItem(SESS); }
-
-// --- Auth logic ---
+// DOM refs
+const authLoading = document.getElementById('auth-loading');
+const authForm = document.getElementById('auth-form');
+const authWelcome = document.getElementById('auth-welcome');
 const authUser = document.getElementById('auth-user');
 const authPass = document.getElementById('auth-pass');
 const authName = document.getElementById('auth-name');
@@ -121,8 +121,6 @@ const authToggle = document.getElementById('auth-toggle');
 const authError = document.getElementById('auth-error');
 const signupFields = document.getElementById('signup-fields');
 const authTitle = document.getElementById('auth-title');
-const authForm = document.getElementById('auth-form');
-const authWelcome = document.getElementById('auth-welcome');
 const welcomeName = document.getElementById('welcome-name');
 const authLogout = document.getElementById('auth-logout');
 
@@ -130,6 +128,8 @@ let isSignup = false;
 
 function showError(msg) { authError.textContent = msg; authError.style.display = 'block'; }
 function hideError() { authError.style.display = 'none'; }
+function showForm() { authLoading.style.display = 'none'; authForm.style.display = 'block'; authWelcome.style.display = 'none'; }
+function showWelcomeUI(name) { authLoading.style.display = 'none'; authForm.style.display = 'none'; authWelcome.style.display = 'block'; welcomeName.textContent = name; }
 
 authToggle.addEventListener('click', (e) => {
     e.preventDefault();
@@ -156,49 +156,93 @@ authSubmit.addEventListener('click', async () => {
     if (user.length < 2 || user.length > 16) { showError('Username must be 2-16 chars.'); return; }
     if (pass.length < 4) { showError('Password must be 4+ chars.'); return; }
 
-    const accounts = getAccounts();
-    const hash = await sha256(pass);
+    authSubmit.disabled = true;
+    authSubmit.textContent = 'Please wait...';
 
-    if (isSignup) {
-        const name = authName.value.trim() || user;
-        if (accounts[user]) { showError('Username taken.'); return; }
-        accounts[user] = { hash, name: name.slice(0, 20), created: Date.now() };
-        saveAccounts(accounts);
-        const session = { user, name: name.slice(0, 20), ts: Date.now() };
-        if (authRemember.checked) saveSession(session);
-        showWelcome(name.slice(0, 20));
-    } else {
-        const acc = accounts[user];
-        if (!acc || acc.hash !== hash) { showError('Wrong username or password.'); return; }
-        const session = { user, name: acc.name, ts: Date.now() };
-        if (authRemember.checked) saveSession(session);
-        showWelcome(acc.name);
+    try {
+        const hash = await sha256(pass);
+
+        if (isSignup) {
+            const name = (authName.value.trim() || user).slice(0, 20);
+            const snap = await db.ref('accounts/' + user).once('value');
+            if (snap.exists()) { showError('Username taken.'); authSubmit.disabled = false; authSubmit.textContent = 'Sign Up'; return; }
+
+            const cred = await auth.signInAnonymously();
+            const uid = cred.user.uid;
+
+            await db.ref('accounts/' + user).set({ hash, name, created: Date.now() });
+            await db.ref('users/' + uid).set({ username: user, name });
+
+            if (authRemember.checked) {
+                await db.ref('sessions/' + uid).set({ username: user, name, ts: Date.now() });
+            }
+
+            showWelcomeUI(name);
+        } else {
+            const snap = await db.ref('accounts/' + user).once('value');
+            if (!snap.exists()) { showError('Wrong username or password.'); authSubmit.disabled = false; authSubmit.textContent = 'Log In'; return; }
+            const acc = snap.val();
+            if (acc.hash !== hash) { showError('Wrong username or password.'); authSubmit.disabled = false; authSubmit.textContent = 'Log In'; return; }
+
+            const cred = await auth.signInAnonymously();
+            const uid = cred.user.uid;
+
+            await db.ref('users/' + uid).set({ username: user, name: acc.name });
+
+            if (authRemember.checked) {
+                await db.ref('sessions/' + uid).set({ username: user, name: acc.name, ts: Date.now() });
+            }
+
+            showWelcomeUI(acc.name);
+        }
+    } catch(e) {
+        console.error(e);
+        showError('Connection error. Try again.');
+        authSubmit.disabled = false;
+        authSubmit.textContent = isSignup ? 'Sign Up' : 'Log In';
     }
 });
 
-function showWelcome(name) {
-    authForm.style.display = 'none';
-    authWelcome.style.display = 'block';
-    welcomeName.textContent = name;
-}
-
-authLogout.addEventListener('click', (e) => {
+authLogout.addEventListener('click', async (e) => {
     e.preventDefault();
-    saveSession(null);
-    authForm.style.display = 'block';
-    authWelcome.style.display = 'none';
+    try {
+        const uid = auth.currentUser && auth.currentUser.uid;
+        if (uid) await db.ref('sessions/' + uid).remove();
+        await auth.signOut();
+    } catch(e) {}
+    showForm();
     authUser.value = '';
     authPass.value = '';
 });
 
-const sess = getSession();
-if (sess && sess.user) {
-    const accounts = getAccounts();
-    const acc = accounts[sess.user];
-    if (acc) showWelcome(acc.name);
-}
+// Check existing session on load
+auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+        try { await auth.signInAnonymously(); } catch(e) { showForm(); }
+        return;
+    }
+    const uid = user.uid;
+    const sessSnap = await db.ref('sessions/' + uid).once('value');
+    if (sessSnap.exists()) {
+        const sess = sessSnap.val();
+        showWelcomeUI(sess.name);
+    } else {
+        showForm();
+    }
+});
+</script>
 
-// --- 3D Character with idle animation ---
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const LEG_W = 15.9664, LEG_H = 38.0, LEG_D = 15.9664;
+const TORSO_W = 31.9949, TORSO_H = 38.0, TORSO_D = 15.9664;
+const ARM_W = 15.9664, ARM_H = 38.0, ARM_D = 15.9664;
+const HEAD_SCALE = 0.68;
+const S = 0.032;
+const LIMB_COLOR = 0x808080;
+
 const canvas = document.getElementById('char-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -229,7 +273,6 @@ const legOffX = (TORSO_W / 2 - LEG_W / 2 - 0.01);
 const shoulderY = hipY + TORSO_H;
 const armOffX = (TORSO_W / 2 + ARM_W / 2 - 0.001);
 
-// Left leg
 parts.leftLegPivot = new THREE.Group();
 parts.leftLegPivot.position.set(-legOffX * S, hipY * S, 0);
 const ll = makeBox(LEG_W, LEG_H, LEG_D, limbMat);
@@ -237,7 +280,6 @@ ll.position.y = -LEG_H / 2 * S;
 parts.leftLegPivot.add(ll);
 charGroup.add(parts.leftLegPivot);
 
-// Right leg
 parts.rightLegPivot = new THREE.Group();
 parts.rightLegPivot.position.set(legOffX * S, hipY * S, 0);
 const rl = makeBox(LEG_W, LEG_H, LEG_D, limbMat);
@@ -245,13 +287,11 @@ rl.position.y = -LEG_H / 2 * S;
 parts.rightLegPivot.add(rl);
 charGroup.add(parts.rightLegPivot);
 
-// Torso
 const torso = makeBox(TORSO_W, TORSO_H, TORSO_D, limbMat);
 torso.position.y = (hipY + TORSO_H / 2) * S;
 torso.name = 'Torso';
 charGroup.add(torso);
 
-// Torso decal
 try {
     const decalTex = new THREE.TextureLoader().load('./Roblox Decal.png');
     const decalMat = new THREE.MeshBasicMaterial({ map: decalTex, transparent: true, depthWrite: false });
@@ -260,7 +300,6 @@ try {
     charGroup.add(decal);
 } catch(e) {}
 
-// Left arm
 parts.leftArmPivot = new THREE.Group();
 parts.leftArmPivot.position.set(-armOffX * S, shoulderY * S, 0);
 const la = makeBox(ARM_W, ARM_H, ARM_D, limbMat);
@@ -268,7 +307,6 @@ la.position.y = -ARM_H / 2 * S;
 parts.leftArmPivot.add(la);
 charGroup.add(parts.leftArmPivot);
 
-// Right arm
 parts.rightArmPivot = new THREE.Group();
 parts.rightArmPivot.position.set(armOffX * S, shoulderY * S, 0);
 const ra = makeBox(ARM_W, ARM_H, ARM_D, limbMat);
@@ -276,7 +314,6 @@ ra.position.y = -ARM_H / 2 * S;
 parts.rightArmPivot.add(ra);
 charGroup.add(parts.rightArmPivot);
 
-// Head (load GLB)
 const headW = TORSO_W * HEAD_SCALE;
 const headLoader = new GLTFLoader();
 headLoader.load('./head.glb', (gltf) => {
@@ -293,7 +330,6 @@ headLoader.load('./head.glb', (gltf) => {
             n.castShadow = true;
         }
     });
-    // Face overlay
     try {
         const faceTex = new THREE.TextureLoader().load('./face.png');
         head.traverse(n => {
@@ -308,38 +344,27 @@ headLoader.load('./head.glb', (gltf) => {
     charGroup.add(head);
     parts.head = head;
 }, undefined, () => {
-    // Fallback: simple box head
     const fallbackHead = makeBox(headW, headW, headW, limbMat);
     fallbackHead.position.y = shoulderY * S + headW * S / 2 + 0.01;
     charGroup.add(fallbackHead);
     parts.head = fallbackHead;
 });
 
-// Idle animation
 let animTime = 0;
 const IDLE_SPEED = 0.03;
 const IDLE_SWING = Math.PI * 0.06;
 const SMOOTH = 0.42;
-
 function lerp(a, b, t) { return a + (b - a) * t; }
 
 function tick() {
     requestAnimationFrame(tick);
     animTime += IDLE_SPEED;
     if (animTime > Math.PI * 2) animTime -= Math.PI * 2;
-
     const swing = Math.sin(animTime) * IDLE_SWING;
-
-    const tLL = swing;
-    const tRL = -swing;
-    const tLA = -swing;
-    const tRA = swing;
-
-    if (parts.leftLegPivot) parts.leftLegPivot.rotation.x = lerp(parts.leftLegPivot.rotation.x, tLL, SMOOTH);
-    if (parts.rightLegPivot) parts.rightLegPivot.rotation.x = lerp(parts.rightLegPivot.rotation.x, tRL, SMOOTH);
-    if (parts.leftArmPivot) parts.leftArmPivot.rotation.x = lerp(parts.leftArmPivot.rotation.x, tLA, SMOOTH);
-    if (parts.rightArmPivot) parts.rightArmPivot.rotation.x = lerp(parts.rightArmPivot.rotation.x, tRA, SMOOTH);
-
+    if (parts.leftLegPivot) parts.leftLegPivot.rotation.x = lerp(parts.leftLegPivot.rotation.x, swing, SMOOTH);
+    if (parts.rightLegPivot) parts.rightLegPivot.rotation.x = lerp(parts.rightLegPivot.rotation.x, -swing, SMOOTH);
+    if (parts.leftArmPivot) parts.leftArmPivot.rotation.x = lerp(parts.leftArmPivot.rotation.x, -swing, SMOOTH);
+    if (parts.rightArmPivot) parts.rightArmPivot.rotation.x = lerp(parts.rightArmPivot.rotation.x, swing, SMOOTH);
     renderer.render(scene, cam);
 }
 tick();
