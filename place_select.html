@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Circuitstyle!</title>
     <link rel="stylesheet" href="styles.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.163.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.163.0/examples/jsm/"
+            }
+        }
+    </script>
 </head>
 <body class="center bg2 max">
 <div id="main">
@@ -15,6 +23,43 @@
 <a href="#working">Games Section</a> <span class="line">|</span>
 <a href="#made">About us</a></h4>
 </div>
+
+<!-- 3D character preview + auth -->
+<div id="auth-section" style="text-align:center; margin:20px 0;">
+    <canvas id="char-canvas" width="300" height="320" style="display:block; margin:0 auto 12px; background:transparent;"></canvas>
+
+    <div id="auth-box" style="display:inline-block; text-align:left; background:rgba(0,0,0,0.5); border:2px solid yellow; padding:16px 20px; min-width:260px;">
+        <div id="auth-form">
+            <div id="auth-title" style="color:yellow; font-size:1.2em; font-weight:bold; margin-bottom:10px; text-align:center;">Log In</div>
+            <div id="auth-error" style="color:#ff4444; font-size:0.85em; margin-bottom:8px; display:none;"></div>
+            <div id="signup-fields" style="display:none;">
+                <label style="color:#ccc; font-size:0.9em; display:block; margin-bottom:2px;">Display Name</label>
+                <input id="auth-name" type="text" placeholder="Your name" style="width:100%; box-sizing:border-box; padding:6px 8px; margin-bottom:8px; border:1px solid #888; background:#222; color:#fff; font-family:inherit;">
+            </div>
+            <label style="color:#ccc; font-size:0.9em; display:block; margin-bottom:2px;">Username</label>
+            <input id="auth-user" type="text" placeholder="Username" style="width:100%; box-sizing:border-box; padding:6px 8px; margin-bottom:8px; border:1px solid #888; background:#222; color:#fff; font-family:inherit;">
+            <label style="color:#ccc; font-size:0.9em; display:block; margin-bottom:2px;">Password</label>
+            <input id="auth-pass" type="password" placeholder="Password" style="width:100%; box-sizing:border-box; padding:6px 8px; margin-bottom:8px; border:1px solid #888; background:#222; color:#fff; font-family:inherit;">
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+                <input id="auth-remember" type="checkbox" style="accent-color:yellow;">
+                <label for="auth-remember" style="color:#ccc; font-size:0.85em; cursor:pointer;">Remember me</label>
+            </div>
+            <button id="auth-submit" style="width:100%; padding:8px; background:yellow; color:#000; border:none; font-weight:bold; font-size:1em; cursor:pointer; font-family:inherit;">Log In</button>
+            <div style="text-align:center; margin-top:10px;">
+                <a id="auth-toggle" href="#" style="color:#aaa; font-size:0.85em;">Don't have an account? Sign up</a>
+            </div>
+        </div>
+        <div id="auth-welcome" style="display:none; text-align:center;">
+            <div style="color:yellow; font-size:1.1em; font-weight:bold;" id="welcome-name"></div>
+            <div style="color:#aaa; font-size:0.85em; margin:4px 0;">Welcome back!</div>
+            <a href="./index.html" class="play-btn" style="margin-top:8px;">Play Now</a>
+            <div style="margin-top:10px;">
+                <a id="auth-logout" href="#" style="color:#aaa; font-size:0.85em;">Log out</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <img class="intro" id="about" src="">
 <h2>This is a web game based off of early roblox, call it circuitstyle! We have our web based game on: Phones (Android), PC (Laptops, Box PC, All in one, mini box, portable Box PC, etc.)</h2>
 
@@ -38,5 +83,266 @@
 <p>This is a web game - not affiliated with roblox or lego</p>
 <span><img src="https://i.imgur.com/QkBkUkC.gif" alt="footer gif 2"></span>
 </footer>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const ACC = 'cs_accounts';
+const SESS = 'cs_session';
+const LEG_W = 15.9664, LEG_H = 38.0, LEG_D = 15.9664;
+const TORSO_W = 31.9949, TORSO_H = 38.0, TORSO_D = 15.9664;
+const ARM_W = 15.9664, ARM_H = 38.0, ARM_D = 15.9664;
+const HEAD_SCALE = 0.68;
+const S = 0.032;
+const LIMB_COLOR = 0x808080;
+
+async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getAccounts() {
+    try { return JSON.parse(localStorage.getItem(ACC)) || {}; } catch(e) { return {}; }
+}
+function saveAccounts(a) { localStorage.setItem(ACC, JSON.stringify(a)); }
+function getSession() {
+    try { return JSON.parse(localStorage.getItem(SESS)); } catch(e) { return null; }
+}
+function saveSession(s) { if (s) localStorage.setItem(SESS, JSON.stringify(s)); else localStorage.removeItem(SESS); }
+
+// --- Auth logic ---
+const authUser = document.getElementById('auth-user');
+const authPass = document.getElementById('auth-pass');
+const authName = document.getElementById('auth-name');
+const authRemember = document.getElementById('auth-remember');
+const authSubmit = document.getElementById('auth-submit');
+const authToggle = document.getElementById('auth-toggle');
+const authError = document.getElementById('auth-error');
+const signupFields = document.getElementById('signup-fields');
+const authTitle = document.getElementById('auth-title');
+const authForm = document.getElementById('auth-form');
+const authWelcome = document.getElementById('auth-welcome');
+const welcomeName = document.getElementById('welcome-name');
+const authLogout = document.getElementById('auth-logout');
+
+let isSignup = false;
+
+function showError(msg) { authError.textContent = msg; authError.style.display = 'block'; }
+function hideError() { authError.style.display = 'none'; }
+
+authToggle.addEventListener('click', (e) => {
+    e.preventDefault();
+    isSignup = !isSignup;
+    hideError();
+    if (isSignup) {
+        authTitle.textContent = 'Sign Up';
+        authSubmit.textContent = 'Sign Up';
+        authToggle.textContent = 'Already have an account? Log in';
+        signupFields.style.display = 'block';
+    } else {
+        authTitle.textContent = 'Log In';
+        authSubmit.textContent = 'Log In';
+        authToggle.textContent = "Don't have an account? Sign up";
+        signupFields.style.display = 'none';
+    }
+});
+
+authSubmit.addEventListener('click', async () => {
+    hideError();
+    const user = authUser.value.trim().toLowerCase();
+    const pass = authPass.value;
+    if (!user || !pass) { showError('Fill in all fields.'); return; }
+    if (user.length < 2 || user.length > 16) { showError('Username must be 2-16 chars.'); return; }
+    if (pass.length < 4) { showError('Password must be 4+ chars.'); return; }
+
+    const accounts = getAccounts();
+    const hash = await sha256(pass);
+
+    if (isSignup) {
+        const name = authName.value.trim() || user;
+        if (accounts[user]) { showError('Username taken.'); return; }
+        accounts[user] = { hash, name: name.slice(0, 20), created: Date.now() };
+        saveAccounts(accounts);
+        const session = { user, name: name.slice(0, 20), ts: Date.now() };
+        if (authRemember.checked) saveSession(session);
+        showWelcome(name.slice(0, 20));
+    } else {
+        const acc = accounts[user];
+        if (!acc || acc.hash !== hash) { showError('Wrong username or password.'); return; }
+        const session = { user, name: acc.name, ts: Date.now() };
+        if (authRemember.checked) saveSession(session);
+        showWelcome(acc.name);
+    }
+});
+
+function showWelcome(name) {
+    authForm.style.display = 'none';
+    authWelcome.style.display = 'block';
+    welcomeName.textContent = name;
+}
+
+authLogout.addEventListener('click', (e) => {
+    e.preventDefault();
+    saveSession(null);
+    authForm.style.display = 'block';
+    authWelcome.style.display = 'none';
+    authUser.value = '';
+    authPass.value = '';
+});
+
+const sess = getSession();
+if (sess && sess.user) {
+    const accounts = getAccounts();
+    const acc = accounts[sess.user];
+    if (acc) showWelcome(acc.name);
+}
+
+// --- 3D Character with idle animation ---
+const canvas = document.getElementById('char-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(300, 320, false);
+renderer.setClearColor(0x000000, 0);
+
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(35, 300 / 320, 0.1, 200);
+cam.position.set(0, 1.8 * S * 38, 7);
+cam.lookAt(0, 1.2, 0);
+
+scene.add(new THREE.AmbientLight(0xffffff, 1.1));
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(4, 8, 6);
+scene.add(dirLight);
+
+const limbMat = new THREE.MeshStandardMaterial({ color: LIMB_COLOR, roughness: 0.18, metalness: 0.03 });
+const parts = {};
+const charGroup = new THREE.Group();
+scene.add(charGroup);
+
+function makeBox(w, h, d, mat) {
+    return new THREE.Mesh(new THREE.BoxGeometry(w * S, h * S, d * S), mat);
+}
+
+const hipY = LEG_H;
+const legOffX = (TORSO_W / 2 - LEG_W / 2 - 0.01);
+const shoulderY = hipY + TORSO_H;
+const armOffX = (TORSO_W / 2 + ARM_W / 2 - 0.001);
+
+// Left leg
+parts.leftLegPivot = new THREE.Group();
+parts.leftLegPivot.position.set(-legOffX * S, hipY * S, 0);
+const ll = makeBox(LEG_W, LEG_H, LEG_D, limbMat);
+ll.position.y = -LEG_H / 2 * S;
+parts.leftLegPivot.add(ll);
+charGroup.add(parts.leftLegPivot);
+
+// Right leg
+parts.rightLegPivot = new THREE.Group();
+parts.rightLegPivot.position.set(legOffX * S, hipY * S, 0);
+const rl = makeBox(LEG_W, LEG_H, LEG_D, limbMat);
+rl.position.y = -LEG_H / 2 * S;
+parts.rightLegPivot.add(rl);
+charGroup.add(parts.rightLegPivot);
+
+// Torso
+const torso = makeBox(TORSO_W, TORSO_H, TORSO_D, limbMat);
+torso.position.y = (hipY + TORSO_H / 2) * S;
+torso.name = 'Torso';
+charGroup.add(torso);
+
+// Torso decal
+try {
+    const decalTex = new THREE.TextureLoader().load('./Roblox Decal.png');
+    const decalMat = new THREE.MeshBasicMaterial({ map: decalTex, transparent: true, depthWrite: false });
+    const decal = new THREE.Mesh(new THREE.PlaneGeometry(TORSO_W * S * 0.9, TORSO_H * S * 0.9), decalMat);
+    decal.position.set(0, (hipY + TORSO_H / 2) * S, TORSO_D / 2 * S + 0.001);
+    charGroup.add(decal);
+} catch(e) {}
+
+// Left arm
+parts.leftArmPivot = new THREE.Group();
+parts.leftArmPivot.position.set(-armOffX * S, shoulderY * S, 0);
+const la = makeBox(ARM_W, ARM_H, ARM_D, limbMat);
+la.position.y = -ARM_H / 2 * S;
+parts.leftArmPivot.add(la);
+charGroup.add(parts.leftArmPivot);
+
+// Right arm
+parts.rightArmPivot = new THREE.Group();
+parts.rightArmPivot.position.set(armOffX * S, shoulderY * S, 0);
+const ra = makeBox(ARM_W, ARM_H, ARM_D, limbMat);
+ra.position.y = -ARM_H / 2 * S;
+parts.rightArmPivot.add(ra);
+charGroup.add(parts.rightArmPivot);
+
+// Head (load GLB)
+const headW = TORSO_W * HEAD_SCALE;
+const headLoader = new GLTFLoader();
+headLoader.load('./head.glb', (gltf) => {
+    const head = gltf.scene;
+    const bbox = new THREE.Box3().setFromObject(head);
+    const size = new THREE.Vector3();
+    bbox.getSize(size);
+    const scale = (headW * S) / (size.x || 1);
+    head.scale.setScalar(scale);
+    head.position.y = shoulderY * S + size.y * scale / 2 + 0.01;
+    head.traverse(n => {
+        if (n.isMesh) {
+            n.material = limbMat.clone();
+            n.castShadow = true;
+        }
+    });
+    // Face overlay
+    try {
+        const faceTex = new THREE.TextureLoader().load('./face.png');
+        head.traverse(n => {
+            if (n.isMesh) {
+                const overlay = n.clone();
+                overlay.material = new THREE.MeshBasicMaterial({ map: faceTex, transparent: true, opacity: 0.9, depthWrite: false });
+                overlay.scale.set(1.01, 1.01, 1.01);
+                n.add(overlay);
+            }
+        });
+    } catch(e) {}
+    charGroup.add(head);
+    parts.head = head;
+}, undefined, () => {
+    // Fallback: simple box head
+    const fallbackHead = makeBox(headW, headW, headW, limbMat);
+    fallbackHead.position.y = shoulderY * S + headW * S / 2 + 0.01;
+    charGroup.add(fallbackHead);
+    parts.head = fallbackHead;
+});
+
+// Idle animation
+let animTime = 0;
+const IDLE_SPEED = 0.03;
+const IDLE_SWING = Math.PI * 0.06;
+const SMOOTH = 0.42;
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function tick() {
+    requestAnimationFrame(tick);
+    animTime += IDLE_SPEED;
+    if (animTime > Math.PI * 2) animTime -= Math.PI * 2;
+
+    const swing = Math.sin(animTime) * IDLE_SWING;
+
+    const tLL = swing;
+    const tRL = -swing;
+    const tLA = -swing;
+    const tRA = swing;
+
+    if (parts.leftLegPivot) parts.leftLegPivot.rotation.x = lerp(parts.leftLegPivot.rotation.x, tLL, SMOOTH);
+    if (parts.rightLegPivot) parts.rightLegPivot.rotation.x = lerp(parts.rightLegPivot.rotation.x, tRL, SMOOTH);
+    if (parts.leftArmPivot) parts.leftArmPivot.rotation.x = lerp(parts.leftArmPivot.rotation.x, tLA, SMOOTH);
+    if (parts.rightArmPivot) parts.rightArmPivot.rotation.x = lerp(parts.rightArmPivot.rotation.x, tRA, SMOOTH);
+
+    renderer.render(scene, cam);
+}
+tick();
+</script>
 </body>
 </html>

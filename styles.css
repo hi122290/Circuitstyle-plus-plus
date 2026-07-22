@@ -224,4 +224,12 @@ footer p {
     footer img {
         max-width: 140px;
     }
+    #char-canvas {
+        width: 200px !important;
+        height: 220px !important;
+    }
+    #auth-box {
+        min-width: 0 !important;
+        width: 90% !important;
+    }
 }
