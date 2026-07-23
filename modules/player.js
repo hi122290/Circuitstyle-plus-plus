@@ -1606,8 +1606,15 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                     // Idle: very subtle sway — barely perceptible
                     targetLL = swing;
                     targetRL = -swing;
-                    targetLA = -swing * 0.6;
-                    targetRA = swing * 0.6;
+
+                    if (currentHeldItemId) {
+                        // Holding idle: arm stays raised with a gentle bob
+                        targetLA = -swing * 0.4;
+                        targetRA = Math.PI / 2 + Math.sin(animationTime * 1.5) * 0.06;
+                    } else {
+                        targetLA = -swing * 0.6;
+                        targetRA = swing * 0.6;
+                    }
                 } else {
                     // Walk: brisk march — legs alternate, arms swing together forward
                     targetLL = swing;
