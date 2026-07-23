@@ -193,11 +193,11 @@ if (typeof WebsimSocket === 'undefined') {
             const connectTimeout = setTimeout(() => {
                 if (!this.clientId) {
                     console.log('[Peer] Connection timeout');
-                    this._showStatus('Connection timeout', 'rgba(200,0,0,0.85)');
+                    this._showStatus('Connection timeout — retrying...', 'rgba(200,0,0,0.85)');
                     this._scheduleReconnect();
                     resolve();
                 }
-            }, 10000);
+            }, 30000);
 
             try {
                 const peer = new Peer(PEERJS_HOST_ID, peerConfig);
@@ -271,11 +271,11 @@ if (typeof WebsimSocket === 'undefined') {
             const connectTimeout = setTimeout(() => {
                 if (!this.clientId) {
                     console.log('[Peer] Client timeout');
-                    this._showStatus('Connection timeout', 'rgba(200,0,0,0.85)');
+                    this._showStatus('Connection timeout — retrying...', 'rgba(200,0,0,0.85)');
                     this._scheduleReconnect();
                     resolve();
                 }
-            }, 10000);
+            }, 30000);
 
             peer.on('open', (id) => {
                 console.log('[Peer] Got client peer ID:', id);
@@ -285,8 +285,16 @@ if (typeof WebsimSocket === 'undefined') {
 
                 conn.on('open', () => {
                     console.log('[Peer] Data channel to host opened');
-                    this._showStatus('Connected', 'rgba(0,150,0,0.85)', 2000);
+                    this._showStatus('Connected — waiting for host...', 'rgba(0,150,0,0.85)', 2000);
                     this._startPing();
+                    // Data channel is open, so clear the timeout — the welcome should arrive shortly
+                    clearTimeout(connectTimeout);
+                    // Fallback: if welcome never arrives, set a basic clientId so the game can still start
+                    if (!this.clientId) {
+                        this.clientId = id;
+                        this.peers[id] = { username: window.currentPlayerName || 'Player' };
+                        this.presence[id] = {};
+                    }
                 });
 
                 conn.on('data', (data) => {
