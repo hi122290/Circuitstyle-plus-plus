@@ -196,25 +196,25 @@ export function updateUIElementPositions(renderer) {
 
     const healthBarContainer = document.getElementById('health-bar-container');
     if (healthBarContainer) {
-        const HB_INTERNAL_WIDTH = 12;
-        const HB_INTERNAL_HEIGHT = 106;
-        const HEALTHBAR_RIGHT_OFFSET = 64;
+        const HB_INTERNAL_WIDTH = 212;
+        const HB_INTERNAL_HEIGHT = 20;
 
         const healthBarCanvas = document.getElementById('health-bar-canvas');
         if (healthBarCanvas) {
-            healthBarCanvas.width = 24;
+            healthBarCanvas.width = HB_INTERNAL_WIDTH;
             healthBarCanvas.height = HB_INTERNAL_HEIGHT;
             healthBarContainer.style.width = `${HB_INTERNAL_WIDTH}px`;
             healthBarContainer.style.height = `${HB_INTERNAL_HEIGHT}px`;
         }
 
-        const hbDisplayHeight = healthBarContainer.clientHeight; 
-        const hbTop = rect.top + offsetY + (drawHeight / 2) - (hbDisplayHeight / 2);
-
-        // Nudge the health bar slightly upward so it sits a bit higher relative to the canvas center.
-        const NUDGE_UP_PX = 12;
-        healthBarContainer.style.top = `${Math.max(2, Math.round(hbTop - NUDGE_UP_PX))}px`;
-        healthBarContainer.style.right = `${offsetX + HEALTHBAR_RIGHT_OFFSET}px`;
+        const backpackEl = document.getElementById('backpack-container');
+        if (backpackEl) {
+            const bpRect = backpackEl.getBoundingClientRect();
+            const hbWidth = HB_INTERNAL_WIDTH;
+            healthBarContainer.style.left = `${Math.round(bpRect.left + bpRect.width / 2 - hbWidth / 2)}px`;
+            const HB_GAP = 6;
+            healthBarContainer.style.top = `${Math.round(bpRect.top - HB_INTERNAL_HEIGHT - HB_GAP)}px`;
+        }
     }
 
     // CHAT ICON positioning calculation
@@ -245,8 +245,8 @@ export function updateUIElementPositions(renderer) {
     // Position the 2007-style chat logs panel directly under the top-row buttons (inside canvas area)
     const chatLogs = document.getElementById('chat-logs');
     if (chatLogs) {
-        // Top-row buttons height defined in CSS as 24px; include small gap of 4px
-        const TOP_ROW_HEIGHT = 24;
+        // Top-row buttons height: two buttons stacked vertically at 26px each
+        const TOP_ROW_HEIGHT = 52;
         // increased gap so chat logs sit a bit lower
         const GAP = 12;
         // Slight horizontal offset so the chat log sits a bit right of the canvas-left edge
@@ -273,7 +273,7 @@ export function updateUIElementPositions(renderer) {
     if (backpackContainer) {
         // Align the LEFT edge of the backpack exactly to the visible canvas draw area's left edge
         // (use bounds.left which already accounts for canvas draw area offsets)
-        backpackContainer.style.left = `${bounds.left}px`;
+        backpackContainer.style.left = `${Math.round(bounds.left + (drawWidth / 2) - (backpackContainer.offsetWidth / 2))}px`;
         backpackContainer.style.top = 'auto';
 
         // Align the BOTTOM of the backpack to match the BOTTOM edge of the camera controls.

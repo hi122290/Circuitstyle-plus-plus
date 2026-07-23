@@ -231,14 +231,14 @@ button {
     /* Positioned dynamically by JS */
     z-index: 20;
     pointer-events: none; /* non-interactive */
-    width: 12px;
-    height: 106px;
-    display: flex; /* Use flex to position label below canvas */
-    flex-direction: column;
+    width: 212px;
+    height: 24px;
+    display: flex;
+    flex-direction: row;
     align-items: center;
     padding: 2px;
     border-radius: 3px;
-    background: linear-gradient(180deg, #9f9f9f, #636363);
+    background: linear-gradient(90deg, #9f9f9f, #636363);
     box-shadow:
         inset 1px 1px 0 rgba(255,255,255,0.85),
         inset -1px -1px 0 rgba(0,0,0,0.7),
@@ -272,7 +272,7 @@ button {
    We preserve the Comic Sans font choice but add a small blur and slight opacity so it reads
    like an older, softly-rendered UI text element. */
 #health-label {
-    margin-top: 4px;
+    margin-left: 4px;
     /* use Comic Sans for health text as requested */
     font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
     font-size: 16px; /* Adjusted to 16px tall */
@@ -860,10 +860,10 @@ button, .safechat-option, #safechat-current-phrase, #place-spawn, #hat-button,
     z-index: 30;
     pointer-events: auto;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: 0; /* no spacing between buttons */
     align-items: flex-start;
-    justify-content: flex-start; /* align left-to-right */
+    justify-content: flex-start; /* align top-to-bottom */
     /* ensure flush layout: remove internal padding/margin */
     left: 0;
     top: 0;
@@ -887,12 +887,12 @@ button, .safechat-option, #safechat-current-phrase, #place-spawn, #hat-button,
     padding: 0;
     display: block; /* keep full-panel block to avoid shrinkwrap influencing sibling layouts */
     pointer-events: auto;
-    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive;
-    font-size: 12px;
+    font-family: Verdana, sans-serif;
+    font-size: 14px;
     color: #ffffff;
     box-shadow: none;
     /* limit overall panel height while allowing internal scrolling */
-    max-height: 38vh;
+    max-height: 42vh;
     overflow: visible;
 }
 
@@ -910,7 +910,7 @@ button, .safechat-option, #safechat-current-phrase, #place-spawn, #hat-button,
 
     /* Enable vertical scrolling when messages exceed the visual max height */
     overflow-y: auto;
-    max-height: 38vh; 
+    max-height: 42vh; 
 }
 
 /* Chat log: hide the visible scrollbar/thumb but keep scrolling functional */
@@ -941,15 +941,15 @@ button, .safechat-option, #safechat-current-phrase, #place-spawn, #hat-button,
     white-space: normal;
     word-break: break-word;
     overflow: visible;
-    background: rgba(190,190,190,0.60);
-    padding: 4px 6px;
+    background: #1a1a1a;
+    padding: 6px 8px;
     margin: 0 0 4px 0;
     border: none;
     box-shadow: none;
     pointer-events: auto;
     gap: 6px;
     border-radius: 0;
-    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive;
+    font-family: Verdana, sans-serif;
     color: #ffffff;
     max-width: 60vw;
     box-sizing: border-box;
@@ -1010,15 +1010,15 @@ button, .safechat-option, #safechat-current-phrase, #place-spawn, #hat-button,
     white-space: normal;
     word-break: break-word;
     overflow: visible;
-    background: rgba(190,190,190,0.60);
-    padding: 4px 6px;
+    background: #1a1a1a;
+    padding: 6px 8px;
     margin: 0;                    /* keep minimal spacing */
     border: none;
     box-shadow: none;
     pointer-events: auto;
     gap: 0;
     border-radius: 0;
-    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive;
+    font-family: Verdana, sans-serif;
     color: #ffffff;
     box-sizing: border-box;
 }
@@ -1048,9 +1048,9 @@ button, .safechat-option, #safechat-current-phrase, #place-spawn, #hat-button,
 }
 
 
-/* Ensure all text inside chat-line (names, message spans, and any nested elements) uses Comic Sans MS */
+/* Ensure all text inside chat-line (names, message spans, and any nested elements) uses Verdana */
 .chat-line, .chat-line * {
-    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+    font-family: Verdana, sans-serif !important;
 }
 
 .chat-line {
@@ -1075,7 +1075,7 @@ button, .safechat-option, #safechat-current-phrase, #place-spawn, #hat-button,
     /* skeuomorphic flat gradient — raised look, no border-radius */
     background: linear-gradient(180deg, #e8e8e8 0%, #c8c8c8 45%, #b0b0b0 55%, #c0c0c0 100%);
     color: #333;
-    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+    font-family: Verdana, sans-serif !important;
     font-weight: normal !important;
     text-shadow: 0 1px 0 rgba(255,255,255,0.5);
     font-size: 15.4px;
@@ -1105,11 +1105,11 @@ button, .safechat-option, #safechat-current-phrase, #place-spawn, #hat-button,
 /* keep a simple fallback holder for legacy rules */
 .canvas-top-left-buttons-text-fallback {}
 
-/* Ensure top-row button text uses Comic Sans MS only (override global font-face rules) */
+/* Ensure top-row button text uses Verdana (override global font-face rules) */
 .tl-btn-text {
     display: inline-block;
     line-height: 24px;
-    font-family: "Comic Sans MS", "ComicSans", ComicSans, cursive !important;
+    font-family: Verdana, sans-serif !important;
     font-weight: normal !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

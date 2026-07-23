@@ -5,8 +5,8 @@
 export function renderHealthBar(health) {
     const canvasEl = document.getElementById('health-bar-canvas');
     if (!canvasEl) return;
-    const W = 24;
-    const H = 212;
+    const W = 212;
+    const H = 20;
     if (canvasEl.width !== W || canvasEl.height !== H) {
         canvasEl.width = W;
         canvasEl.height = H;
@@ -21,13 +21,12 @@ export function renderHealthBar(health) {
     ctx.strokeRect(3, 3, W - 6, H - 6);
     ctx.fillStyle = '#5f0000';
     ctx.fillRect(5, 5, W - 10, H - 10);
-    const fillH = Math.ceil((H - 10) * ratio);
-    const fillY = H - 5 - fillH;
-    const gradient = ctx.createLinearGradient(0, fillY, 0, fillY + fillH);
+    const fillW = Math.ceil((W - 10) * ratio);
+    const gradient = ctx.createLinearGradient(5, 0, 5 + fillW, 0);
     gradient.addColorStop(0, '#ff4d5a');
     gradient.addColorStop(1, '#7d0008');
     ctx.fillStyle = gradient;
-    ctx.fillRect(5, fillY, W - 10, fillH);
+    ctx.fillRect(5, 5, fillW, H - 10);
 }
 
 export function renderPlayerList(players = []) {

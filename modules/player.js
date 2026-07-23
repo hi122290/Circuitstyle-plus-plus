@@ -1602,15 +1602,22 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
 
                 const swing = Math.sin(animationTime) * amplitude;
                 
-                targetLL = swing;
-                targetRL = -swing;
-                targetLA = -swing;
-                
-                // If holding a tool, right arm stays in pointing pose during walk/idle
-                if (currentHeldItemId) {
-                    targetRA = Math.PI / 2;
+                if (!isWalking) {
+                    // Idle: very subtle sway — barely perceptible
+                    targetLL = swing;
+                    targetRL = -swing;
+                    targetLA = -swing * 0.6;
+                    targetRA = swing * 0.6;
                 } else {
-                    targetRA = swing; 
+                    // Walk: brisk march — legs alternate, arms swing together forward
+                    targetLL = swing;
+                    targetRL = -swing;
+                    targetLA = Math.abs(swing) * amplitude * 0.45;
+                    targetRA = Math.abs(swing) * amplitude * 0.45;
+                    
+                    if (currentHeldItemId) {
+                        targetRA = Math.PI / 2;
+                    }
                 }
             }
 

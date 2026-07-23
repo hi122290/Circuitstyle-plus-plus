@@ -50,10 +50,10 @@ const defaultConfig = {
 
     // Animation Parameters
     animation: {
-        walkSpeed: 0.28,
-        walkSwingMax: Math.PI * 0.34,
-        idleSpeed: 0.03,
-        idleSwingMax: Math.PI * 0.06,
+        walkSpeed: 0.18,
+        walkSwingMax: Math.PI * 0.24,
+        idleSpeed: 0.012,
+        idleSwingMax: Math.PI * 0.015,
         smoothing: 0.42,
         armSmoothing: 0.55,
         jumpRotation: Math.PI * 0.78,
