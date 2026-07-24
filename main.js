@@ -12,8 +12,7 @@ import { registerStencilHelper } from './modules/stencil_shadows_adapter.js';
 import { setupMobileControls, isMobile } from './modules/mobile_controls.js';
 import { appendChatMessage } from './modules/safechat.js';
 import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost, deleteBlockByMesh, deleteBlockById, findBlockAtPoint, stampBuild, toggleSaveMenu, closeSaveMenu } from './modules/build.js';
-import { initStudio, updateStudio, setMode as setStudioMode } from './modules/studio.js';
-import { initStudioUI } from './modules/studio_ui.js';
+
 
 window.THREE_REF = THREE;
 
@@ -975,25 +974,6 @@ async function init() {
     backpack.init();
     initBuildUI();
 
-    // Studio mode init
-    try {
-        const studioRef = initStudio(scene, camera, renderer, world);
-        initStudioUI();
-        // Sync player lock with studio mode
-        let lastStudioMode = 'play';
-        window._syncStudioMode = () => {
-            const current = studioRef.getMode();
-            if (current !== lastStudioMode) {
-                lastStudioMode = current;
-                if (current === 'freecam') {
-                    try { player.lockInput(true); } catch(e) {}
-                } else {
-                    try { player.lockInput(false); } catch(e) {}
-                }
-            }
-        };
-    } catch(e) { console.warn('Studio init failed:', e); }
-
     // Give all items to the player immediately on spawn
     Object.keys(ITEM_DATA).forEach(itemId => backpack.addItem(itemId));
     // Auto-select slot 0 so they have something in hand right away
@@ -1603,12 +1583,6 @@ function animate(now) {
                 }
             }
         }
-
-        // Studio mode update
-        try {
-            updateStudio(16.6667);
-            if (window._syncStudioMode) window._syncStudioMode();
-        } catch(e) {}
 
         renderer.render(scene, camera);
 
