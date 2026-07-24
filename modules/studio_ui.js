@@ -97,7 +97,7 @@ function initStudioUI() {
             snapEl.className = on ? '' : 'off';
         };
         update(snapEnabled);
-        import('./studio.js').then(s => { s.onSnapUI = update; });
+        import('./studio.js').then(s => { s.onSnapUI(update); });
     }
 
     // Mode indicator
@@ -113,12 +113,12 @@ function initStudioUI() {
                 document.getElementById('studio-overlay')?.classList.add('hidden');
             }
         };
-        import('./studio.js').then(s => { s.onModeUI = update; });
+        import('./studio.js').then(s => { s.onModeUI(update); });
     }
 
     // Tool grid sync
     import('./studio.js').then(s => {
-        s.onToolUI = (t) => {
+        s.onToolUI((t) => {
             document.querySelectorAll('.toolbox-tool-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tool === t);
             });
@@ -135,7 +135,7 @@ function initStudioUI() {
     const propDelete = document.getElementById('prop-delete');
 
     import('./studio.js').then(s => {
-        s.onPropsUI = (part) => {
+        s.onPropsUI((part) => {
             if (!part) {
                 propsPanel?.classList.add('hidden');
                 return;

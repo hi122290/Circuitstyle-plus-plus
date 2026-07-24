@@ -637,22 +637,35 @@ function updateStudio(dt) {
     }
 }
 
+const _getMode = () => _mode;
+const _getSnapEnabled = () => _snapEnabled;
+const _getActiveTool = () => _activeTool;
+const _getActivePartType = () => _activePartType;
+const _getSelectedColor = () => _selectedColor;
+const _getSelectedMaterial = () => _selectedMaterial;
+const _getSelectedPart = () => _selectedPart;
+const _getPlacedParts = () => _placedParts;
+function _setOnSnapUI(fn) { _snapUIFn = fn; }
+function _setOnModeUI(fn) { _modeUIFn = fn; }
+function _setOnToolUI(fn) { _toolUIFn = fn; }
+function _setOnPropsUI(fn) { _propsUIFn = fn; }
+
 export {
     initStudio, updateStudio, setMode, setTool, setPartType,
     setColor, setMaterial, setPartScale, toggleSnap, deleteSelectedPart,
     savePlace, loadPlace, deleteSave, getSaveList, clearAllParts,
     exportPlace, publishPlace, getPublishedList, loadPublished,
     PART_TYPES, PART_COLORS, MATERIAL_PRESETS,
-    get mode() { return _mode; },
-    get snapEnabled() { return _snapEnabled; },
-    get activeTool() { return _activeTool; },
-    get activePartType() { return _activePartType; },
-    get selectedColor() { return _selectedColor; },
-    get selectedMaterial() { return _selectedMaterial; },
-    get selectedPart() { return _selectedPart; },
-    get placedParts() { return _placedParts; },
-    set onSnapUI(fn) { _snapUIFn = fn; },
-    set onModeUI(fn) { _modeUIFn = fn; },
-    set onToolUI(fn) { _toolUIFn = fn; },
-    set onPropsUI(fn) { _propsUIFn = fn; },
+    _getMode as mode,
+    _getSnapEnabled as snapEnabled,
+    _getActiveTool as activeTool,
+    _getActivePartType as activePartType,
+    _getSelectedColor as selectedColor,
+    _getSelectedMaterial as selectedMaterial,
+    _getSelectedPart as selectedPart,
+    _getPlacedParts as placedParts,
+    _setOnSnapUI as onSnapUI,
+    _setOnModeUI as onModeUI,
+    _setOnToolUI as onToolUI,
+    _setOnPropsUI as onPropsUI,
 };
