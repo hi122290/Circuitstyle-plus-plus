@@ -23,8 +23,85 @@
 <div id="home">
 <h4><a href="#home">Home</a> <span class="line">|</span>
 <a href="#about">Player Search</a> <span class="line">|</span>
+<a href="#studio-section">Studio</a> <span class="line">|</span>
 <a href="#working">Games Section</a> <span class="line">|</span>
 <a href="#made">About us</a></h4>
+</div>
+
+<!-- STUDIO SECTION -->
+<h2 id="studio-section">Studio</h2>
+<div id="studio-wrapper">
+    <canvas id="studio-canvas"></canvas>
+
+    <!-- Studio Mode Overlay -->
+    <div id="studio-overlay">
+        <div id="studio-mode-indicator" class="hidden">STUDIO - Freecam</div>
+
+        <!-- Toolbox -->
+        <div id="studio-toolbox">
+            <div class="toolbox-section">
+                <div class="toolbox-section-title">Parts</div>
+                <div class="toolbox-part-grid" id="studio-part-grid"></div>
+            </div>
+            <div class="toolbox-section">
+                <div class="toolbox-section-title">Tools</div>
+                <div class="toolbox-tool-grid" id="studio-tool-grid"></div>
+            </div>
+            <div class="toolbox-section">
+                <div class="toolbox-section-title">Color</div>
+                <div class="toolbox-color-grid" id="studio-color-grid"></div>
+            </div>
+            <div class="toolbox-section">
+                <div class="toolbox-section-title">Material</div>
+                <div class="toolbox-material-grid" id="studio-material-grid"></div>
+            </div>
+        </div>
+
+        <!-- Properties -->
+        <div id="studio-properties" class="hidden">
+            <div class="prop-row"><span class="prop-label">Type</span><span class="prop-value" id="prop-type">-</span></div>
+            <div class="prop-row"><span class="prop-label">Position</span><span class="prop-value" id="prop-pos">-</span></div>
+            <div class="prop-row"><span class="prop-label">Rotation</span><span class="prop-value" id="prop-rot">-</span></div>
+            <div class="prop-row"><span class="prop-label">Scale</span>
+                <span>
+                    <input type="number" class="prop-input" id="prop-scale" min="0.2" max="20" step="0.2" value="1">
+                </span>
+            </div>
+            <div class="prop-row"><span class="prop-label">Color</span>
+                <span><input type="color" id="prop-color" value="#cbc4a4" style="width:24px;height:18px;border:none;cursor:pointer;"></span>
+            </div>
+            <div class="prop-row"><span class="prop-label">Delete</span><button class="prop-btn danger" id="prop-delete">Del</button></div>
+        </div>
+
+        <!-- Snap indicator -->
+        <div id="studio-snap-indicator">SNAP: ON (M)</div>
+
+        <!-- Saves -->
+        <div id="studio-saves" class="hidden">
+            <div class="toolbox-section">
+                <div class="toolbox-section-title">My Places</div>
+                <div id="studio-saves-list"></div>
+                <div style="margin-top:6px;display:flex;gap:4px;">
+                    <input type="text" id="studio-save-name" placeholder="Place name..." style="flex:1;background:#222;border:1px solid #555;color:#fff;font-size:10px;padding:3px 4px;font-family:Verdana;">
+                    <button class="save-btn" id="studio-save-btn">Save</button>
+                </div>
+                <div style="margin-top:4px;display:flex;gap:4px;">
+                    <button class="save-btn" id="studio-publish-btn">Publish</button>
+                    <button class="save-btn" id="studio-exports-btn">Export</button>
+                </div>
+            </div>
+            <div class="toolbox-section">
+                <div class="toolbox-section-title">Community</div>
+                <div id="studio-published-list"></div>
+            </div>
+        </div>
+
+        <!-- Toggle saves button -->
+        <button id="studio-saves-toggle" style="position:absolute;top:40px;right:8px;z-index:42;background:rgba(40,40,40,0.92);border:1px solid #555;color:#ddd;font-family:Verdana;font-size:11px;padding:6px 10px;pointer-events:auto;cursor:pointer;">Places</button>
+    </div>
+</div>
+<div style="text-align:center; margin:8px 0 20px 0;">
+    <span style="color:#aaa; font-size:0.85em;">Press <b>1</b> to enter Studio freecam | <b>2</b> to go back to orbit view | <b>Left-click</b> to place parts | <b>M</b> toggle snap</span>
 </div>
 
 <!-- 3D character preview + auth -->
@@ -559,5 +636,6 @@ async function loadNewPlayers() {
 }
 loadNewPlayers();
 </script>
+<script type="module" src="./modules/studio_home.js"></script>
 </body>
 </html>
