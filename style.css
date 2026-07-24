@@ -530,18 +530,6 @@ button {
         inset 0 0 8px rgba(255,255,255,0.5);
 }
 
-/* full-screen visual blur overlay: covers everything but is non-interactive */
-#global-blur {
-    position: fixed;
-    inset: 0;
-    pointer-events: none; /* allow clicks to pass through */
-    z-index: 9999;
-    backdrop-filter: blur(0.5px) saturate(1.02);
-    -webkit-backdrop-filter: blur(0.5px) saturate(1.02);
-    /* fallback visual (subtle) for browsers without backdrop-filter */
-    background: rgba(255,255,255,0.01);
-}
-
 /* CHAT BAR STYLES */
 #chat-bar-container {
     position: absolute;
