@@ -1075,23 +1075,20 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                         if (acc) {
                             new GLTFLoader().load(acc.model, (gltf) => {
                                 const accModel = gltf.scene;
-                                // Compute actual visual bounding box
                                 const bbox = new THREE.Box3().setFromObject(accModel);
                                 const sz = new THREE.Vector3();
+                                const center = new THREE.Vector3();
                                 bbox.getSize(sz);
-                                // Scale so cap width matches ~85% of head width
-                                const targetW = size2.x * 0.85;
-                                const sx = sz.x > 0.001 ? targetW / sz.x : 1;
-                                const sy = sz.y > 0.001 ? (size2.y * 0.35) / sz.y : 1;
-                                const sz2 = sz.z > 0.001 ? (size2.x * 0.85) / sz.z : 1;
-                                accModel.scale.set(sx, sy, sz2);
-                                // Center on head and sit on top
-                                const headTop = size2.y / 2;
-                                const centerOffset = bbox.getCenter(new THREE.Vector3());
+                                bbox.getCenter(center);
+                                // Uniform scale: cap matches head width
+                                const maxDim = Math.max(sz.x, sz.y, sz.z);
+                                const s = size2.x / maxDim;
+                                accModel.scale.setScalar(s);
+                                // Position: center on head, sit on top
                                 accModel.position.set(
-                                    -centerOffset.x * sx + (acc.offset?.x || 0),
-                                    headTop - (centerOffset.y * sy) + (acc.offset?.y || 0),
-                                    -centerOffset.z * sz2 + (acc.offset?.z || 0)
+                                    -center.x * s + (acc.offset?.x || 0),
+                                    (size2.y / 2) - (center.y * s) + (acc.offset?.y || 0),
+                                    -center.z * s + (acc.offset?.z || 0)
                                 );
                                 accModel.traverse(n => {
                                     if (n.isMesh) {
