@@ -13,7 +13,7 @@ const ACCESSORIES = [
         price: 5,
         model: './Military-cap-accessory.glb',
         description: 'A rugged olive-drab military cap modeled after classic field headwear. Features a stiff visor and rounded crown with subtle stitching detail. Perfect for officers leading the charge on the baseplate.',
-        offset: { x: 0, y: 0.08, z: 0 },
+        offset: { x: 0, y: 0, z: 0 },
         scale: 1.0,
     },
 ];

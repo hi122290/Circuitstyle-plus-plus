@@ -1075,15 +1075,23 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                         if (acc) {
                             new GLTFLoader().load(acc.model, (gltf) => {
                                 const accModel = gltf.scene;
-                                // Use acc.scale as a direct multiplier on head height
-                                const headH = size2.y;
-                                const finalScale = headH * (acc.scale || 1.0);
-                                accModel.scale.setScalar(finalScale);
+                                // Compute actual visual bounding box
+                                const bbox = new THREE.Box3().setFromObject(accModel);
+                                const sz = new THREE.Vector3();
+                                bbox.getSize(sz);
+                                // Scale so cap width matches ~85% of head width
+                                const targetW = size2.x * 0.85;
+                                const sx = sz.x > 0.001 ? targetW / sz.x : 1;
+                                const sy = sz.y > 0.001 ? (size2.y * 0.35) / sz.y : 1;
+                                const sz2 = sz.z > 0.001 ? (size2.x * 0.85) / sz.z : 1;
+                                accModel.scale.set(sx, sy, sz2);
+                                // Center on head and sit on top
                                 const headTop = size2.y / 2;
+                                const centerOffset = bbox.getCenter(new THREE.Vector3());
                                 accModel.position.set(
-                                    acc.offset?.x || 0,
-                                    headTop + (acc.offset?.y || 0),
-                                    acc.offset?.z || 0
+                                    -centerOffset.x * sx + (acc.offset?.x || 0),
+                                    headTop - (centerOffset.y * sy) + (acc.offset?.y || 0),
+                                    -centerOffset.z * sz2 + (acc.offset?.z || 0)
                                 );
                                 accModel.traverse(n => {
                                     if (n.isMesh) {
@@ -1097,7 +1105,6 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                                 });
                                 accModel.name = 'Accessory_' + accId;
                                 headNode.add(accModel);
-                                console.log('[Accessory] loaded', accId, 'headH:', headH.toFixed(3), 'scale:', finalScale.toFixed(3));
                             }, undefined, (err) => {
                                 console.warn('[Accessory] load failed:', acc.model, err);
                             });
