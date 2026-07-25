@@ -1075,21 +1075,31 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                         if (acc) {
                             new GLTFLoader().load(acc.model, (gltf) => {
                                 const accModel = gltf.scene;
-                                const bbox = new THREE.Box3().setFromObject(accModel);
-                                const sz = new THREE.Vector3();
-                                bbox.getSize(sz);
-                                const maxDim = Math.max(sz.x, sz.y, sz.z);
-                                const s = (size2.y * 0.6) / maxDim;
-                                accModel.scale.setScalar(s);
+                                // Use acc.scale as a direct multiplier on head height
+                                const headH = size2.y;
+                                const finalScale = headH * (acc.scale || 1.0);
+                                accModel.scale.setScalar(finalScale);
                                 const headTop = size2.y / 2;
                                 accModel.position.set(
                                     acc.offset?.x || 0,
                                     headTop + (acc.offset?.y || 0),
                                     acc.offset?.z || 0
                                 );
-                                accModel.traverse(n => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = false; } });
+                                accModel.traverse(n => {
+                                    if (n.isMesh) {
+                                        n.castShadow = true;
+                                        n.receiveShadow = false;
+                                        if (n.material) {
+                                            n.material.side = THREE.DoubleSide;
+                                            n.material.needsUpdate = true;
+                                        }
+                                    }
+                                });
                                 accModel.name = 'Accessory_' + accId;
                                 headNode.add(accModel);
+                                console.log('[Accessory] loaded', accId, 'headH:', headH.toFixed(3), 'scale:', finalScale.toFixed(3));
+                            }, undefined, (err) => {
+                                console.warn('[Accessory] load failed:', acc.model, err);
                             });
                         }
                     }

@@ -740,7 +740,7 @@ function renderAccessoryThumbnail(canvas, modelPath) {
         const maxDim = Math.max(size.x, size.y, size.z);
         const s = 1.2 / maxDim;
         model.scale.setScalar(s);
-        model.traverse(n => { if (n.isMesh) { n.castShadow = true; } });
+        model.traverse(n => { if (n.isMesh) { n.castShadow = true; if (n.material) { n.material.side = THREE.DoubleSide; n.material.needsUpdate = true; } } });
         group.add(model);
     });
 
@@ -829,7 +829,7 @@ function openPreview(id) {
         const maxDim = Math.max(size.x, size.y, size.z);
         const s = 1.4 / maxDim;
         m.scale.setScalar(s);
-        m.traverse(n => { if (n.isMesh) { n.castShadow = true; } });
+        m.traverse(n => { if (n.isMesh) { n.castShadow = true; if (n.material) { n.material.side = THREE.DoubleSide; n.material.needsUpdate = true; } } });
         grp.add(m);
     });
 
