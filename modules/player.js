@@ -1079,12 +1079,13 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                                 const sz = new THREE.Vector3();
                                 bbox.getSize(sz);
                                 const maxDim = Math.max(sz.x, sz.y, sz.z);
-                                const s = (size2.y * 0.6) / maxDim;
+                                const s = (size2.y * 0.28) / maxDim;
                                 accModel.scale.setScalar(s);
+                                const headTop = size2.y / 2;
                                 accModel.position.set(
-                                    (acc.offset?.x || 0) / s,
-                                    (size2.y / 2) + (acc.offset?.y || 0) / s,
-                                    (acc.offset?.z || 0) / s
+                                    acc.offset?.x || 0,
+                                    headTop + (acc.offset?.y || 0),
+                                    acc.offset?.z || 0
                                 );
                                 accModel.traverse(n => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = false; } });
                                 accModel.name = 'Accessory_' + accId;
