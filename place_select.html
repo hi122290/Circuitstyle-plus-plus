@@ -20,10 +20,16 @@
 <body class="center bg2 max">
 <div id="main">
 <h1 class="tab blink">Circuitstyle!</h1>
+<div id="currency-bar">
+    <span id="currency-amount">15 Circuitbuckz</span>
+    <button id="daily-claim-btn" class="play-btn" style="padding:4px 12px; font-size:0.85em;">Daily +10</button>
+    <span id="daily-timer" style="color:#aaa; font-size:0.8em;"></span>
+</div>
 <div id="home">
 <h4><a href="#home">Home</a> <span class="line">|</span>
 <a href="#about">Player Search</a> <span class="line">|</span>
 <a href="#working">Games Section</a> <span class="line">|</span>
+<a href="#accessories">Accessories</a> <span class="line">|</span>
 <a href="#made">About us</a></h4>
 </div>
 
@@ -87,6 +93,24 @@
 
 <!-- About Us -->
 <h2 id="made">About Us</h2>
+
+<!-- Accessories -->
+<h2 id="accessories">Accessories</h2>
+<div id="accessories-grid"></div>
+<div id="accessory-preview-modal" class="hidden">
+    <div id="accessory-preview-backdrop"></div>
+    <div id="accessory-preview-box">
+        <div id="accessory-preview-canvas-wrap">
+            <canvas id="accessory-preview-canvas" width="300" height="300"></canvas>
+        </div>
+        <div id="accessory-preview-info">
+            <h3 id="acc-preview-name"></h3>
+            <p id="acc-preview-desc"></p>
+            <div id="acc-preview-actions"></div>
+        </div>
+        <button id="acc-preview-close">&times;</button>
+    </div>
+</div>
 <div style="background:rgba(0,0,0,0.5); border:2px solid yellow; padding:16px; margin:12px 0; text-align:left;">
     <p style="color:#ddd; margin:0 0 10px 0;">Circuitstyle is a free web-based building and fighting game inspired by early 2000s block games. Build structures, equip tools, and play with others — all from your browser.</p>
     <p style="color:#ddd; margin:0 0 10px 0;">No downloads. No installs. Just open the site and play.</p>
@@ -558,6 +582,275 @@ async function loadNewPlayers() {
     }
 }
 loadNewPlayers();
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import {
+    ACCESSORIES, DAILY_AMOUNT,
+    getCurrency, claimDaily, canClaimDaily, getDailyTimeLeft, formatTimeLeft,
+    getOwned, ownsAccessory, buyAccessory,
+    getEquipped, equipAccessory, unequipAccessory, getAccessoryById,
+} from './modules/accessories.js';
+
+// === Currency display ===
+const curAmount = document.getElementById('currency-amount');
+const dailyBtn = document.getElementById('daily-claim-btn');
+const dailyTimer = document.getElementById('daily-timer');
+
+function updateCurrencyUI() {
+    curAmount.textContent = getCurrency() + ' Circuitbuckz';
+    if (canClaimDaily()) {
+        dailyBtn.disabled = false;
+        dailyBtn.textContent = 'Daily +10';
+        dailyBtn.style.background = 'yellow';
+        dailyBtn.style.color = '#000';
+        dailyTimer.textContent = '';
+    } else {
+        dailyBtn.disabled = true;
+        dailyBtn.textContent = 'Claimed';
+        dailyBtn.style.background = '#555';
+        dailyBtn.style.color = '#aaa';
+        dailyTimer.textContent = 'Next in ' + formatTimeLeft(getDailyTimeLeft());
+    }
+}
+updateCurrencyUI();
+setInterval(updateCurrencyUI, 1000);
+
+dailyBtn.addEventListener('click', () => {
+    const amt = claimDaily();
+    if (amt > 0) updateCurrencyUI();
+});
+
+// === Accessories grid ===
+const accGrid = document.getElementById('accessories-grid');
+
+function renderAccessories() {
+    if (!accGrid) return;
+    const owned = getOwned();
+    const equipped = getEquipped();
+    accGrid.innerHTML = '';
+
+    ACCESSORIES.forEach(acc => {
+        const isOwned = owned.includes(acc.id);
+        const isEquipped = equipped === acc.id;
+        const card = document.createElement('div');
+        card.className = 'acc-card';
+        card.dataset.id = acc.id;
+
+        card.innerHTML = `
+            <div class="acc-card-model">
+                <canvas class="acc-card-canvas" width="160" height="160" data-model="${acc.model}"></canvas>
+            </div>
+            <div class="acc-card-info">
+                <div class="acc-card-name">${acc.name}</div>
+                <div class="acc-card-price">${isOwned ? (isEquipped ? 'Equipped' : 'Owned') : acc.price + ' CBz'}</div>
+                <div class="acc-card-btns">
+                    ${isOwned
+                        ? (isEquipped
+                            ? `<button class="acc-btn unequip" data-id="${acc.id}">Unequip</button>`
+                            : `<button class="acc-btn equip" data-id="${acc.id}">Equip</button>`)
+                        : `<button class="acc-btn buy" data-id="${acc.id}">Buy</button>`}
+                </div>
+            </div>
+        `;
+        accGrid.appendChild(card);
+    });
+
+    // Render 3D previews on card canvases
+    accGrid.querySelectorAll('.acc-card-canvas').forEach(canvas => {
+        renderAccessoryThumbnail(canvas, canvas.dataset.model);
+    });
+
+    // Buy buttons
+    accGrid.querySelectorAll('.acc-btn.buy').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            const result = buyAccessory(id);
+            if (!result.ok) { alert(result.msg); return; }
+            updateCurrencyUI();
+            renderAccessories();
+        });
+    });
+
+    // Equip buttons
+    accGrid.querySelectorAll('.acc-btn.equip').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            equipAccessory(btn.dataset.id);
+            renderAccessories();
+        });
+    });
+
+    // Unequip buttons
+    accGrid.querySelectorAll('.acc-btn.unequip').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            unequipAccessory();
+            renderAccessories();
+        });
+    });
+
+    // Double-click opens preview
+    accGrid.querySelectorAll('.acc-card').forEach(card => {
+        let clickCount = 0;
+        let clickTimer = null;
+        card.addEventListener('click', () => {
+            clickCount++;
+            if (clickCount === 2) {
+                clearTimeout(clickTimer);
+                clickCount = 0;
+                openPreview(card.dataset.id);
+            } else {
+                clickTimer = setTimeout(() => { clickCount = 0; }, 350);
+            }
+        });
+    });
+}
+
+function renderAccessoryThumbnail(canvas, modelPath) {
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(160, 160, false);
+    renderer.setClearColor(0x000000, 0);
+
+    const scene = new THREE.Scene();
+    const cam = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
+    cam.position.set(0, 0.3, 1.8);
+    cam.lookAt(0, 0.15, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+    const dl = new THREE.DirectionalLight(0xffffff, 1.2);
+    dl.position.set(2, 4, 3);
+    scene.add(dl);
+
+    const group = new THREE.Group();
+    scene.add(group);
+
+    new GLTFLoader().load(modelPath, (gltf) => {
+        const model = gltf.scene;
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        const center = new THREE.Vector3();
+        box.getSize(size);
+        box.getCenter(center);
+        model.position.sub(center);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const s = 1.2 / maxDim;
+        model.scale.setScalar(s);
+        model.traverse(n => { if (n.isMesh) { n.castShadow = true; } });
+        group.add(model);
+    });
+
+    let t = 0;
+    function anim() {
+        requestAnimationFrame(anim);
+        t += 0.015;
+        group.rotation.y = Math.sin(t) * 0.4;
+        renderer.render(scene, cam);
+    }
+    anim();
+}
+
+renderAccessories();
+
+// === Preview modal ===
+const modal = document.getElementById('accessory-preview-modal');
+const previewCanvas = document.getElementById('accessory-preview-canvas');
+const previewName = document.getElementById('acc-preview-name');
+const previewDesc = document.getElementById('acc-preview-desc');
+const previewActions = document.getElementById('acc-preview-actions');
+const previewClose = document.getElementById('acc-preview-close');
+const previewBackdrop = document.getElementById('accessory-preview-backdrop');
+
+function openPreview(id) {
+    const acc = getAccessoryById(id);
+    if (!acc) return;
+    const owned = ownsAccessory(id);
+    const equipped = getEquipped() === id;
+
+    previewName.textContent = acc.name;
+    previewDesc.textContent = acc.description;
+
+    if (owned) {
+        previewActions.innerHTML = equipped
+            ? `<button class="acc-btn unequip" data-id="${id}">Unequip</button>`
+            : `<button class="acc-btn equip" data-id="${id}">Equip</button>`;
+    } else {
+        previewActions.innerHTML = `<button class="acc-btn buy" data-id="${id}">Buy for ${acc.price} CBz</button>`;
+    }
+
+    previewActions.querySelector('.acc-btn')?.addEventListener('click', () => {
+        if (!owned) {
+            const r = buyAccessory(id);
+            if (!r.ok) { alert(r.msg); return; }
+            updateCurrencyUI();
+        } else if (equipped) {
+            unequipAccessory();
+        } else {
+            equipAccessory(id);
+        }
+        renderAccessories();
+        openPreview(id);
+    });
+
+    modal.classList.remove('hidden');
+
+    // 3D preview
+    const pr = new THREE.WebGLRenderer({ canvas: previewCanvas, antialias: true, alpha: true });
+    pr.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    pr.setSize(300, 300, false);
+    pr.setClearColor(0x1a1a2e, 1);
+
+    const ps = new THREE.Scene();
+    const pc = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
+    pc.position.set(0, 0.4, 2.2);
+    pc.lookAt(0, 0.2, 0);
+
+    ps.add(new THREE.AmbientLight(0xffffff, 1.0));
+    const dl2 = new THREE.DirectionalLight(0xffffff, 1.2);
+    dl2.position.set(3, 5, 4);
+    ps.add(dl2);
+
+    const grp = new THREE.Group();
+    ps.add(grp);
+
+    let animId = null;
+    new GLTFLoader().load(acc.model, (gltf) => {
+        const m = gltf.scene;
+        const box = new THREE.Box3().setFromObject(m);
+        const size = new THREE.Vector3();
+        const center = new THREE.Vector3();
+        box.getSize(size);
+        box.getCenter(center);
+        m.position.sub(center);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const s = 1.4 / maxDim;
+        m.scale.setScalar(s);
+        m.traverse(n => { if (n.isMesh) { n.castShadow = true; } });
+        grp.add(m);
+    });
+
+    let t = 0;
+    function anim() {
+        animId = requestAnimationFrame(anim);
+        t += 0.02;
+        grp.rotation.y = t;
+        pr.render(ps, pc);
+    }
+    anim();
+
+    modal._cleanup = () => { if (animId) cancelAnimationFrame(animId); };
+}
+
+function closePreview() {
+    modal.classList.add('hidden');
+    if (modal._cleanup) modal._cleanup();
+}
+previewClose.addEventListener('click', closePreview);
+previewBackdrop.addEventListener('click', closePreview);
 </script>
 </body>
 </html>

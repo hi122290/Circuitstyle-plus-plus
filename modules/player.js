@@ -7,6 +7,7 @@ import PlayerModule from './PlayerModule.js';
 import Global from './Global.js';
 import { ITEM_DATA } from './backpack.js';
 import { getBuildSettings, placeBuild } from './build.js';
+import { getEquipped, getAccessoryById } from './accessories.js';
 
 
 export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
@@ -1065,6 +1066,33 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
 
                 headNode.name = 'Head';
                 charModel.add(headNode);
+
+                // Load equipped accessory on top of head
+                try {
+                    const accId = getEquipped();
+                    if (accId) {
+                        const acc = getAccessoryById(accId);
+                        if (acc) {
+                            new GLTFLoader().load(acc.model, (gltf) => {
+                                const accModel = gltf.scene;
+                                const bbox = new THREE.Box3().setFromObject(accModel);
+                                const sz = new THREE.Vector3();
+                                bbox.getSize(sz);
+                                const maxDim = Math.max(sz.x, sz.y, sz.z);
+                                const s = (size2.y * 0.6) / maxDim;
+                                accModel.scale.setScalar(s);
+                                accModel.position.set(
+                                    (acc.offset?.x || 0) / s,
+                                    (size2.y / 2) + (acc.offset?.y || 0) / s,
+                                    (acc.offset?.z || 0) / s
+                                );
+                                accModel.traverse(n => { if (n.isMesh) { n.castShadow = true; n.receiveShadow = false; } });
+                                accModel.name = 'Accessory_' + accId;
+                                headNode.add(accModel);
+                            });
+                        }
+                    }
+                } catch (e) { console.warn('Accessory load failed:', e); }
             }, undefined, (err) => {
                 // swallow load errors so missing asset doesn't break runtime
                 console.warn('head.glb load failed', err);
