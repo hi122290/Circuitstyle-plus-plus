@@ -1079,7 +1079,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                                 const sz = new THREE.Vector3();
                                 bbox.getSize(sz);
                                 const maxDim = Math.max(sz.x, sz.y, sz.z);
-                                const s = (size2.y * 0.28) / maxDim;
+                                const s = (size2.y * 0.42) / maxDim;
                                 accModel.scale.setScalar(s);
                                 const headTop = size2.y / 2;
                                 accModel.position.set(
