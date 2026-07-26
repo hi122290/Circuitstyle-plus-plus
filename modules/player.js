@@ -1080,9 +1080,9 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                                 const center = new THREE.Vector3();
                                 bbox.getSize(sz);
                                 bbox.getCenter(center);
-                                // Uniform scale: cap matches head width
+                                // Uniform scale: cap is 40% of head width
                                 const maxDim = Math.max(sz.x, sz.y, sz.z);
-                                const s = size2.x / maxDim;
+                                const s = (size2.x * 0.4) / maxDim;
                                 accModel.scale.setScalar(s);
                                 // Position: center on head, sit on top
                                 accModel.position.set(
