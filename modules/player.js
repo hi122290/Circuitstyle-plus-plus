@@ -1082,7 +1082,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                                 bbox.getCenter(center);
                                 // Uniform scale: cap is 40% of head width
                                 const maxDim = Math.max(sz.x, sz.y, sz.z);
-                                const s = (size2.x * 0.2) / maxDim;
+                                const s = (size2.x * 0.02) / maxDim;
                                 accModel.scale.setScalar(s);
                                 // Position: center on head, sit on top
                                 accModel.position.set(
