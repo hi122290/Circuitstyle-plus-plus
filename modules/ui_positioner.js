@@ -311,6 +311,28 @@ export function updateUIElementPositions(renderer) {
         }
     }
 
+    // POWERS BAR positioning (to the right of the backpack)
+    const powersContainer = document.getElementById('powers-container');
+    if (powersContainer && !powersContainer.classList.contains('hidden')) {
+        const backpackEl = document.getElementById('backpack-container');
+        if (backpackEl) {
+            const bpRect = backpackEl.getBoundingClientRect();
+            powersContainer.style.left = `${bpRect.right + 8}px`;
+            powersContainer.style.bottom = powersContainer.style.bottom || 'auto';
+            // Align bottom with backpack
+            try {
+                const controlsEl = document.getElementById('controls-container');
+                if (controlsEl) {
+                    const controlsRect = controlsEl.getBoundingClientRect();
+                    const controlsBottomGap = Math.max(0, window.innerHeight - controlsRect.bottom);
+                    const BACKPACK_NUDGE_UP = 12;
+                    powersContainer.style.bottom = `${Math.round(controlsBottomGap + BACKPACK_NUDGE_UP)}px`;
+                }
+            } catch(e) {}
+            powersContainer.style.top = 'auto';
+        }
+    }
+
     // CHAT BAR positioning (used for SafeChat display/send button)
     const chatBarEl = document.getElementById('chat-bar-container');
     if (chatBarEl) {

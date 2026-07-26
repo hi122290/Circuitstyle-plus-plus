@@ -1348,6 +1348,153 @@ button, .safechat-option, #safechat-current-phrase, #place-spawn, #hat-button,
     box-shadow: none;
 }
 
+/* Powers Bar */
+#powers-container {
+    position: absolute;
+    z-index: 21;
+    pointer-events: auto;
+    background: transparent;
+    padding: 0;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+#powers-label {
+    font-family: "Comic Sans MS", cursive !important;
+    font-size: 10px;
+    color: #ff4444;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+    margin-bottom: 2px;
+    letter-spacing: 1px;
+    pointer-events: none;
+}
+
+#powers-row {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    margin: 0;
+}
+
+.power-slot {
+    width: 84px;
+    height: 84px;
+    background-color: rgba(180, 40, 40, 0.65);
+    border: none;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: var(--main-cursor);
+    box-sizing: border-box;
+    overflow: hidden;
+    margin: 0;
+    padding: 4px;
+    transition: background-color 0.15s;
+}
+
+.power-slot:hover {
+    background-color: rgba(220, 50, 50, 0.8);
+}
+
+.power-slot.selected {
+    background-color: rgba(255, 60, 60, 0.85);
+    position: relative;
+}
+
+.power-slot.selected::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-sizing: border-box;
+    border: 3px solid #ff4444;
+    z-index: 2;
+}
+
+.power-slot.on-cooldown {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.power-slot-name {
+    font-family: "Comic Sans MS", cursive !important;
+    font-size: 10px;
+    color: #fff;
+    text-align: center;
+    line-height: 1.1;
+    pointer-events: none;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+    word-break: break-word;
+}
+
+.power-slot-dmg {
+    font-family: "Comic Sans MS", cursive !important;
+    font-size: 9px;
+    color: #ffcc00;
+    pointer-events: none;
+    margin-top: 2px;
+}
+
+.power-slot-cooldown-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-family: "Comic Sans MS", cursive !important;
+    font-size: 10px;
+    text-align: center;
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* Grapple indicator overlay */
+#grapple-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    pointer-events: none;
+    display: none;
+}
+
+#grapple-indicator .ring {
+    width: 80px;
+    height: 80px;
+    border: 4px solid #ff4444;
+    border-radius: 50%;
+    position: relative;
+}
+
+#grapple-indicator .ring::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border: 4px solid transparent;
+    border-top-color: #ff8888;
+    border-radius: 50%;
+    animation: grapple-spin 0.8s linear infinite;
+}
+
+@keyframes grapple-spin {
+    to { transform: rotate(360deg); }
+}
+
+#grapple-indicator .label {
+    font-family: "Comic Sans MS", cursive !important;
+    font-size: 12px;
+    color: #ff4444;
+    text-align: center;
+    margin-top: 4px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+
 /* Clean outlined HUD language: Arial typography, dark glass surfaces, and cyan guides. */
 :root {
     --ui-font: Arial, Helvetica, sans-serif;

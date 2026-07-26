@@ -12,6 +12,7 @@ import { registerStencilHelper } from './modules/stencil_shadows_adapter.js';
 import { setupMobileControls, isMobile } from './modules/mobile_controls.js';
 import { appendChatMessage } from './modules/safechat.js';
 import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost, deleteBlockByMesh, deleteBlockById, findBlockAtPoint, stampBuild, toggleSaveMenu, closeSaveMenu } from './modules/build.js';
+import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js';
 
 
 window.THREE_REF = THREE;
@@ -553,6 +554,7 @@ let world, player, game;
 let isDead = false;
 const playerStats = { kills: 0, wipeouts: 0 };
 let _hiddenTicker = null;
+let _wasChoked = false;
 // Combat events that need to survive exactly one presence broadcast before being cleared
 const _pendingPresence = {};
 window._pendingPresence = _pendingPresence;
@@ -1007,6 +1009,121 @@ async function init() {
     document.getElementById('build-controls').classList.add('hidden');
     // captions-container starts hidden from html anyway
 
+    // ===== POWERS SYSTEM =====
+    const _myUsername = window.currentPlayerName || 'Guest';
+    const _myPowers = getPowersForUser(_myUsername);
+    let _selectedPowerId = null;
+
+    function _setupPowersUI() {
+        const container = document.getElementById('powers-container');
+        const row = document.getElementById('powers-row');
+        if (!container || !row || _myPowers.length === 0) return;
+
+        container.classList.remove('hidden');
+        row.innerHTML = '';
+
+        _myPowers.forEach((power, idx) => {
+            const slot = document.createElement('div');
+            slot.className = 'power-slot';
+            slot.dataset.powerId = power.id;
+
+            const name = document.createElement('div');
+            name.className = 'power-slot-name';
+            name.textContent = power.name;
+
+            const dmg = document.createElement('div');
+            dmg.className = 'power-slot-dmg';
+            if (power.type === 'grapple') {
+                dmg.textContent = power.id === 'advanced_grapple' ? '1 HP' : `${power.damage}dmg`;
+            } else if (power.id === 'barrage') {
+                dmg.textContent = `${power.damage}x${power.hitCount}`;
+            } else {
+                dmg.textContent = `${power.damage}dmg`;
+            }
+
+            slot.appendChild(name);
+            slot.appendChild(dmg);
+
+            slot.addEventListener('click', () => {
+                if (_selectedPowerId === power.id) {
+                    _selectedPowerId = null;
+                } else {
+                    _selectedPowerId = power.id;
+                }
+                _updatePowerUI();
+            });
+
+            row.appendChild(slot);
+        });
+
+        // Key bindings: Q, E, R, T, Y for powers
+        const _powerKeys = ['q', 'e', 'r', 't', 'y'];
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            const idx = _powerKeys.indexOf(key);
+            if (idx >= 0 && idx < _myPowers.length) {
+                const power = _myPowers[idx];
+                if (_selectedPowerId === power.id) {
+                    _selectedPowerId = null;
+                } else {
+                    _selectedPowerId = power.id;
+                }
+                _updatePowerUI();
+            }
+        });
+    }
+
+    function _updatePowerUI() {
+        const row = document.getElementById('powers-row');
+        if (!row) return;
+        const slots = row.querySelectorAll('.power-slot');
+        slots.forEach(slot => {
+            const pid = slot.dataset.powerId;
+            const cd = getCooldownRemaining(_myUsername, pid);
+            slot.classList.toggle('selected', pid === _selectedPowerId);
+            slot.classList.toggle('on-cooldown', cd > 0);
+
+            let overlay = slot.querySelector('.power-slot-cooldown-overlay');
+            if (cd > 0) {
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.className = 'power-slot-cooldown-overlay';
+                    slot.appendChild(overlay);
+                }
+                overlay.textContent = `${(cd / 1000).toFixed(1)}s`;
+            } else if (overlay) {
+                overlay.remove();
+            }
+        });
+    }
+
+    _setupPowersUI();
+    setInterval(_updatePowerUI, 100);
+
+    // Grapple indicator
+    const _grappleEl = document.getElementById('grapple-indicator');
+
+    // Hook into the pointerdown for power activation
+    const _canvas = document.getElementById('game-canvas');
+    if (_canvas) {
+        _canvas.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return;
+            if (!_selectedPowerId) return;
+            if (isDead) return;
+
+            const success = activatePower(
+                _myUsername, _selectedPowerId,
+                player, remotePlayers, camera, scene, _pendingPresence
+            );
+            if (success) {
+                // don't deselect — let user keep it selected for repeated use
+            }
+        }, { capture: true });
+    }
+
+    // Tick grapple and choke in animate loop
+    const _origAnimate = animate;
+
     // when tab visibility spilf, we keep logic ticking in the bagrounf with just a small fixed step loop
     document.addEventListener('visibilitychange', () => {
         const FIXED_STEP = 1000 / 60;
@@ -1413,6 +1530,20 @@ function updateRemotePlayers() {
                     }
                 }
 
+                // Power events
+                if (pData.lastPowerEvent) {
+                    const pe = pData.lastPowerEvent;
+                    const peKey = `${clientId}_power_${pe.t}`;
+                    if (!remote._lastPowerEventKey || remote._lastPowerEventKey !== peKey) {
+                        remote._lastPowerEventKey = peKey;
+                        try {
+                            handleRemotePowerEvent(pe, remotePlayers, player.model, myId, scene, (dmg) => {
+                                if (window._onDamageCallback) window._onDamageCallback(dmg);
+                            });
+                        } catch(e) { console.warn('Power event error:', e); }
+                    }
+                }
+
                 // arm pivot sync is now handled inside updateModelAnimations
             } catch (e) {}
         }
@@ -1500,6 +1631,37 @@ function animate(now) {
         animate._accumulator -= FIXED_STEP;
     }
 
+    // Tick power grapple and choke timers
+    try {
+        tickGrapple(room.clientId, _pendingPresence);
+        tickChoke(room.clientId, player, (dmg) => { if (window._onDamageCallback) window._onDamageCallback(dmg); });
+
+        // Grapple indicator
+        if (_grappleEl) {
+            _grappleEl.style.display = isGrappling() ? 'block' : 'none';
+        }
+
+        // Force choke: lock player movement
+        const chokeData = getChokeData();
+        if (chokeData && player && typeof player.lockInput === 'function') {
+            if (!_wasChoked) {
+                _wasChoked = true;
+                player.lockInput(true);
+            }
+            // Force player model to lay down
+            if (player.model) {
+                player.model.rotation.x = Math.PI / 2;
+                player.model.position.y = Math.max(0.3, player.model.position.y - 0.02);
+            }
+        } else if (_wasChoked && player && typeof player.lockInput === 'function') {
+            _wasChoked = false;
+            player.lockInput(false);
+            if (player.model) {
+                player.model.rotation.x = 0;
+            }
+        }
+    } catch(e) {}
+
     // the frames are capped here uh yeah
     const timeSinceLastRender = now - (animate._lastRenderTime || 0);
     if (timeSinceLastRender >= TARGET_DT) {
@@ -1514,7 +1676,7 @@ function animate(now) {
 
         // push our transform + anim. state into presence so everyone else sees us or else we a ghost
         if (player && player.model) {
-            const hasCombatEvent = _pendingPresence.lastProjectile || _pendingPresence.lastSwordHit || _pendingPresence.lastExplosion || _pendingPresence.lastChat || _pendingPresence.lastBuild || _pendingPresence.lastDelete;
+            const hasCombatEvent = _pendingPresence.lastProjectile || _pendingPresence.lastSwordHit || _pendingPresence.lastExplosion || _pendingPresence.lastChat || _pendingPresence.lastBuild || _pendingPresence.lastDelete || _pendingPresence.lastPowerEvent;
             const presenceData = {
                 x: player.model.position.x,
                 y: player.model.position.y,
@@ -1542,6 +1704,7 @@ function animate(now) {
             if (_pendingPresence.lastChat) { presenceData.lastChat = _pendingPresence.lastChat; delete _pendingPresence.lastChat; }
             if (_pendingPresence.lastBuild) { presenceData.lastBuild = _pendingPresence.lastBuild; delete _pendingPresence.lastBuild; }
             if (_pendingPresence.lastDelete) { presenceData.lastDelete = _pendingPresence.lastDelete; delete _pendingPresence.lastDelete; }
+            if (_pendingPresence.lastPowerEvent) { presenceData.lastPowerEvent = _pendingPresence.lastPowerEvent; delete _pendingPresence.lastPowerEvent; }
             room.updatePresence(presenceData);
             // If a combat event was just broadcast, immediately process remote players on this tab too
             // (subscribePresence won't fire for our own updatePresence on the same tab)
