@@ -1083,7 +1083,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                                 // Position: center on head, sit on top
                                 accModel.position.set(
                                     -center.x * s + (acc.offset?.x || 0),
-                                    (size2.y / 2) - (center.y * s) - size2.y * 0.06 + (acc.offset?.y || 0),
+                                    (size2.y / 2) - (center.y * s) - size2.y * 0.15 + (acc.offset?.y || 0),
                                     -center.z * s + (acc.offset?.z || 0)
                                 );
                                 accModel.traverse(n => {
