@@ -1076,13 +1076,9 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                             new GLTFLoader().load(acc.model, (gltf) => {
                                 const accModel = gltf.scene;
                                 const bbox = new THREE.Box3().setFromObject(accModel);
-                                const sz = new THREE.Vector3();
                                 const center = new THREE.Vector3();
-                                bbox.getSize(sz);
                                 bbox.getCenter(center);
-                                // Uniform scale: cap is 40% of head width
-                                const maxDim = Math.max(sz.x, sz.y, sz.z);
-                                const s = (size2.x * 0.02) / maxDim;
+                                const s = 0.06;
                                 accModel.scale.setScalar(s);
                                 // Position: center on head, sit on top
                                 accModel.position.set(
