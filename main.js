@@ -1190,7 +1190,6 @@ async function init() {
 
     // Track mouse for build ghost preview
     let _mouseX = 0, _mouseY = 0;
-    const _canvas = document.getElementById('game-canvas');
     if (_canvas) {
         _canvas.addEventListener('mousemove', (e) => { _mouseX = e.clientX; _mouseY = e.clientY; }, { passive: true });
         _canvas.addEventListener('pointermove', (e) => { _mouseX = e.clientX; _mouseY = e.clientY; }, { passive: true });
