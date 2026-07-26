@@ -1078,7 +1078,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                                 const bbox = new THREE.Box3().setFromObject(accModel);
                                 const center = new THREE.Vector3();
                                 bbox.getCenter(center);
-                                const s = 25;
+                                const s = 62.5;
                                 accModel.scale.setScalar(s);
                                 // Position: center on head, sit on top
                                 accModel.position.set(
