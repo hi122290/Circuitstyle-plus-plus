@@ -555,6 +555,9 @@ let isDead = false;
 const playerStats = { kills: 0, wipeouts: 0 };
 let _hiddenTicker = null;
 let _wasChoked = false;
+let _grappleEl = null;
+let _selectedPowerId = null;
+let _myUsername = 'Guest';
 // Combat events that need to survive exactly one presence broadcast before being cleared
 const _pendingPresence = {};
 window._pendingPresence = _pendingPresence;
@@ -1010,9 +1013,8 @@ async function init() {
     // captions-container starts hidden from html anyway
 
     // ===== POWERS SYSTEM =====
-    const _myUsername = window.currentPlayerName || 'Guest';
+    _myUsername = window.currentPlayerName || 'Guest';
     const _myPowers = getPowersForUser(_myUsername);
-    let _selectedPowerId = null;
 
     function _setupPowersUI() {
         const container = document.getElementById('powers-container');
@@ -1101,7 +1103,7 @@ async function init() {
     setInterval(_updatePowerUI, 100);
 
     // Grapple indicator
-    const _grappleEl = document.getElementById('grapple-indicator');
+    _grappleEl = document.getElementById('grapple-indicator');
 
     // Hook into the pointerdown for power activation
     const _canvas = document.getElementById('game-canvas');
