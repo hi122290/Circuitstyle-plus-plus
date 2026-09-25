@@ -696,7 +696,7 @@ async function init() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     // basic hard shadows, no soft blur fanciness, just stencil shadows, juuuusstttt like 2007 ROBLOX clients, init!
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.BasicShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     window.renderer = renderer;
     window.camera = camera;
 
@@ -808,9 +808,9 @@ async function init() {
         cam.near = 0.05;
         cam.far = 400;
 
-        // Tiny bias to avoid z-fighting while keeping crisp specular highlights
-        directionalLight.shadow.bias = -0.00012;
-        directionalLight.shadow.radius = 0;
+        // Bias and radius tuned for soft PCF shadows without acne or peter-panning
+        directionalLight.shadow.bias = -0.0003;
+        directionalLight.shadow.radius = 3;
 
         try { cam.updateProjectionMatrix(); } catch (e) {}
         try { renderer.shadowMap.autoUpdate = true; } catch (e) {}
@@ -868,9 +868,9 @@ async function init() {
             cam.far = Math.max(200, cam.far || 400);
 
             try {
-                directionalLight.shadow.mapSize.width = 2048;
-                directionalLight.shadow.mapSize.height = 2048;
-                directionalLight.shadow.radius = 0;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.radius = 3;
             } catch (e) {}
 
             try { cam.updateProjectionMatrix(); } catch (e) {}
