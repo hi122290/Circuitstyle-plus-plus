@@ -14,6 +14,8 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
     const keyboard = {};
     let model = null;
     let velocityY = 0;
+    let _headNode = null;
+    let _headLocalBox = null;
     // gravity will be sourced from PlayerModule configuration (allows live tuning)
     // Use PlayerModule.getConfig().gravity where needed so changes propagate
     let onGround = true;
@@ -354,6 +356,46 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         // Keep renderOrder default (0) so depth testing behaves naturally with other objects
         targetIndicator.renderOrder = 0;
         scene.add(targetIndicator);
+    }
+
+    function reloadAccessory() {
+        if (!_headNode) return;
+        _headNode.children
+            .filter(c => c.name && c.name.startsWith('Accessory_'))
+            .forEach(c => _headNode.remove(c));
+        const accId = getEquipped();
+        if (!accId) return;
+        const acc = getAccessoryById(accId);
+        if (!acc) return;
+        new GLTFLoader().load(acc.model, (gltf) => {
+            const accModel = gltf.scene;
+            const s = acc.scale ? acc.scale * 300 : 300;
+            accModel.scale.setScalar(s);
+            const accBox = new THREE.Box3().setFromObject(accModel);
+            const accCenter = new THREE.Vector3();
+            accBox.getCenter(accCenter);
+            const headTop = _headLocalBox ? _headLocalBox.max.y : 0;
+            const headCenter = _headLocalBox ? _headLocalBox.getCenter(new THREE.Vector3()) : new THREE.Vector3();
+            accModel.position.set(
+                -accCenter.x + headCenter.x + (acc.offset?.x || 0),
+                headTop - accBox.min.y + (acc.offset?.y || 0),
+                -accCenter.z + headCenter.z + (acc.offset?.z || 0)
+            );
+            accModel.traverse(n => {
+                if (n.isMesh) {
+                    n.castShadow = true;
+                    n.receiveShadow = false;
+                    if (n.material) {
+                        n.material.side = THREE.DoubleSide;
+                        n.material.needsUpdate = true;
+                    }
+                }
+            });
+            accModel.name = 'Accessory_' + accId;
+            _headNode.add(accModel);
+        }, undefined, (err) => {
+            console.warn('[Accessory] load failed:', acc.model, err);
+        });
     }
 
     function createModel() {
@@ -1066,43 +1108,11 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
 
                 headNode.name = 'Head';
                 charModel.add(headNode);
+                _headNode = headNode;
+                _headLocalBox = bbox.clone();
 
                 // Load equipped accessory on top of head
-                try {
-                    const accId = getEquipped();
-                    if (accId) {
-                        const acc = getAccessoryById(accId);
-                        if (acc) {
-                            new GLTFLoader().load(acc.model, (gltf) => {
-                                const accModel = gltf.scene;
-                                const bbox = new THREE.Box3().setFromObject(accModel);
-                                const center = new THREE.Vector3();
-                                bbox.getCenter(center);
-                                const s = 300;
-                                accModel.scale.setScalar(s);
-                                accModel.position.set(
-                                    (acc.offset?.x || 0),
-                                    (size2.y * 0.25) + (acc.offset?.y || 0),
-                                    (acc.offset?.z || 0)
-                                );
-                                accModel.traverse(n => {
-                                    if (n.isMesh) {
-                                        n.castShadow = true;
-                                        n.receiveShadow = false;
-                                        if (n.material) {
-                                            n.material.side = THREE.DoubleSide;
-                                            n.material.needsUpdate = true;
-                                        }
-                                    }
-                                });
-                                accModel.name = 'Accessory_' + accId;
-                                headNode.add(accModel);
-                            }, undefined, (err) => {
-                                console.warn('[Accessory] load failed:', acc.model, err);
-                            });
-                        }
-                    }
-                } catch (e) { console.warn('Accessory load failed:', e); }
+                reloadAccessory();
             }, undefined, (err) => {
                 // swallow load errors so missing asset doesn't break runtime
                 console.warn('head.glb load failed', err);
@@ -2638,6 +2648,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         createModel, 
         updateModelAnimations,
         updateModelForcefield,
+        reloadAccessory,
         
         get model() { return model; },
         get isWalking() { return isWalking; },

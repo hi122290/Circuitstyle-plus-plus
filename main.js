@@ -907,6 +907,11 @@ async function init() {
         }
     });
 
+    if (player && player.reloadAccessory) player.reloadAccessory();
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'cs_equipped_accessory' && player && player.reloadAccessory) player.reloadAccessory();
+    });
+
     // throw a reference on window so safechat / ui can contact the player directly on the phone untill you run out of mobile data D: (jst bubble stuff and etc...)
     window.playerRef = player;
 
