@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Circuitstyle! — Dashboard</title>
+    <title>Circuitstyle!</title>
     <link rel="stylesheet" href="styles.css">
     <script type="importmap">
         {
@@ -19,21 +19,16 @@
 </head>
 <body>
 
-<!-- ===== TOP APP BAR ===== -->
+<!-- TOP BAR -->
 <div id="app-bar">
     <div id="app-bar-inner">
-        <div id="app-logo">
-            <span class="logo-icon">&#9881;</span>
-            <span class="logo-text">Circuitstyle!</span>
-            <span class="logo-version">v1.0</span>
-        </div>
+        <div id="app-logo">Circuitstyle!</div>
         <div id="currency-bar">
             <span id="currency-amount">15 Circuitbuckz</span>
-            <button id="daily-claim-btn" class="btn btn-gold btn-small">Daily +10</button>
+            <button id="daily-claim-btn" class="btn btn-small">Daily +10</button>
             <span id="daily-timer"></span>
         </div>
         <div id="app-user-status">
-            <span class="status-dot online"></span>
             <span id="app-user-label">Not signed in</span>
         </div>
     </div>
@@ -41,38 +36,17 @@
 
 <div id="dashboard">
 
-    <!-- ===== LEFT SIDEBAR ===== -->
+    <!-- SIDEBAR -->
     <nav id="sidebar">
         <div class="sidebar-header">Navigation</div>
-        <a class="sidebar-item active" href="#home" data-section="home">
-            <span class="sidebar-icon">&#127968;</span>
-            <span class="sidebar-label">Home</span>
-        </a>
-        <a class="sidebar-item" href="#about" data-section="about">
-            <span class="sidebar-icon">&#128269;</span>
-            <span class="sidebar-label">Player Search</span>
-        </a>
-        <a class="sidebar-item" href="#working" data-section="working">
-            <span class="sidebar-icon">&#127918;</span>
-            <span class="sidebar-label">Games</span>
-        </a>
-        <a class="sidebar-item" href="#accessories" data-section="accessories">
-            <span class="sidebar-icon">&#127913;</span>
-            <span class="sidebar-label">Accessories</span>
-        </a>
-        <a class="sidebar-item" href="#new-players" data-section="new-players">
-            <span class="sidebar-icon">&#128075;</span>
-            <span class="sidebar-label">New Players</span>
-        </a>
-        <a class="sidebar-item" href="#made" data-section="made">
-            <span class="sidebar-icon">&#8505;</span>
-            <span class="sidebar-label">About Us</span>
-        </a>
+        <a class="sidebar-item active" href="#home" data-section="home">Home</a>
+        <a class="sidebar-item" href="#about" data-section="about">Player Search</a>
+        <a class="sidebar-item" href="#working" data-section="working">Games</a>
+        <a class="sidebar-item" href="#accessories" data-section="accessories">Accessories</a>
+        <a class="sidebar-item" href="#new-players" data-section="new-players">New Players</a>
+        <a class="sidebar-item" href="#made" data-section="made">About Us</a>
         <div class="sidebar-divider"></div>
-        <a class="sidebar-item sidebar-play" href="./index.html">
-            <span class="sidebar-icon">&#9654;</span>
-            <span class="sidebar-label">Play Now!</span>
-        </a>
+        <a class="sidebar-item sidebar-play" href="./index.html">Play Now</a>
         <div class="sidebar-footer">
             <div class="sidebar-stat">
                 <span class="stat-label">Server</span>
@@ -81,22 +55,18 @@
         </div>
     </nav>
 
-    <!-- ===== MAIN CONTENT ===== -->
+    <!-- CONTENT -->
     <main id="content">
         <div class="content-header">
-            <h1 id="content-title">Dashboard</h1>
+            <h1 id="content-title">Home</h1>
             <div class="breadcrumb">Circuitstyle &raquo; Home</div>
         </div>
 
         <div id="main">
 
-            <!-- HOME: Auth + Character Preview -->
-            <section id="home" class="panel panel-primary">
-                <div class="panel-titlebar">
-                    <span class="panel-title-icon">&#127968;</span>
-                    <span class="panel-title">Welcome</span>
-                    <span class="panel-title-actions"></span>
-                </div>
+            <!-- HOME -->
+            <section id="home" class="panel">
+                <div class="panel-titlebar">Welcome</div>
                 <div class="panel-body">
                     <div id="auth-section">
                         <canvas id="char-canvas" width="300" height="320"></canvas>
@@ -119,16 +89,15 @@
                                         <input id="auth-remember" type="checkbox" checked>
                                         <label for="auth-remember">Remember me</label>
                                     </div>
-                                    <button id="auth-submit" class="btn btn-primary btn-block">Log In</button>
+                                    <button id="auth-submit" class="btn btn-block">Log In</button>
                                     <div class="auth-toggle-row">
                                         <a id="auth-toggle" href="#">Don't have an account? Sign up</a>
                                     </div>
                                 </div>
                                 <div id="auth-welcome" style="display:none;">
-                                    <div class="welcome-avatar">&#128100;</div>
                                     <div id="welcome-name"></div>
                                     <div class="welcome-sub">Welcome back!</div>
-                                    <a href="./index.html" class="btn btn-success btn-block">Play Now</a>
+                                    <a href="./index.html" class="btn btn-block btn-green">Play Now</a>
                                     <div class="auth-toggle-row">
                                         <a id="auth-logout" href="#">Log out</a>
                                     </div>
@@ -141,15 +110,12 @@
 
             <!-- PLAYER SEARCH -->
             <section id="about" class="panel">
-                <div class="panel-titlebar">
-                    <span class="panel-title-icon">&#128269;</span>
-                    <span class="panel-title">Player Search</span>
-                </div>
+                <div class="panel-titlebar">Player Search</div>
                 <div class="panel-body">
                     <div id="player-search-box">
                         <div class="input-group">
                             <input id="player-search-input" type="text" placeholder="Enter a username...">
-                            <button id="player-search-btn" class="btn btn-primary">Search</button>
+                            <button id="player-search-btn" class="btn">Search</button>
                         </div>
                         <div id="player-search-results"></div>
                     </div>
@@ -158,10 +124,7 @@
 
             <!-- GAMES -->
             <section id="working" class="panel">
-                <div class="panel-titlebar">
-                    <span class="panel-title-icon">&#127918;</span>
-                    <span class="panel-title">Games</span>
-                </div>
+                <div class="panel-titlebar">Games</div>
                 <div class="panel-body">
                     <div class="games-grid">
                         <a class="game-card" href="./index.html">
@@ -171,7 +134,7 @@
                             <div class="card-body">
                                 <h3>Baseplate</h3>
                                 <p>The default Circuitstyle experience. Build, fight, and explore!</p>
-                                <span class="btn btn-success btn-small">Play</span>
+                                <span class="btn btn-green btn-small">Play</span>
                             </div>
                         </a>
                     </div>
@@ -180,10 +143,7 @@
 
             <!-- ACCESSORIES -->
             <section id="accessories" class="panel">
-                <div class="panel-titlebar">
-                    <span class="panel-title-icon">&#127913;</span>
-                    <span class="panel-title">Accessories</span>
-                </div>
+                <div class="panel-titlebar">Accessories</div>
                 <div class="panel-body">
                     <div id="accessories-grid"></div>
                 </div>
@@ -191,10 +151,7 @@
 
             <!-- NEW PLAYERS -->
             <section id="new-players" class="panel">
-                <div class="panel-titlebar">
-                    <span class="panel-title-icon">&#128075;</span>
-                    <span class="panel-title">New Players</span>
-                </div>
+                <div class="panel-titlebar">New Players</div>
                 <div class="panel-body">
                     <canvas id="newplayer-head-canvas" width="200" height="200"></canvas>
                     <div id="new-players-list"></div>
@@ -214,10 +171,7 @@
 
             <!-- ABOUT US -->
             <section id="made" class="panel">
-                <div class="panel-titlebar">
-                    <span class="panel-title-icon">&#8505;</span>
-                    <span class="panel-title">About Us</span>
-                </div>
+                <div class="panel-titlebar">About Us</div>
                 <div class="panel-body">
                     <div class="info-box">
                         <p>Circuitstyle is a free web-based building and fighting game inspired by early 2000s block games. Build structures, equip tools, and play with others — all from your browser.</p>
@@ -233,11 +187,11 @@
                                 <span>Windows</span>
                             </div>
                             <div class="platform-badge">
-                                <span class="platform-emoji">&#128241;</span>
+                                <span class="platform-text">iOS</span>
                                 <span>iOS</span>
                             </div>
                             <div class="platform-badge">
-                                <span class="platform-emoji">&#128187;</span>
+                                <span class="platform-text">Linux / macOS</span>
                                 <span>Linux / macOS</span>
                             </div>
                         </div>
@@ -246,20 +200,20 @@
                 </div>
             </section>
 
-        </div><!-- /#main -->
+        </div>
 
         <footer id="footer">
             <div class="footer-inner">
-                <img src="https://i.imgur.com/i6hvJjx.gif" alt="footer gif" class="footer-gif">
+                <img src="https://i.imgur.com/i6hvJjx.gif" alt="footer gif">
                 <p>This is a web game - not affiliated with roblox or lego</p>
-                <span><img src="https://i.imgur.com/QkBkUkC.gif" alt="footer gif 2" class="footer-gif"></span>
+                <span><img src="https://i.imgur.com/QkBkUkC.gif" alt="footer gif 2"></span>
             </div>
         </footer>
     </main>
 
-</div><!-- /#dashboard -->
+</div>
 
-<!-- Accessory preview modal (kept at body level) -->
+<!-- Accessory preview modal -->
 <div id="accessory-preview-modal" class="hidden">
     <div id="accessory-preview-backdrop"></div>
     <div id="accessory-preview-box">
@@ -271,7 +225,7 @@
             <p id="acc-preview-desc"></p>
             <div id="acc-preview-actions"></div>
         </div>
-        <button id="acc-preview-close">&times;</button>
+        <button id="acc-preview-close">X</button>
     </div>
 </div>
 
@@ -463,14 +417,14 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
-// Sidebar active state on click
+// Sidebar active state
 document.querySelectorAll('.sidebar-item[data-section]').forEach(item => {
     item.addEventListener('click', () => {
         document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
         item.classList.add('active');
         const section = item.dataset.section;
         const titleMap = {
-            'home': 'Dashboard',
+            'home': 'Home',
             'about': 'Player Search',
             'working': 'Games',
             'accessories': 'Accessories',
@@ -479,7 +433,7 @@ document.querySelectorAll('.sidebar-item[data-section]').forEach(item => {
         };
         const titleEl = document.getElementById('content-title');
         const crumbEl = document.querySelector('.breadcrumb');
-        if (titleEl) titleEl.textContent = titleMap[section] || 'Dashboard';
+        if (titleEl) titleEl.textContent = titleMap[section] || 'Home';
         if (crumbEl) crumbEl.innerHTML = 'Circuitstyle &raquo; ' + (titleMap[section] || 'Home');
     });
 });
@@ -686,11 +640,9 @@ function renderPlayerHead(canvasEl, colorHex) {
     anim();
 }
 
-// Render the big new-players head
 const npHeadCanvas = document.getElementById('newplayer-head-canvas');
 if (npHeadCanvas) renderPlayerHead(npHeadCanvas, 0x808080);
 
-// Load recent accounts from Firebase
 async function loadNewPlayers() {
     const listEl = document.getElementById('new-players-list');
     if (!listEl) return;
@@ -738,7 +690,6 @@ import {
     getEquipped, equipAccessory, unequipAccessory, getAccessoryById,
 } from './modules/accessories.js';
 
-// === Currency display ===
 const curAmount = document.getElementById('currency-amount');
 const dailyBtn = document.getElementById('daily-claim-btn');
 const dailyTimer = document.getElementById('daily-timer');
@@ -765,7 +716,6 @@ dailyBtn.addEventListener('click', () => {
     if (amt > 0) updateCurrencyUI();
 });
 
-// === Accessories grid ===
 const accGrid = document.getElementById('accessories-grid');
 
 function renderAccessories() {
@@ -800,12 +750,10 @@ function renderAccessories() {
         accGrid.appendChild(card);
     });
 
-    // Render 3D previews on card canvases
     accGrid.querySelectorAll('.acc-card-canvas').forEach(canvas => {
         renderAccessoryThumbnail(canvas, canvas.dataset.model);
     });
 
-    // Buy buttons
     accGrid.querySelectorAll('.acc-btn.buy').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -817,7 +765,6 @@ function renderAccessories() {
         });
     });
 
-    // Equip buttons
     accGrid.querySelectorAll('.acc-btn.equip').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -826,7 +773,6 @@ function renderAccessories() {
         });
     });
 
-    // Unequip buttons
     accGrid.querySelectorAll('.acc-btn.unequip').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -835,7 +781,6 @@ function renderAccessories() {
         });
     });
 
-    // Double-click opens preview
     accGrid.querySelectorAll('.acc-card').forEach(card => {
         let clickCount = 0;
         let clickTimer = null;
@@ -898,7 +843,6 @@ function renderAccessoryThumbnail(canvas, modelPath) {
 
 renderAccessories();
 
-// === Preview modal ===
 const modal = document.getElementById('accessory-preview-modal');
 const previewCanvas = document.getElementById('accessory-preview-canvas');
 const previewName = document.getElementById('acc-preview-name');
@@ -940,7 +884,6 @@ function openPreview(id) {
 
     modal.classList.remove('hidden');
 
-    // 3D preview
     const pr = new THREE.WebGLRenderer({ canvas: previewCanvas, antialias: true, alpha: true });
     pr.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     pr.setSize(300, 300, false);
