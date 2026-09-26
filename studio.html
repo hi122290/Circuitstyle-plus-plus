@@ -12,6 +12,9 @@
     }
 }
 </script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
 /* ============================================================
    Circuitstyle Studio — single-file level editor
@@ -975,6 +978,7 @@ import {
     MATERIAL_PRESETS, ATLAS_KEYS, fileToTextureDataURL,
     listPlaces, getPlace, savePlace, compileScript
 } from './modules/place_runtime.js?v=2';
+import { pushPlace, fetchRemotePlace } from './modules/place_cloud.js?v=1';
 
 // ══════════════════════════════════════════════════════════
 // STAGE 1 — viewport, primitives, gizmos, hierarchy
@@ -1052,7 +1056,8 @@ gizmo.addEventListener('objectChange', () => {
 
 // ── place / runtime state ────────────────────────────────
 let placeId = new URLSearchParams(location.search).get('place');
-let manifest = (placeId && getPlace(placeId)) || emptyManifest('My Place');
+let localPlace = placeId ? getPlace(placeId) : null;
+let manifest = localPlace || emptyManifest('My Place');
 let rt = null;                 // PlaceRuntime (scene manager for the editor)
 let selectedId = null;
 let selectionBox = null;
@@ -1873,18 +1878,27 @@ function openPublish() {
 }
 $('btn-publish').addEventListener('click', openPublish);
 
-$('pub-do').addEventListener('click', () => {
+$('pub-do').addEventListener('click', async () => {
     manifest.name = $('pub-name').value.trim() || 'Untitled Place';
     manifest.description = $('pub-desc').value.trim();
     manifest.schema = manifest.schema || 'circuitstyle-place@1';
     if (!manifest.thumbnail) manifest.thumbnail = renderThumbnail();
     manifest.updatedAt = Date.now();
     $('place-name').value = manifest.name;
+    $('pub-result').style.color = '';
     try {
         savePlace(manifest);
-        $('pub-result').textContent = 'Published! It is now listed under Games on the home page.';
+        $('pub-result').textContent = 'Published in this browser — syncing to the cloud...';
         $('pub-open').style.display = 'inline-block';
         log(`published "${manifest.name}" (${manifest.id})`, 'info');
+        try {
+            await pushPlace(manifest);
+            $('pub-result').textContent = 'Published and synced to the cloud — it will show up in every browser.';
+            log('pushed place to cloud (users/__public__/places)', 'info');
+        } catch (cloudErr) {
+            $('pub-result').textContent = 'Published in this browser, but cloud sync failed: ' + cloudErr.message;
+            log('cloud push failed: ' + cloudErr.message, 'err');
+        }
     } catch (e) {
         $('pub-result').textContent = 'Publish failed: ' + e.message;
         $('pub-result').style.color = '#c00';
@@ -1991,7 +2005,19 @@ refreshPropsUI();
 renderScriptList();
 renderToolList();
 updateStatus();
-if (placeId) log(`loaded place "${manifest.name}" from URL (id: ${placeId})`, 'info');
+if (localPlace) log(`loaded place "${manifest.name}" from this browser (id: ${placeId})`, 'info');
+else if (placeId) {
+    log('place not in this browser — checking the cloud...', 'info');
+    fetchRemotePlace(placeId).then((remote) => {
+        if (remote) {
+            savePlace(remote);
+            loadManifest(remote);
+            log(`loaded published place "${remote.name}" from the cloud`, 'info');
+        } else {
+            log('place not found in this browser or the cloud', 'warn');
+        }
+    }).catch((err) => log('cloud load failed: ' + err.message, 'err'));
+}
 else log('new place created — add parts, script them, then Publish');
 window.studio = { get manifest() { return manifest; }, get runtime() { return rt; }, selectPart, addPart };
 </script>

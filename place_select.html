@@ -941,21 +941,21 @@ previewBackdrop.addEventListener('click', closePreview);
 
 <script>
 // ── Published places (built in Circuitstyle Studio) ──────────────────────
+// Local places render instantly; cloud-published places (Firebase RTDB)
+// are merged in afterwards so every browser sees the same games list.
 (function renderPublishedPlaces() {
     var grid = document.getElementById('games-grid');
     if (!grid) return;
-    var places = [];
-    try { places = JSON.parse(localStorage.getItem('cs_places') || '[]') || []; } catch (e) { places = []; }
-    if (!Array.isArray(places)) return;
+    var cards = {}; // place id -> card element
     function esc(s) {
         return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
         });
     }
-    places.forEach(function (p) {
-        if (!p || !p.id) return;
+    function makeCard(p) {
         var card = document.createElement('div');
         card.className = 'game-card';
+        card.dataset.placeId = p.id;
         var thumb = p.thumbnail || './Studs_Texture.png';
         var name = esc(p.name || 'Untitled Place');
         card.innerHTML =
@@ -967,8 +967,38 @@ previewBackdrop.addEventListener('click', closePreview);
             '<a class="btn btn-green btn-small" href="./index.html?place=' + encodeURIComponent(p.id) + '">Play</a>' +
             '<a class="btn btn-small" href="./studio.html?place=' + encodeURIComponent(p.id) + '" style="color:#333;">Edit in Studio</a>' +
             '</span></div>';
+        return card;
+    }
+    function addCard(p, fromCloud) {
+        if (!p || !p.id) return;
+        var existing = cards[p.id];
+        if (existing) {
+            // cloud copy wins over a stale local copy of the same place
+            if (fromCloud && existing.dataset.fromCloud !== '1') {
+                var fresh = makeCard(p);
+                fresh.dataset.fromCloud = '1';
+                existing.parentNode.replaceChild(fresh, existing);
+                cards[p.id] = fresh;
+            }
+            return;
+        }
+        var card = makeCard(p);
+        if (fromCloud) card.dataset.fromCloud = '1';
+        cards[p.id] = card;
         grid.insertBefore(card, grid.firstChild);
-    });
+    }
+    var local = [];
+    try { local = JSON.parse(localStorage.getItem('cs_places') || '[]') || []; } catch (e) { local = []; }
+    if (!Array.isArray(local)) local = [];
+    local.forEach(function (p) { addCard(p, false); });
+    // merge published places from the cloud
+    try {
+        if (window.firebase && firebase.apps.length) {
+            firebase.database().ref('users/__public__/places').once('value').then(function (snap) {
+                snap.forEach(function (child) { addCard(child.val(), true); });
+            }).catch(function (e) { console.warn('[places] cloud list failed:', e); });
+        }
+    } catch (e) { console.warn('[places] cloud list error:', e); }
 })();
 </script>
 </body>

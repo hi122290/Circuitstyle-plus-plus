@@ -13,7 +13,8 @@ import { setupMobileControls, isMobile } from './modules/mobile_controls.js';
 import { appendChatMessage } from './modules/safechat.js';
 import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost, deleteBlockByMesh, deleteBlockById, findBlockAtPoint, stampBuild, toggleSaveMenu, closeSaveMenu } from './modules/build.js';
 import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js';
-import { PlaceRuntime, getPlace } from './modules/place_runtime.js?v=2';
+import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=2';
+import { fetchRemotePlace } from './modules/place_cloud.js?v=1';
 
 
 window.THREE_REF = THREE;
@@ -851,12 +852,29 @@ async function init() {
         console.warn('Failed to apply texture patch unfortunanantyleynt', e);
     }
 
+    // ── Published place mode (?place=<id>): resolve the manifest from this
+    //    browser first, then the cloud, and strip the default baseplate +
+    //    spawn pads — the place brings its own geometry. Not every game is a
+    //    baseplate. ──
+    const placeIdParam = new URLSearchParams(window.location.search).get('place');
+    let placeManifest = placeIdParam ? getPlace(placeIdParam) : null;
+    if (placeIdParam && !placeManifest) {
+        try {
+            const remote = await fetchRemotePlace(placeIdParam);
+            if (remote) {
+                placeManifest = remote;
+                try { savePlace(remote); } catch (e) {}
+                console.info('[Place] loaded from cloud:', remote.name);
+            } else {
+                console.warn('[Place] place not found locally or in the cloud:', placeIdParam);
+            }
+        } catch (e) {
+            console.warn('[Place] cloud fetch failed:', e);
+        }
+    }
+
     world = setupWorld(scene);
 
-    // ── Published place mode (?place=<id>): the place brings its own geometry,
-    //    so strip the default baseplate + spawn pads. Not every game is a baseplate. ──
-    const placeIdParam = new URLSearchParams(window.location.search).get('place');
-    const placeManifest = placeIdParam ? getPlace(placeIdParam) : null;
     if (placeManifest) {
         for (const m of world.collidables.slice()) {
             if (m && m.parent) m.parent.remove(m);
