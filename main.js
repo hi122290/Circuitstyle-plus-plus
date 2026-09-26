@@ -13,6 +13,7 @@ import { setupMobileControls, isMobile } from './modules/mobile_controls.js';
 import { appendChatMessage } from './modules/safechat.js';
 import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost, deleteBlockByMesh, deleteBlockById, findBlockAtPoint, stampBuild, toggleSaveMenu, closeSaveMenu } from './modules/build.js';
 import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js';
+import { PlaceRuntime, getPlace } from './modules/place_runtime.js?v=1';
 
 
 window.THREE_REF = THREE;
@@ -933,7 +934,10 @@ async function init() {
                 PlayerModule.setHealth(maxHp);
                 window.playerHealth = maxHp;
                 renderHealthBar(maxHp);
-                const spawnPos = new THREE.Vector3(0, 1, 0);
+                // spawn at the published place's spawn point when one is set
+                const spawnPos = (window._placeRuntime && typeof window._placeRuntime._spawnPos === 'function')
+                    ? new THREE.Vector3(...window._placeRuntime._spawnPos())
+                    : new THREE.Vector3(0, 1, 0);
                 // Items are never cleared — player keeps their loadout through death
                 try { if (player && typeof player.setHeldItem === 'function') player.setHeldItem(backpack.getSelectedItem()); } catch (e) {}
                 player.respawn(spawnPos);
@@ -967,6 +971,61 @@ async function init() {
             },
             (delta) => { player.adjustZoom(delta); }
         );
+    }
+
+    // ── Published place loading (?place=<id>, listed on place_select.html) ──
+    try {
+        const placeIdParam = new URLSearchParams(window.location.search).get('place');
+        if (placeIdParam) {
+            const placeManifest = getPlace(placeIdParam);
+            if (placeManifest) {
+                const pdims = PlayerModule.getConfig().dimensions || {};
+                const pScale = 0.028; // matches resolvePhysics AABB scale
+                const placeRuntime = new PlaceRuntime({
+                    scene, camera, renderer,
+                    manifest: placeManifest,
+                    mode: 'game',
+                    adapter: {
+                        getName: () => localStorage.getItem('cs_username') || 'Player',
+                        getPosition: () => (player && player.model
+                            ? { x: player.model.position.x, y: player.model.position.y, z: player.model.position.z }
+                            : { x: 0, y: 0, z: 0 }),
+                        getPlayerBox: () => {
+                            const p = player && player.model ? player.model.position : new THREE.Vector3();
+                            const totalH = ((pdims.legH || 38) + (pdims.torsoH || 38)) * pScale;
+                            const hw = (pdims.torsoW || 32) * pScale / 2;
+                            const hd = (pdims.torsoD || 16) * pScale / 2;
+                            return {
+                                min: new THREE.Vector3(p.x - hw, p.y, p.z - hd),
+                                max: new THREE.Vector3(p.x + hw, p.y + totalH, p.z + hd)
+                            };
+                        },
+                        teleport: (x, y, z) => { if (player && player.respawn) player.respawn(new THREE.Vector3(x, y, z)); },
+                        getHealth: () => PlayerModule.getHealth(),
+                        setHealth: (h) => {
+                            PlayerModule.setHealth(h);
+                            window.playerHealth = PlayerModule.getHealth();
+                            try { renderHealthBar(window.playerHealth); } catch (e) {}
+                        },
+                        damage: (n) => { if (window._onDamageCallback) window._onDamageCallback(n); },
+                        registerCollider: (m) => { if (world && world.collidables) world.collidables.push(m); },
+                        unregisterCollider: (m) => {
+                            if (world && world.collidables) {
+                                const i = world.collidables.indexOf(m);
+                                if (i !== -1) world.collidables.splice(i, 1);
+                            }
+                        }
+                    }
+                });
+                window._placeRuntime = placeRuntime;
+                placeRuntime.start();
+                console.info('[Place] loaded published place:', placeManifest.name);
+            } else {
+                console.warn('[Place] no place found for id', placeIdParam);
+            }
+        }
+    } catch (e) {
+        console.warn('failed to load published place:', e);
     }
 
     //literally the heart of the code, game won't work without this, DON'T REMOVE!!
@@ -1619,6 +1678,7 @@ function animate(now) {
     while (animate._accumulator >= FIXED_STEP) {
         try { player.update(FIXED_STEP); } catch (e) { player.update(); }
         try { game.updateGameLogic(FIXED_STEP); } catch (e) { game.updateGameLogic(); }
+        try { if (window._placeRuntime && window._placeRuntime.running) window._placeRuntime.update(FIXED_STEP); } catch (e) {}
         animate._accumulator -= FIXED_STEP;
     }
 

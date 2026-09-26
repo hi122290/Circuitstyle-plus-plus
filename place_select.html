@@ -42,6 +42,7 @@
         <a class="sidebar-item active" href="#home" data-section="home">Home</a>
         <a class="sidebar-item" href="#about" data-section="about">Player Search</a>
         <a class="sidebar-item" href="#working" data-section="working">Games</a>
+        <a class="sidebar-item" href="./studio.html">Studio</a>
         <a class="sidebar-item" href="#accessories" data-section="accessories">Accessories</a>
         <a class="sidebar-item" href="#new-players" data-section="new-players">New Players</a>
         <a class="sidebar-item" href="#made" data-section="made">About Us</a>
@@ -126,7 +127,7 @@
             <section id="working" class="panel">
                 <div class="panel-titlebar">Games</div>
                 <div class="panel-body">
-                    <div class="games-grid">
+                    <div class="games-grid" id="games-grid">
                         <a class="game-card" href="./index.html">
                             <div class="game-card-thumb">
                                 <img src="./Studs_Texture.png" alt="Baseplate">
@@ -936,6 +937,39 @@ function closePreview() {
 }
 previewClose.addEventListener('click', closePreview);
 previewBackdrop.addEventListener('click', closePreview);
+</script>
+
+<script>
+// ── Published places (built in Circuitstyle Studio) ──────────────────────
+(function renderPublishedPlaces() {
+    var grid = document.getElementById('games-grid');
+    if (!grid) return;
+    var places = [];
+    try { places = JSON.parse(localStorage.getItem('cs_places') || '[]') || []; } catch (e) { places = []; }
+    if (!Array.isArray(places)) return;
+    function esc(s) {
+        return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+    places.forEach(function (p) {
+        if (!p || !p.id) return;
+        var card = document.createElement('div');
+        card.className = 'game-card';
+        var thumb = p.thumbnail || './Studs_Texture.png';
+        var name = esc(p.name || 'Untitled Place');
+        card.innerHTML =
+            '<div class="game-card-thumb"><img src="' + thumb + '" alt="' + name + '"></div>' +
+            '<div class="card-body">' +
+            '<h3>' + name + '</h3>' +
+            '<p>' + esc(p.description || 'A place made in Circuitstyle Studio.') + '</p>' +
+            '<span style="display:inline-flex;gap:6px;align-items:center;">' +
+            '<a class="btn btn-green btn-small" href="./index.html?place=' + encodeURIComponent(p.id) + '">Play</a>' +
+            '<a class="btn btn-small" href="./studio.html?place=' + encodeURIComponent(p.id) + '" style="color:#333;">Edit in Studio</a>' +
+            '</span></div>';
+        grid.insertBefore(card, grid.firstChild);
+    });
+})();
 </script>
 </body>
 </html>

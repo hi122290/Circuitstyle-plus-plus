@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circuitstyle Studio</title>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.163.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.163.0/examples/jsm/"
+    }
+}
+</script>
+<style>
+/* ============================================================
+   Circuitstyle Studio — single-file level editor
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+    font: 12px Tahoma, Verdana, Arial, sans-serif;
+    background: #1b1d21;
+    color: #d6d6d6;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+}
+
+/* ── top bar ─────────────────────────────────────────────── */
+#topbar {
+    height: 40px;
+    background: linear-gradient(#3a3f47, #2c3037);
+    border-bottom: 1px solid #14161a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px;
+    flex: 0 0 auto;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07);
+    z-index: 20;
+}
+#topbar .logo {
+    font-weight: bold;
+    font-size: 13px;
+    color: #7fb3ff;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+}
+#place-name {
+    width: 180px;
+    background: #17191d;
+    border: 1px solid #565b63;
+    color: #eee;
+    padding: 5px 7px;
+    font: 12px Tahoma, sans-serif;
+    border-radius: 2px;
+}
+#place-name:focus { outline: 1px solid #4a90d9; }
+.sep { width: 1px; height: 22px; background: #16181c; border-right: 1px solid #4a4f57; }
+#mode-tabs { display: flex; border: 1px solid #565b63; border-radius: 3px; overflow: hidden; }
+#mode-tabs button {
+    background: #24272c;
+    border: 0;
+    color: #aaa;
+    font: 11px Tahoma, sans-serif;
+    padding: 6px 16px;
+    cursor: pointer;
+}
+#mode-tabs button.active { background: #2f6fb4; color: #fff; }
+#mode-tabs button.play.active { background: #2f9e44; }
+.snap-group { display: flex; align-items: center; gap: 4px; color: #b9bcc2; font-size: 11px; }
+.snap-group input[type="checkbox"] { accent-color: #4a90d9; }
+.snap-group input[type="number"] {
+    width: 46px;
+    background: #17191d;
+    border: 1px solid #565b63;
+    color: #ddd;
+    padding: 3px 4px;
+    font-size: 11px;
+    border-radius: 2px;
+}
+.topbtn {
+    background: linear-gradient(#42474f, #33373d);
+    border: 1px solid #14161a;
+    color: #d8dade;
+    font: 11px Tahoma, sans-serif;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.topbtn:hover { background: linear-gradient(#4c525b, #3a3f46); }
+.topbtn:active { background: #2c3036; }
+.topbtn.green { background: linear-gradient(#37924d, #2a7440); border-color: #14401f; }
+.topbtn.green:hover { background: linear-gradient(#42a85a, #318549); }
+.spacer { flex: 1; }
+
+/* ── main layout ─────────────────────────────────────────── */
+#main { flex: 1; display: flex; min-height: 0; }
+
+#left, #right {
+    background: #24272c;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    z-index: 10;
+}
+#left { width: 210px; border-right: 1px solid #14161a; }
+#right { width: 300px; border-left: 1px solid #14161a; }
+
+.panel-title {
+    background: linear-gradient(#3a3f47, #31353c);
+    border-bottom: 1px solid #14161a;
+    border-top: 1px solid #4a4f57;
+    color: #cfd2d8;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 6px 9px;
+    letter-spacing: 0.3px;
+    flex: 0 0 auto;
+}
+.panel-title:first-child { border-top: 0; }
+
+/* parts palette */
+#parts-palette {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 8px;
+    flex: 0 0 auto;
+}
+.part-btn {
+    background: linear-gradient(#3d434b, #2f343a);
+    border: 1px solid #14161a;
+    color: #d4d7dc;
+    font: 11px Tahoma, sans-serif;
+    padding: 9px 4px;
+    cursor: pointer;
+    border-radius: 3px;
+    text-align: center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07);
+}
+.part-btn:hover { background: linear-gradient(#4a5159, #3a4047); border-color: #4a90d9; }
+.part-btn:active { background: #2a2e33; }
+.part-btn .glyph {
+    display: block;
+    width: 22px; height: 16px;
+    margin: 0 auto 5px;
+    background: #8a919b;
+    border: 1px solid #22252a;
+}
+.part-btn .glyph.sphere { border-radius: 50%; width: 18px; height: 18px; }
+.part-btn .glyph.cylinder { border-radius: 4px / 8px; }
+.part-btn .glyph.wedge { clip-path: polygon(0% 100%, 100% 100%, 100% 0%); }
+.part-btn .glyph.ground { height: 8px; width: 26px; background: #3ca040; }
+
+/* hierarchy */
+#hierarchy {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+    min-height: 60px;
+}
+.hier-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: #c3c6cc;
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: 11px;
+}
+.hier-row:hover { background: #2d3238; }
+.hier-row.sel { background: #2f5f96; color: #fff; }
+.hier-row .dot {
+    width: 10px; height: 10px;
+    border: 1px solid #101214;
+    background: #a3a3a3;
+    flex: 0 0 auto;
+}
+.hier-row .hier-name { overflow: hidden; text-overflow: ellipsis; }
+.hier-row .spawn-star { color: #ffd34d; font-size: 10px; }
+
+/* viewport */
+#viewport {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+    background: #101114;
+    overflow: hidden;
+}
+#gl { display: block; width: 100%; height: 100%; }
+#viewport.playing #gl { cursor: crosshair; }
+#play-banner {
+    position: absolute;
+    left: 50%; top: 10px;
+    transform: translateX(-50%);
+    background: rgba(20, 60, 30, 0.9);
+    border: 1px solid #2f9e44;
+    color: #bff0c8;
+    font-size: 11px;
+    padding: 5px 14px;
+    border-radius: 3px;
+    z-index: 50;
+    display: none;
+    pointer-events: none;
+}
+#viewport.playing #play-banner { display: block; }
+
+/* right tabs */
+#rtabs { display: flex; flex: 0 0 auto; border-bottom: 1px solid #14161a; }
+#rtabs button {
+    flex: 1;
+    background: #2a2e34;
+    border: 0;
+    border-right: 1px solid #14161a;
+    color: #9aa0a8;
+    font: 11px Tahoma, sans-serif;
+    padding: 8px 2px;
+    cursor: pointer;
+}
+#rtabs button.active { background: #31353c; color: #fff; box-shadow: inset 0 -2px 0 #4a90d9; }
+#rtab-body { flex: 1; overflow-y: auto; padding: 10px; min-height: 0; }
+.rtab { display: none; }
+.rtab.active { display: block; }
+
+/* form controls */
+.fld { margin-bottom: 9px; }
+.fld label {
+    display: block;
+    color: #9ba1a9;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 3px;
+}
+.fld input[type="text"], .fld input[type="number"], .fld select, .fld textarea {
+    width: 100%;
+    background: #17191d;
+    border: 1px solid #565b63;
+    color: #e4e6ea;
+    padding: 5px 6px;
+    font: 12px Tahoma, sans-serif;
+    border-radius: 2px;
+}
+.fld input:focus, .fld select:focus, .fld textarea:focus { outline: 1px solid #4a90d9; }
+.fld textarea { font-family: Consolas, 'Courier New', monospace; font-size: 11px; resize: vertical; line-height: 1.45; }
+.vec { display: flex; gap: 5px; }
+.vec .axis { flex: 1; position: relative; }
+.vec .axis span {
+    position: absolute; left: 5px; top: 50%; transform: translateY(-50%);
+    color: #6d747d; font-size: 10px; pointer-events: none;
+}
+.vec .axis input { padding-left: 15px !important; }
+.row { display: flex; gap: 6px; }
+.row > * { flex: 1; }
+.chk { display: flex; align-items: center; gap: 6px; color: #c8cbd1; font-size: 11px; margin-bottom: 7px; }
+.chk input { accent-color: #4a90d9; }
+
+/* color swatches */
+#color-presets { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.swatch {
+    width: 18px; height: 18px;
+    border: 1px solid #101214;
+    cursor: pointer;
+    border-radius: 2px;
+}
+.swatch:hover { transform: scale(1.15); border-color: #fff; }
+
+/* texture atlas */
+#texture-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.tex-btn {
+    width: 44px; height: 44px;
+    border: 2px solid #101214;
+    background: #333;
+    cursor: pointer;
+    padding: 0;
+    background-size: cover;
+    border-radius: 2px;
+    position: relative;
+}
+.tex-btn.sel { border-color: #4ad06a; }
+.tex-btn span {
+    position: absolute; left: 0; right: 0; bottom: -14px;
+    font-size: 8px; color: #8b9198; text-align: center;
+}
+#texture-grid { margin-bottom: 18px; }
+
+/* scripts / tools lists */
+.mini-list { border: 1px solid #3c4148; border-radius: 3px; margin-bottom: 8px; }
+.mini-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #30343a;
+    font-size: 11px;
+    color: #c9ccd2;
+}
+.mini-row:last-child { border-bottom: 0; }
+.mini-row:hover { background: #2c3037; }
+.mini-row.sel { background: #2f5f96; color: #fff; }
+.mini-row .badge {
+    font-size: 9px;
+    background: #444a52;
+    color: #cdd2d8;
+    padding: 1px 5px;
+    border-radius: 7px;
+    flex: 0 0 auto;
+}
+.mini-row .badge.ev-touched { background: #7a4a1d; }
+.mini-row .badge.ev-clicked { background: #1d5a7a; }
+.mini-row .badge.ev-update { background: #3d6b2a; }
+.mini-row .badge.ev-start { background: #5b2a7a; }
+.mini-row .grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.addbtn {
+    width: 100%;
+    background: linear-gradient(#3d434b, #2f343a);
+    border: 1px dashed #5a6069;
+    color: #b9bec5;
+    font: 11px Tahoma, sans-serif;
+    padding: 7px;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-bottom: 9px;
+}
+.addbtn:hover { border-color: #4a90d9; color: #fff; }
+.editor-box {
+    border: 1px solid #3c4148;
+    background: #1e2126;
+    border-radius: 3px;
+    padding: 8px;
+    margin-bottom: 10px;
+}
+.editor-box .box-title { font-weight: bold; font-size: 11px; color: #8fbaff; margin-bottom: 7px; }
+.minibtn {
+    background: linear-gradient(#42474f, #33373d);
+    border: 1px solid #14161a;
+    color: #d8dade;
+    font: 11px Tahoma, sans-serif;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+.minibtn:hover { background: linear-gradient(#4c525b, #3a3f46); }
+.minibtn.danger { background: linear-gradient(#a03434, #7c2626); border-color: #401414; }
+.minibtn.blue { background: linear-gradient(#3572b3, #2a5a91); border-color: #16344f; }
+.script-area { min-height: 150px; }
+.err-line { color: #ff7a7a; font-size: 11px; margin-top: 5px; min-height: 14px; }
+.ok-line { color: #6fd382; font-size: 11px; margin-top: 5px; min-height: 14px; }
+
+/* status bar + console */
+#statusbar {
+    height: 24px;
+    background: #24272c;
+    border-top: 1px solid #14161a;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 10px;
+    font-size: 10px;
+    color: #8e949c;
+    flex: 0 0 auto;
+    z-index: 20;
+}
+#statusbar .st-mode { color: #7fb3ff; font-weight: bold; }
+#statusbar .st-mode.play { color: #6fd382; }
+#console-toggle { cursor: pointer; color: #b9bec5; }
+#console-toggle:hover { color: #fff; }
+#console-drawer {
+    height: 130px;
+    background: #14161a;
+    border-top: 1px solid #333;
+    overflow-y: auto;
+    padding: 6px 10px;
+    font: 11px Consolas, 'Courier New', monospace;
+    color: #9fd39f;
+    display: none;
+    flex: 0 0 auto;
+    z-index: 20;
+}
+#console-drawer.open { display: block; }
+#console-drawer .c-err { color: #ff8080; }
+#console-drawer .c-warn { color: #e8c96a; }
+#console-drawer .c-info { color: #8fb6e8; }
+
+/* modals */
+.modal-back {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+}
+.modal-back.open { display: flex; }
+.modal {
+    background: #26292f;
+    border: 1px solid #101214;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+    width: 460px;
+    max-width: 92vw;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.modal.wide { width: 640px; }
+.modal-head {
+    background: linear-gradient(#3a3f47, #31353c);
+    border-bottom: 1px solid #14161a;
+    padding: 9px 12px;
+    font-weight: bold;
+    font-size: 12px;
+    color: #dfe2e7;
+    display: flex;
+    justify-content: space-between;
+}
+.modal-head .x { cursor: pointer; color: #999; font-weight: normal; padding: 0 4px; }
+.modal-head .x:hover { color: #fff; }
+.modal-body { padding: 12px; overflow-y: auto; }
+.modal-foot {
+    border-top: 1px solid #14161a;
+    padding: 9px 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    background: #22252a;
+}
+#pub-thumb {
+    width: 100%;
+    height: 170px;
+    background: #111;
+    border: 1px solid #101214;
+    object-fit: cover;
+    margin-bottom: 10px;
+    border-radius: 2px;
+}
+.help-body { font-size: 12px; line-height: 1.55; color: #c9ccd2; user-select: text; }
+.help-body h3 { color: #7fb3ff; font-size: 12px; margin: 12px 0 4px; }
+.help-body h3:first-child { margin-top: 0; }
+.help-body code {
+    background: #17191d;
+    border: 1px solid #3c4148;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font: 11px Consolas, monospace;
+    color: #a8e6a1;
+}
+.help-body pre {
+    background: #17191d;
+    border: 1px solid #3c4148;
+    padding: 7px 9px;
+    border-radius: 3px;
+    font: 11px/1.5 Consolas, monospace;
+    color: #a8e6a1;
+    overflow-x: auto;
+    margin: 5px 0;
+}
+.help-body ul { padding-left: 18px; }
+
+/* studio toast */
+#studio-toast {
+    position: fixed;
+    left: 50%; top: 54px;
+    transform: translateX(-50%);
+    background: rgba(24, 27, 32, 0.96);
+    border: 1px solid #4a90d9;
+    color: #e8eef7;
+    font-size: 12px;
+    padding: 8px 18px;
+    border-radius: 3px;
+    z-index: 90000;
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+#studio-toast.show { opacity: 1; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #1a1c20; }
+::-webkit-scrollbar-thumb { background: #3d434b; border: 2px solid #1a1c20; border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: #4d545d; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+    <span class="logo">Circuitstyle Studio</span>
+    <input id="place-name" type="text" value="My Place" spellcheck="false">
+    <div class="sep"></div>
+    <div id="mode-tabs">
+        <button id="tab-edit" class="active">Edit</button>
+        <button id="tab-play" class="play">Play</button>
+    </div>
+    <div class="sep"></div>
+    <div class="snap-group">
+        <label><input type="checkbox" id="snap-move" checked> Move</label>
+        <input type="number" id="snap-move-step" value="1" step="0.5" min="0.1" title="Move snap (studs)">
+        <label><input type="checkbox" id="snap-rot" checked> Rot</label>
+        <input type="number" id="snap-rot-step" value="15" step="5" min="1" title="Rotation snap (degrees)">
+        <label><input type="checkbox" id="snap-scale" checked> Scale</label>
+        <input type="number" id="snap-scale-step" value="0.25" step="0.05" min="0.05" title="Scale snap">
+    </div>
+    <div class="sep"></div>
+    <button class="topbtn" id="btn-space" title="Gizmo coordinate space">World</button>
+    <div class="spacer"></div>
+    <button class="topbtn" id="btn-export" title="Download place as JSON">Export</button>
+    <button class="topbtn" id="btn-import" title="Import place from JSON">Import</button>
+    <input type="file" id="import-file" accept=".json,application/json" style="display:none">
+    <button class="topbtn green" id="btn-publish">Publish</button>
+    <button class="topbtn" id="btn-help" title="Scripting API and shortcuts">Help</button>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+    <!-- LEFT -->
+    <div id="left">
+        <div class="panel-title">Parts</div>
+        <div id="parts-palette">
+            <button class="part-btn" data-type="box"><span class="glyph"></span>Box</button>
+            <button class="part-btn" data-type="sphere"><span class="glyph sphere"></span>Sphere</button>
+            <button class="part-btn" data-type="cylinder"><span class="glyph cylinder"></span>Cylinder</button>
+            <button class="part-btn" data-type="wedge"><span class="glyph wedge"></span>Wedge</button>
+            <button class="part-btn" data-type="ground" style="grid-column: span 2"><span class="glyph ground"></span>Terrain</button>
+        </div>
+        <div class="panel-title">Hierarchy</div>
+        <div id="hierarchy"></div>
+    </div>
+
+    <!-- VIEWPORT -->
+    <div id="viewport">
+        <canvas id="gl"></canvas>
+        <div id="play-banner">PLAYING — Esc or Edit tab to stop</div>
+    </div>
+
+    <!-- RIGHT -->
+    <div id="right">
+        <div id="rtabs">
+            <button data-tab="properties" class="active">Properties</button>
+            <button data-tab="scripts">Scripts</button>
+            <button data-tab="tools">Tools</button>
+        </div>
+        <div id="rtab-body">
+            <!-- PROPERTIES TAB -->
+            <div class="rtab active" id="rtab-properties">
+                <div id="props-empty" style="color:#777; font-size:11px; padding:8px 0;">Select a part to edit its properties.</div>
+                <div id="props-form" style="display:none;">
+                    <div class="fld"><label>Name</label><input type="text" id="prop-name"></div>
+                    <div class="fld"><label>Type</label><input type="text" id="prop-type" readonly style="color:#888"></div>
+                    <div class="fld"><label>Parent</label><select id="prop-parent"></select></div>
+                    <div class="fld"><label>Position</label>
+                        <div class="vec">
+                            <div class="axis"><span>X</span><input type="number" id="prop-px" step="0.5"></div>
+                            <div class="axis"><span>Y</span><input type="number" id="prop-py" step="0.5"></div>
+                            <div class="axis"><span>Z</span><input type="number" id="prop-pz" step="0.5"></div>
+                        </div>
+                    </div>
+                    <div class="fld"><label>Rotation (deg)</label>
+                        <div class="vec">
+                            <div class="axis"><span>X</span><input type="number" id="prop-rx" step="15"></div>
+                            <div class="axis"><span>Y</span><input type="number" id="prop-ry" step="15"></div>
+                            <div class="axis"><span>Z</span><input type="number" id="prop-rz" step="15"></div>
+                        </div>
+                    </div>
+                    <div class="fld"><label>Scale</label>
+                        <div class="vec">
+                            <div class="axis"><span>X</span><input type="number" id="prop-sx" step="0.25" min="0.05"></div>
+                            <div class="axis"><span>Y</span><input type="number" id="prop-sy" step="0.25" min="0.05"></div>
+                            <div class="axis"><span>Z</span><input type="number" id="prop-sz" step="0.25" min="0.05"></div>
+                        </div>
+                    </div>
+                    <div class="panel-title" style="margin:12px -10px 9px;">Material</div>
+                    <div class="fld"><label>Color</label><input type="color" id="prop-color" value="#a3a3a3" style="width:100%;height:28px;padding:1px;background:#17191d;border:1px solid #565b63;">
+                        <div id="color-presets"></div>
+                    </div>
+                    <div class="fld"><label>Finish</label><select id="prop-material"></select></div>
+                    <div class="fld"><label>Texture</label>
+                        <div id="texture-grid"></div>
+                        <button class="minibtn" id="btn-upload-tex" style="width:100%">Upload Image...</button>
+                        <input type="file" id="upload-tex-file" accept="image/*" style="display:none">
+                    </div>
+                    <div class="panel-title" style="margin:12px -10px 9px;">Behavior</div>
+                    <label class="chk"><input type="checkbox" id="prop-collidable" checked> Collidable</label>
+                    <label class="chk"><input type="checkbox" id="prop-visible" checked> Visible</label>
+                    <div class="fld"><label>Damage on touch</label><input type="number" id="prop-damage" value="0" step="5" min="0"></div>
+                    <label class="chk"><input type="checkbox" id="prop-spawn"> Player spawn point</label>
+                    <div class="row" style="margin-top:10px;">
+                        <button class="minibtn" id="btn-duplicate">Duplicate</button>
+                        <button class="minibtn danger" id="btn-delete">Delete</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCRIPTS TAB -->
+            <div class="rtab" id="rtab-scripts">
+                <button class="addbtn" id="btn-add-script">+ New Script</button>
+                <div class="mini-list" id="script-list"></div>
+                <div class="editor-box" id="script-editor" style="display:none;">
+                    <div class="box-title">Script Editor</div>
+                    <div class="fld"><label>Name</label><input type="text" id="se-name"></div>
+                    <div class="row">
+                        <div class="fld"><label>Event</label><select id="se-event">
+                            <option value="start">start (run once)</option>
+                            <option value="update">update (every frame)</option>
+                            <option value="touched">touched (on contact)</option>
+                            <option value="clicked">clicked (on click)</option>
+                        </select></div>
+                        <div class="fld"><label>Attach to</label><select id="se-part"></select></div>
+                    </div>
+                    <div class="fld"><label>Template</label><select id="se-template">
+                        <option value="">(blank)</option>
+                        <option value="flash">Change color on touch</option>
+                        <option value="spin">Spin every frame</option>
+                        <option value="welcome">Welcome toast on start</option>
+                        <option value="round">Round timer + broadcast</option>
+                        <option value="lava">Damage on touch</option>
+                        <option value="give">Give a tool on start</option>
+                        <option value="global-log">Log every collision (global)</option>
+                        <option value="bouncy">Launch the player on touch</option>
+                    </select></div>
+                    <div class="fld"><label>Code (JavaScript)</label><textarea id="se-code" class="script-area" spellcheck="false"></textarea></div>
+                    <div class="row">
+                        <button class="minibtn blue" id="se-save">Save Script</button>
+                        <button class="minibtn danger" id="se-delete">Delete</button>
+                    </div>
+                    <div id="se-err" class="err-line"></div>
+                </div>
+                <div style="color:#777;font-size:10px;line-height:1.5;">Scripts run in Play mode and in published places. See Help for the game API.</div>
+            </div>
+
+            <!-- TOOLS TAB -->
+            <div class="rtab" id="rtab-tools">
+                <button class="addbtn" id="btn-add-tool">+ New Tool</button>
+                <div class="mini-list" id="tool-list"></div>
+                <div class="editor-box" id="tool-editor" style="display:none;">
+                    <div class="box-title">Tool Editor</div>
+                    <div class="row">
+                        <div class="fld"><label>Name</label><input type="text" id="te-name"></div>
+                        <div class="fld"><label>ID</label><input type="text" id="te-id" readonly style="color:#888"></div>
+                    </div>
+                    <div class="fld"><label>Description</label><input type="text" id="te-desc"></div>
+                    <div class="fld"><label>Chip color</label><input type="color" id="te-color" value="#4a90d9" style="width:100%;height:26px;padding:1px;background:#17191d;border:1px solid #565b63;"></div>
+                    <div class="fld"><label>onEquip code (runs when equipped)</label><textarea id="te-equip" class="script-area" style="min-height:70px" spellcheck="false"></textarea></div>
+                    <div class="fld"><label>onActivate code (runs when used — F key)</label><textarea id="te-activate" class="script-area" style="min-height:90px" spellcheck="false"></textarea></div>
+                    <label class="chk"><input type="checkbox" id="te-start"> Give to player when place starts</label>
+                    <div class="row">
+                        <button class="minibtn blue" id="te-save">Save Tool</button>
+                        <button class="minibtn danger" id="te-delete">Delete</button>
+                    </div>
+                    <div id="te-err" class="err-line"></div>
+                </div>
+                <div style="color:#777;font-size:10px;line-height:1.5;">Tools live in the player hotbar. Press 1-9 to equip, F to activate. Scripts can also manage them with <code style="color:#a8e6a1">game.inventory</code>.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STATUS + CONSOLE -->
+<div id="statusbar">
+    <span class="st-mode" id="st-mode">EDIT</span>
+    <span id="st-sel">No selection</span>
+    <span id="st-parts">0 parts</span>
+    <span id="st-snap">snap: move 1 / rot 15 / scale 0.25</span>
+    <div class="spacer"></div>
+    <span id="console-toggle">Console</span>
+</div>
+<div id="console-drawer"></div>
+
+<!-- PUBLISH MODAL -->
+<div class="modal-back" id="publish-modal">
+    <div class="modal">
+        <div class="modal-head">Publish Place <span class="x" data-close="publish-modal">x</span></div>
+        <div class="modal-body">
+            <img id="pub-thumb" alt="Place thumbnail">
+            <div class="fld"><label>Place name</label><input type="text" id="pub-name"></div>
+            <div class="fld"><label>Description</label><textarea id="pub-desc" style="min-height:60px" spellcheck="false"></textarea></div>
+            <div id="pub-result" style="font-size:11px;color:#6fd382;min-height:16px;"></div>
+        </div>
+        <div class="modal-foot">
+            <button class="minibtn" data-close="publish-modal">Cancel</button>
+            <button class="minibtn blue" id="pub-open" style="display:none">Open Games Page</button>
+            <button class="minibtn" id="pub-do" style="background:linear-gradient(#37924d,#2a7440);border-color:#14401f;">Save &amp; Publish</button>
+        </div>
+    </div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="modal-back" id="help-modal">
+    <div class="modal wide">
+        <div class="modal-head">Studio Help — Scripting API &amp; Shortcuts <span class="x" data-close="help-modal">x</span></div>
+        <div class="modal-body help-body">
+            <h3>Editing</h3>
+            <ul>
+                <li>Click parts in the viewport or hierarchy to select. Drag the gizmo to move/rotate/scale.</li>
+                <li>Keys: <code>W</code> move, <code>E</code> rotate, <code>R</code> scale, <code>Ctrl+D</code> duplicate, <code>Delete</code> remove, <code>Esc</code> deselect / stop play.</li>
+                <li>Orbit: left-drag. Pan: right-drag. Zoom: wheel.</li>
+            </ul>
+            <h3>Play mode</h3>
+            <p>Play runs your scripts with a test player: <code>WASD</code> move, <code>Space</code> jump, right-drag look, <code>1-9</code> equip tools, <code>F</code> use tool, <code>Esc</code> stop. Changes made by scripts are discarded when you stop.</p>
+            <h3>Script events</h3>
+            <ul>
+                <li><code>start</code> — once when the place starts (attach to a part or global).</li>
+                <li><code>update</code> — every frame.</li>
+                <li><code>touched</code> — when something hits the part (player, or a moved/spawned part).</li>
+                <li><code>clicked</code> — when the player clicks the part in Play mode.</li>
+            </ul>
+            <h3>Global game API (all scripts)</h3>
+<pre>// objects
+game.parts                  // array of all parts
+game.getPart('My Part')     // by name or id
+game.localPlayer            // .name .health .position .teleport(x,y,z)
+game.localPlayer.damage(25) // .heal(25)
+game.players                // array of players
+
+// spawn / destroy
+game.spawnPart({ type: 'box', name: 'Wall', position: [0, 2, 0],
+                 color: '#c04040', scale: [4, 1, 1] })
+game.destroy(partOrId)
+
+// events + timers
+game.on('roundStart', fn)   // also: roundEnd, timer, touched,
+                            // clicked, playerSpawn, playerDamaged
+game.emit('myEvent', data)
+game.startRound(30)         // emits roundStart, then timer, then roundEnd
+game.after(2, fn)           // one-shot timer (seconds)
+game.every(1, fn)           // repeating timer
+game.cancel(timerId)
+
+// inventory + tools
+game.inventory.give('jetpack')
+game.inventory.remove('jetpack')
+game.inventory.has('jetpack')
+game.inventory.equipped     // current tool or null
+game.tools.define({ id: 'jet', name: 'Jetpack',
+    onEquip() { game.toast('Equipped!') },
+    onActivate() { player.teleport(player.position.x, 20, player.position.z) } })
+
+game.toast('message')       // on-screen banner
+game.log('debug')           // to the console drawer</pre>
+            <h3>Part API (the <code>part</code> argument)</h3>
+<pre>part.name / part.type / part.parent
+part.position.x = 4          // world/local position (y up)
+part.rotation.y += 0.05      // radians
+part.scale.x = 2
+part.color = '#ff5050'
+part.setPosition(x, y, z)
+part.setRotationDeg(0, 90, 0)
+part.onTouch(other =&gt; ...)   // dynamic listener
+part.onClick(other =&gt; ...)
+part.destroy()</pre>
+            <h3>Tool API</h3>
+            <p>Define tools in the Tools tab (equipped/activated code) or from a script with
+            <code>game.tools.define(...)</code>. Scripts receive <code>(game, tool, player)</code>
+            in tool code. Inventory is saved into the place manifest on publish.</p>
+        </div>
+        <div class="modal-foot"><button class="minibtn" data-close="help-modal">Close</button></div>
+    </div>
+</div>
+
+<div id="studio-toast"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import {
+    PlaceRuntime, emptyManifest, defaultPartDef, genId,
+    createPartGeometry, buildPartMaterial, getAtlasTexture,
+    PART_BASE_SIZES, PART_TYPE_NAMES, PART_COLOR_PRESETS,
+    MATERIAL_PRESETS, ATLAS_KEYS, fileToTextureDataURL,
+    listPlaces, getPlace, savePlace, compileScript
+} from './modules/place_runtime.js?v=1';
+
+// ══════════════════════════════════════════════════════════
+// STAGE 1 — viewport, primitives, gizmos, hierarchy
+// ══════════════════════════════════════════════════════════
+
+const $ = (id) => document.getElementById(id);
+const canvas = $('gl');
+const viewportEl = $('viewport');
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.setClearColor(0x87ceeb);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+scene.fog = new THREE.Fog(0x87ceeb, 160, 420);
+
+const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 2000);
+camera.position.set(22, 16, 22);
+
+const orbit = new OrbitControls(camera, canvas);
+orbit.target.set(0, 2, 0);
+orbit.enableDamping = true;
+orbit.dampingFactor = 0.12;
+orbit.update();
+
+// lights
+const hemi = new THREE.HemisphereLight(0xdfeaf5, 0x6a6f5e, 0.95);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff4e0, 1.6);
+sun.position.set(40, 70, 25);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -90;
+sun.shadow.camera.right = 90;
+sun.shadow.camera.top = 90;
+sun.shadow.camera.bottom = -90;
+sun.shadow.camera.far = 260;
+sun.shadow.bias = -0.0004;
+scene.add(sun);
+
+// grid
+const grid = new THREE.GridHelper(160, 80, 0x5a6068, 0x3d434b);
+grid.position.y = 0.012;
+grid.material.opacity = 0.6;
+grid.material.transparent = true;
+scene.add(grid);
+const axisX = new THREE.Mesh(
+    new THREE.BoxGeometry(160, 0.01, 0.06),
+    new THREE.MeshBasicMaterial({ color: 0xc04040, transparent: true, opacity: 0.45 })
+);
+axisX.position.y = 0.014;
+scene.add(axisX);
+const axisZ = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.01, 160),
+    new THREE.MeshBasicMaterial({ color: 0x4060c0, transparent: true, opacity: 0.45 })
+);
+axisZ.position.y = 0.014;
+scene.add(axisZ);
+
+// transform gizmo
+const gizmo = new TransformControls(camera, canvas);
+scene.add(gizmo);
+let gizmoDragging = false;
+gizmo.addEventListener('dragging-changed', (e) => {
+    gizmoDragging = !!e.value;
+    orbit.enabled = !e.value && mode === 'edit';
+});
+gizmo.addEventListener('objectChange', () => {
+    if (selectedId) refreshPropsFromMesh();
+    updateSelectionBox();
+});
+
+// ── place / runtime state ────────────────────────────────
+let placeId = new URLSearchParams(location.search).get('place');
+let manifest = (placeId && getPlace(placeId)) || emptyManifest('My Place');
+let rt = null;                 // PlaceRuntime (edit-phase: built, not running)
+let mode = 'edit';             // 'edit' | 'play'
+let playSnapshot = null;
+let selectedId = null;
+let selectionBox = null;
+
+function makeRuntime() {
+    const r = new PlaceRuntime({ scene, camera, renderer, manifest, mode: 'studio' });
+    r.onLog = (msg) => log(msg, 'info');
+    return r;
+}
+
+rt = makeRuntime();
+rt.buildScene();
+
+function log(msg, cls) {
+    const drawer = $('console-drawer');
+    const line = document.createElement('div');
+    if (cls) line.className = 'c-' + cls;
+    const t = new Date();
+    const hh = String(t.getHours()).padStart(2, '0');
+    const mm = String(t.getMinutes()).padStart(2, '0');
+    const ss = String(t.getSeconds()).padStart(2, '0');
+    line.textContent = `[${hh}:${mm}:${ss}] ${msg}`;
+    drawer.appendChild(line);
+    while (drawer.children.length > 300) drawer.removeChild(drawer.firstChild);
+    drawer.scrollTop = drawer.scrollHeight;
+}
+
+function studioToast(msg) {
+    const el = $('studio-toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(studioToast._t);
+    studioToast._t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ── selection ────────────────────────────────────────────
+function getEntry(id) { return rt.parts.get(id); }
+function selectedEntry() { return selectedId ? rt.parts.get(selectedId) : null; }
+
+function selectPart(id) {
+    if (mode !== 'edit') return;
+    selectedId = id && rt.parts.has(id) ? id : null;
+    const entry = selectedEntry();
+    if (entry) {
+        if (!selectionBox) {
+            selectionBox = new THREE.BoxHelper(entry.mesh, 0x29b6ff);
+            scene.add(selectionBox);
+        } else {
+            selectionBox.setFromObject(entry.mesh);
+            selectionBox.visible = true;
+        }
+        gizmo.attach(entry.mesh);
+    } else {
+        if (selectionBox) selectionBox.visible = false;
+        gizmo.detach();
+    }
+    refreshHierarchySelection();
+    refreshPropsUI();
+    updateStatus();
+}
+
+function updateSelectionBox() {
+    const entry = selectedEntry();
+    if (selectionBox && entry) selectionBox.setFromObject(entry.mesh);
+}
+
+// viewport picking (click without drag)
+let downPos = null;
+canvas.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    downPos = { x: e.clientX, y: e.clientY };
+});
+canvas.addEventListener('pointerup', (e) => {
+    if (e.button !== 0 || !downPos || mode !== 'edit' || gizmoDragging) { downPos = null; return; }
+    const moved = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
+    downPos = null;
+    if (moved > 5) return;
+    const rect = canvas.getBoundingClientRect();
+    const ndc = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+    );
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(ndc, camera);
+    const meshes = [];
+    for (const [, entry] of rt.parts) entry.mesh.traverse((n) => { if (n.isMesh && n.visible) meshes.push(n); });
+    const hits = ray.intersectObjects(meshes, false);
+    if (hits.length) {
+        let node = hits[0].object;
+        while (node && !node.userData.partId && node.parent) node = node.parent;
+        selectPart(node && node.userData.partId ? node.userData.partId : null);
+    } else {
+        selectPart(null);
+    }
+});
+
+// ── snapping ─────────────────────────────────────────────
+function applySnaps() {
+    gizmo.setTranslationSnap($('snap-move').checked ? Math.max(0.1, parseFloat($('snap-move-step').value) || 1) : null);
+    gizmo.setRotationSnap($('snap-rot').checked ? THREE.MathUtils.degToRad(Math.max(1, parseFloat($('snap-rot-step').value) || 15)) : null);
+    gizmo.setScaleSnap($('snap-scale').checked ? Math.max(0.05, parseFloat($('snap-scale-step').value) || 0.25) : null);
+    $('st-snap').textContent = `snap: move ${$('snap-move').checked ? ($('snap-move-step').value) : 'off'} / rot ${$('snap-rot').checked ? ($('snap-rot-step').value + '°') : 'off'} / scale ${$('snap-scale').checked ? $('snap-scale-step').value : 'off'}`;
+}
+['snap-move', 'snap-rot', 'snap-scale', 'snap-move-step', 'snap-rot-step', 'snap-scale-step'].forEach((id) => {
+    $(id).addEventListener('input', applySnaps);
+});
+applySnaps();
+
+let gizmoSpace = 'world';
+$('btn-space').addEventListener('click', () => {
+    gizmoSpace = gizmoSpace === 'world' ? 'local' : 'world';
+    gizmo.setSpace(gizmoSpace);
+    $('btn-space').textContent = gizmoSpace === 'world' ? 'World' : 'Local';
+});
+
+// ── part creation ────────────────────────────────────────
+function uniqueName(base) {
+    const names = new Set(Array.from(rt.parts.values()).map((e) => e.def.name));
+    if (!names.has(base)) return base;
+    let i = 2;
+    while (names.has(base + ' ' + i)) i++;
+    return base + ' ' + i;
+}
+
+function addPart(type) {
+    if (mode !== 'edit') return;
+    const def = defaultPartDef(type);
+    def.name = uniqueName(def.name);
+    const size = PART_BASE_SIZES[type];
+    if (type === 'ground') {
+        def.position = [0, -size.h / 2, 0];
+    } else {
+        const tx = Math.round(orbit.target.x * 2) / 2;
+        const tz = Math.round(orbit.target.z * 2) / 2;
+        // avoid exact overlaps: bump up if something is already there
+        let y = size.h / 2;
+        for (const [, entry] of rt.parts) {
+            const p = entry.mesh.position;
+            if (Math.abs(p.x - tx) < 0.3 && Math.abs(p.z - tz) < 0.3 && p.y > y - 0.1) {
+                y = p.y + size.h;
+            }
+        }
+        def.position = [tx, y, tz];
+    }
+    rt.spawnPart(def);
+    refreshHierarchy();
+    updateStatus();
+    selectPart(def.id);
+    log(`added ${PART_TYPE_NAMES[type] || type} "${def.name}"`);
+}
+
+document.querySelectorAll('.part-btn').forEach((btn) => {
+    btn.addEventListener('click', () => addPart(btn.dataset.type));
+});
+
+function deleteSelected() {
+    if (mode !== 'edit') return;
+    const entry = selectedEntry();
+    if (!entry) return;
+    const id = entry.def.id;
+    // remove scripts bound to this part
+    manifest.scripts = (manifest.scripts || []).filter((s) => s.part !== id);
+    selectPart(null);
+    rt.destroyPart(id);
+    refreshHierarchy();
+    renderScriptList();
+    updateStatus();
+    log(`deleted "${entry.def.name}"`, 'warn');
+}
+
+function duplicateSelected() {
+    if (mode !== 'edit') return;
+    const entry = selectedEntry();
+    if (!entry) return;
+    const def = JSON.parse(JSON.stringify(entry.def));
+    def.id = genId('part');
+    def.name = uniqueName(entry.def.name + ' copy');
+    def.position = [def.position[0] + 2, def.position[1], def.position[2] + 2];
+    def.parent = rt.parts.has(def.parent) ? def.parent : null;
+    def.scripts = [];
+    rt.spawnPart(def);
+    refreshHierarchy();
+    updateStatus();
+    selectPart(def.id);
+}
+
+$('btn-delete').addEventListener('click', deleteSelected);
+$('btn-duplicate').addEventListener('click', duplicateSelected);
+
+// ── hierarchy panel ──────────────────────────────────────
+function partDepth(def) {
+    let d = 0, cur = def, guard = 0;
+    while (cur && cur.parent && guard++ < 50) {
+        const p = rt.parts.get(cur.parent);
+        if (!p) break;
+        d++;
+        cur = p.def;
+    }
+    return d;
+}
+
+function orderedParts() {
+    const list = Array.from(rt.parts.values());
+    list.sort((a, b) => {
+        const da = partDepth(a.def), db = partDepth(b.def);
+        if (da !== db) return da - db;
+        return a.def.name.localeCompare(b.def.name);
+    });
+    return list;
+}
+
+function refreshHierarchy() {
+    const box = $('hierarchy');
+    box.innerHTML = '';
+    if (rt.parts.size === 0) {
+        box.innerHTML = '<div style="color:#666;font-size:10px;padding:8px 10px;">No parts yet. Add one above.</div>';
+        return;
+    }
+    for (const entry of orderedParts()) {
+        const def = entry.def;
+        const row = document.createElement('div');
+        row.className = 'hier-row' + (def.id === selectedId ? ' sel' : '');
+        row.dataset.id = def.id;
+        const indent = partDepth(def) * 12;
+        const dotColor = def.color || '#a3a3a3';
+        row.innerHTML =
+            `<span style="width:${indent}px;flex:0 0 auto"></span>` +
+            `<span class="dot" style="background:${dotColor}"></span>` +
+            `<span class="hier-name">${escapeHtml(def.name)}</span>` +
+            (def.spawn ? '<span class="spawn-star" title="Spawn point">S</span>' : '');
+        row.addEventListener('click', () => selectPart(def.id));
+        row.addEventListener('dblclick', () => {
+            switchTab('properties');
+            $('prop-name').focus();
+            $('prop-name').select();
+        });
+        box.appendChild(row);
+    }
+}
+
+function refreshHierarchySelection() {
+    document.querySelectorAll('.hier-row').forEach((row) => {
+        row.classList.toggle('sel', row.dataset.id === selectedId);
+    });
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function updateStatus() {
+    $('st-parts').textContent = `${rt.parts.size} part${rt.parts.size === 1 ? '' : 's'}`;
+    const entry = selectedEntry();
+    $('st-sel').textContent = entry ? `Selected: ${entry.def.name}` : 'No selection';
+}
+
+// ══════════════════════════════════════════════════════════
+// STAGE 2 — properties panel: transforms + materials
+// ══════════════════════════════════════════════════════════
+
+// build static selects/swatches
+const materialSelect = $('prop-material');
+for (const name of Object.keys(MATERIAL_PRESETS)) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    materialSelect.appendChild(opt);
+}
+
+const colorPresets = $('color-presets');
+for (const p of PART_COLOR_PRESETS) {
+    const sw = document.createElement('div');
+    sw.className = 'swatch';
+    sw.style.background = p.hex;
+    sw.title = p.name + ' ' + p.hex;
+    sw.addEventListener('click', () => {
+        const entry = selectedEntry();
+        if (!entry) return;
+        entry.def.color = p.hex;
+        $('prop-color').value = p.hex;
+        applyVisual(entry);
+    });
+    colorPresets.appendChild(sw);
+}
+
+const textureGrid = $('texture-grid');
+function refreshTextureGrid() {
+    textureGrid.innerHTML = '';
+    const entry = selectedEntry();
+    const current = entry ? entry.def.texture : 'none';
+    for (const key of ATLAS_KEYS) {
+        const b = document.createElement('button');
+        b.className = 'tex-btn' + (current === key ? ' sel' : '');
+        b.title = key;
+        if (key === 'none') {
+            b.style.background = 'linear-gradient(135deg,#555 45%,#777 55%)';
+        } else {
+            const tex = getAtlasTexture(key);
+            if (tex && tex.image) {
+                b.style.backgroundImage = `url(${tex.image.toDataURL ? tex.image.toDataURL() : ''})`;
+            } else {
+                b.style.background = '#444';
+            }
+        }
+        const lbl = document.createElement('span');
+        lbl.textContent = key;
+        b.appendChild(lbl);
+        b.addEventListener('click', () => {
+            const e2 = selectedEntry();
+            if (!e2) return;
+            e2.def.texture = key;
+            applyVisual(e2);
+            refreshTextureGrid();
+        });
+        textureGrid.appendChild(b);
+    }
+}
+refreshTextureGrid();
+
+$('btn-upload-tex').addEventListener('click', () => $('upload-tex-file').click());
+$('upload-tex-file').addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+        const dataUrl = await fileToTextureDataURL(file);
+        const entry = selectedEntry();
+        if (!entry) return;
+        entry.def.texture = dataUrl;
+        applyVisual(entry);
+        refreshTextureGrid();
+        log('uploaded texture ' + file.name);
+        studioToast('Texture applied');
+    } catch (err) {
+        log('texture upload failed: ' + err.message, 'err');
+    }
+});
+
+function applyVisual(entry) {
+    rt.applyPartVisual(entry.def.id);
+    if (selectionBox && selectedId === entry.def.id) selectionBox.setFromObject(entry.mesh);
+    refreshHierarchy();
+}
+
+const PROP_INPUT_IDS = ['prop-px', 'prop-py', 'prop-pz', 'prop-rx', 'prop-ry', 'prop-rz', 'prop-sx', 'prop-sy', 'prop-sz'];
+
+function refreshPropsUI() {
+    const entry = selectedEntry();
+    $('props-empty').style.display = entry ? 'none' : 'block';
+    $('props-form').style.display = entry ? 'block' : 'none';
+    if (!entry) return;
+    const def = entry.def;
+    const mesh = entry.mesh;
+    $('prop-name').value = def.name;
+    $('prop-type').value = PART_TYPE_NAMES[def.type] || def.type;
+    $('prop-color').value = /^#[0-9a-fA-F]{6}$/.test(def.color) ? def.color : '#a3a3a3';
+    materialSelect.value = def.material || 'Plastic';
+    $('prop-collidable').checked = def.collidable !== false;
+    $('prop-visible').checked = def.visible !== false;
+    $('prop-damage').value = def.damage || 0;
+    $('prop-spawn').checked = !!def.spawn;
+
+    // parent select
+    const parentSel = $('prop-parent');
+    parentSel.innerHTML = '';
+    const opt0 = document.createElement('option');
+    opt0.value = '';
+    opt0.textContent = 'Workspace';
+    parentSel.appendChild(opt0);
+    const selfAndDesc = new Set([def.id]);
+    let changed = true;
+    while (changed) {
+        changed = false;
+        for (const [, e2] of rt.parts) {
+            if (!selfAndDesc.has(e2.def.id) && selfAndDesc.has(e2.def.parent)) {
+                selfAndDesc.add(e2.def.id);
+                changed = true;
+            }
+        }
+    }
+    for (const e2 of orderedParts()) {
+        if (selfAndDesc.has(e2.def.id)) continue;
+        const o = document.createElement('option');
+        o.value = e2.def.id;
+        o.textContent = e2.def.name;
+        parentSel.appendChild(o);
+    }
+    parentSel.value = def.parent && !selfAndDesc.has(def.parent) ? def.parent : '';
+
+    refreshPropsFromMesh();
+    refreshTextureGrid();
+}
+
+// mesh -> inputs (called while gizmo drags)
+let propSyncLock = false;
+function refreshPropsFromMesh() {
+    const entry = selectedEntry();
+    if (!entry || propSyncLock) return;
+    const mesh = entry.mesh;
+    if (PROP_INPUT_IDS.includes(document.activeElement && document.activeElement.id)) return;
+    $('prop-px').value = round3(mesh.position.x);
+    $('prop-py').value = round3(mesh.position.y);
+    $('prop-pz').value = round3(mesh.position.z);
+    $('prop-rx').value = round3(THREE.MathUtils.radToDeg(mesh.rotation.x));
+    $('prop-ry').value = round3(THREE.MathUtils.radToDeg(mesh.rotation.y));
+    $('prop-rz').value = round3(THREE.MathUtils.radToDeg(mesh.rotation.z));
+    $('prop-sx').value = round3(mesh.scale.x);
+    $('prop-sy').value = round3(mesh.scale.y);
+    $('prop-sz').value = round3(mesh.scale.z);
+    syncDefFromMesh(entry);
+}
+
+function syncDefFromMesh(entry) {
+    const m = entry.mesh;
+    entry.def.position = [m.position.x, m.position.y, m.position.z];
+    entry.def.rotation = [m.rotation.x, m.rotation.y, m.rotation.z];
+    entry.def.scale = [m.scale.x, m.scale.y, m.scale.z];
+}
+
+function round3(v) { return Math.round(v * 1000) / 1000; }
+
+// inputs -> mesh
+function bindVec(inputIds, apply) {
+    inputIds.forEach((id, i) => {
+        $(id).addEventListener('input', () => {
+            const entry = selectedEntry();
+            if (!entry) return;
+            const vals = inputIds.map((x) => parseFloat($(x).value) || 0);
+            apply(entry, vals);
+            syncDefFromMesh(entry);
+            updateSelectionBox();
+        });
+    });
+}
+bindVec(['prop-px', 'prop-py', 'prop-pz'], (e, v) => e.mesh.position.set(v[0], v[1], v[2]));
+bindVec(['prop-rx', 'prop-ry', 'prop-rz'], (e, v) => e.mesh.rotation.set(
+    THREE.MathUtils.degToRad(v[0]), THREE.MathUtils.degToRad(v[1]), THREE.MathUtils.degToRad(v[2])
+));
+bindVec(['prop-sx', 'prop-sy', 'prop-sz'], (e, v) => e.mesh.scale.set(
+    Math.max(0.05, v[0]), Math.max(0.05, v[1]), Math.max(0.05, v[2])
+));
+
+$('prop-name').addEventListener('input', () => {
+    const entry = selectedEntry();
+    if (!entry) return;
+    entry.def.name = $('prop-name').value || 'Part';
+    entry.mesh.name = entry.def.name;
+    refreshHierarchy();
+    updateStatus();
+});
+$('prop-parent').addEventListener('change', () => {
+    const entry = selectedEntry();
+    if (!entry) return;
+    rt.reparent(entry.def.id, $('prop-parent').value || null);
+    refreshHierarchy();
+});
+$('prop-color').addEventListener('input', () => {
+    const entry = selectedEntry();
+    if (!entry) return;
+    entry.def.color = $('prop-color').value;
+    applyVisual(entry);
+});
+materialSelect.addEventListener('change', () => {
+    const entry = selectedEntry();
+    if (!entry) return;
+    entry.def.material = materialSelect.value;
+    applyVisual(entry);
+});
+$('prop-collidable').addEventListener('change', () => {
+    const entry = selectedEntry();
+    if (entry) entry.def.collidable = $('prop-collidable').checked;
+});
+$('prop-visible').addEventListener('change', () => {
+    const entry = selectedEntry();
+    if (!entry) return;
+    entry.def.visible = $('prop-visible').checked;
+    entry.mesh.visible = $('prop-visible').checked;
+    refreshHierarchy();
+});
+$('prop-damage').addEventListener('input', () => {
+    const entry = selectedEntry();
+    if (entry) entry.def.damage = Math.max(0, parseFloat($('prop-damage').value) || 0);
+});
+$('prop-spawn').addEventListener('change', () => {
+    const entry = selectedEntry();
+    if (!entry) return;
+    const on = $('prop-spawn').checked;
+    for (const [, e2] of rt.parts) e2.def.spawn = false;
+    entry.def.spawn = on;
+    refreshHierarchy();
+    refreshPropsUI();
+});
+
+// ══════════════════════════════════════════════════════════
+// STAGE 3 — scripting layer + play mode
+// ══════════════════════════════════════════════════════════
+
+const SCRIPT_TEMPLATES = {
+    flash: `// change color briefly when touched
+part.color = '#ff5050';
+game.after(0.4, () => { part.color = '#a3a3a3'; });`,
+    spin: `// rotate a little every frame
+part.rotation.y += 0.03;`,
+    welcome: `game.toast('Welcome!');`,
+    round: `game.startRound(30);
+game.on('timer', (t) => { if (t <= 10) game.toast(t + ' seconds left!'); });
+game.on('roundEnd', () => game.toast('Round over!'));`,
+    lava: `// burn the player
+if (other === game.localPlayer) other.damage(25);`,
+    give: `game.inventory.give('sword');
+game.toast('You got a tool!');`,
+    'global-log': `game.on('touched', (touchedPart, who) => {
+  game.log((who && who.name ? who.name : 'something') + ' hit ' + touchedPart.name);
+});`,
+    bouncy: `const p = game.localPlayer;
+p.teleport(p.position.x, p.position.y + 6, p.position.z);
+game.toast('Boing!');`
+};
+
+function refreshScriptPartSelect(selected) {
+    const sel = $('se-part');
+    sel.innerHTML = '';
+    const g = document.createElement('option');
+    g.value = '';
+    g.textContent = '(global — not attached)';
+    sel.appendChild(g);
+    for (const entry of orderedParts()) {
+        const o = document.createElement('option');
+        o.value = entry.def.id;
+        o.textContent = entry.def.name;
+        sel.appendChild(o);
+    }
+    sel.value = selected || '';
+}
+
+function renderScriptList() {
+    const box = $('script-list');
+    box.innerHTML = '';
+    const scripts = manifest.scripts || [];
+    if (scripts.length === 0) {
+        box.innerHTML = '<div class="mini-row" style="color:#666;cursor:default;">No scripts yet</div>';
+        return;
+    }
+    for (const s of scripts) {
+        const row = document.createElement('div');
+        row.className = 'mini-row' + (s.id === editingScriptId ? ' sel' : '');
+        const partName = s.part && rt.parts.has(s.part) ? rt.parts.get(s.part).def.name : 'global';
+        row.innerHTML =
+            `<span class="badge ev-${s.event}">${s.event}</span>` +
+            `<span class="grow">${escapeHtml(s.name)}</span>` +
+            `<span class="badge">${escapeHtml(partName)}</span>`;
+        row.addEventListener('click', () => openScriptEditor(s.id));
+        box.appendChild(row);
+    }
+}
+
+let editingScriptId = null;
+
+function openScriptEditor(id) {
+    const s = (manifest.scripts || []).find((x) => x.id === id);
+    if (!s) return;
+    editingScriptId = id;
+    switchTab('scripts');
+    $('script-editor').style.display = 'block';
+    $('se-name').value = s.name;
+    $('se-event').value = s.event;
+    refreshScriptPartSelect(s.part || '');
+    $('se-code').value = s.code || '';
+    $('se-err').textContent = '';
+    $('se-err').className = 'err-line';
+    renderScriptList();
+}
+
+function closeScriptEditor() {
+    editingScriptId = null;
+    $('script-editor').style.display = 'none';
+    renderScriptList();
+}
+
+$('btn-add-script').addEventListener('click', () => {
+    if (mode !== 'edit') { studioToast('Stop play mode first'); return; }
+    const sel = selectedEntry();
+    const s = {
+        id: genId('script'),
+        name: 'Script ' + ((manifest.scripts || []).length + 1),
+        event: sel ? 'touched' : 'start',
+        part: sel ? sel.def.id : null,
+        code: sel ? SCRIPT_TEMPLATES.flash : SCRIPT_TEMPLATES.welcome
+    };
+    if (!manifest.scripts) manifest.scripts = [];
+    manifest.scripts.push(s);
+    openScriptEditor(s.id);
+    log(`created script "${s.name}"`);
+});
+
+$('se-event').addEventListener('change', () => {
+    const ev = $('se-event').value;
+    const needsPart = ev === 'touched' || ev === 'clicked';
+    if (needsPart && !$('se-part').value) {
+        const sel = selectedEntry();
+        if (sel) $('se-part').value = sel.def.id;
+        else if (rt.parts.size > 0) $('se-part').value = orderedParts()[0].def.id;
+    }
+});
+$('se-template').addEventListener('change', () => {
+    const key = $('se-template').value;
+    if (key && SCRIPT_TEMPLATES[key]) {
+        $('se-code').value = SCRIPT_TEMPLATES[key];
+    }
+});
+$('se-save').addEventListener('click', () => {
+    const s = (manifest.scripts || []).find((x) => x.id === editingScriptId);
+    if (!s) return;
+    const ev = $('se-event').value;
+    const needsPart = ev === 'touched' || ev === 'clicked';
+    const partId = $('se-part').value || null;
+    if (needsPart && !partId) {
+        $('se-err').textContent = 'This event must be attached to a part.';
+        $('se-err').className = 'err-line';
+        return;
+    }
+    const code = $('se-code').value;
+    const fn = compileScript(code, $('se-name').value);
+    if (fn === null) {
+        $('se-err').textContent = 'Syntax error — see console.';
+        $('se-err').className = 'err-line';
+        return;
+    }
+    s.name = $('se-name').value || s.name;
+    s.event = ev;
+    s.part = partId;
+    s.code = code;
+    $('se-err').textContent = 'Saved. Script compiles OK.';
+    $('se-err').className = 'ok-line';
+    renderScriptList();
+    log(`saved script "${s.name}" (${ev})`);
+});
+$('se-delete').addEventListener('click', () => {
+    if (!editingScriptId) return;
+    manifest.scripts = (manifest.scripts || []).filter((x) => x.id !== editingScriptId);
+    closeScriptEditor();
+    log('script deleted', 'warn');
+});
+
+// ══════════════════════════════════════════════════════════
+// STAGE 4 — tool / inventory system
+// ══════════════════════════════════════════════════════════
+
+const TOOL_TEMPLATES = {
+    equip: `game.toast(tool.name + ' equipped');`,
+    activate: `game.toast(tool.name + ' used!');`,
+    bomb: `// spawn an exploding box in front of the player
+const p = game.localPlayer;
+const b = game.spawnPart({
+  type: 'box', name: 'Boom', color: '#ff5050',
+  position: [p.position.x, p.position.y + 1, p.position.z - 3],
+  scale: [0.5, 0.5, 0.5]
+});
+game.after(0.8, () => {
+  b.color = '#ffff40';
+  game.emit('explosion', b);
+  b.destroy();
+});`,
+    heal: `game.localPlayer.heal(25);
+game.toast('+25 health');`,
+    rocket: `const p = game.localPlayer;
+p.teleport(p.position.x, p.position.y + 12, p.position.z);
+game.toast('Up we go!');`
+};
+
+function renderToolList() {
+    const box = $('tool-list');
+    box.innerHTML = '';
+    const tools = manifest.tools || [];
+    if (tools.length === 0) {
+        box.innerHTML = '<div class="mini-row" style="color:#666;cursor:default;">No tools yet</div>';
+        return;
+    }
+    for (const t of tools) {
+        const row = document.createElement('div');
+        row.className = 'mini-row' + (t.id === editingToolId ? ' sel' : '');
+        const startMark = (manifest.startTools || []).includes(t.id) ? '<span class="badge">start</span>' : '';
+        row.innerHTML =
+            `<span class="dot" style="width:10px;height:10px;background:${t.color || '#4a90d9'};border:1px solid #111;"></span>` +
+            `<span class="grow">${escapeHtml(t.name)}</span>` +
+            `<span class="badge">${escapeHtml(t.id)}</span>` + startMark;
+        row.addEventListener('click', () => openToolEditor(t.id));
+        box.appendChild(row);
+    }
+}
+
+let editingToolId = null;
+
+function openToolEditor(id) {
+    const t = (manifest.tools || []).find((x) => x.id === id);
+    if (!t) return;
+    editingToolId = id;
+    switchTab('tools');
+    $('tool-editor').style.display = 'block';
+    $('te-name').value = t.name || '';
+    $('te-id').value = t.id || '';
+    $('te-desc').value = t.description || '';
+    $('te-color').value = /^#[0-9a-fA-F]{6}$/.test(t.color || '') ? t.color : '#4a90d9';
+    $('te-equip').value = t.equipCode || '';
+    $('te-activate').value = t.activateCode || '';
+    $('te-start').checked = (manifest.startTools || []).includes(t.id);
+    $('te-err').textContent = '';
+    renderToolList();
+}
+
+$('btn-add-tool').addEventListener('click', () => {
+    if (mode !== 'edit') { studioToast('Stop play mode first'); return; }
+    const base = 'tool' + ((manifest.tools || []).length + 1);
+    const t = {
+        id: genId(base).replace(/[^a-z0-9_]/gi, '').toLowerCase(),
+        name: 'Tool ' + ((manifest.tools || []).length + 1),
+        description: '',
+        color: '#4a90d9',
+        equipCode: TOOL_TEMPLATES.equip,
+        activateCode: TOOL_TEMPLATES.activate
+    };
+    if (!manifest.tools) manifest.tools = [];
+    manifest.tools.push(t);
+    openToolEditor(t.id);
+    log(`created tool "${t.name}"`);
+});
+
+$('te-save').addEventListener('click', () => {
+    const t = (manifest.tools || []).find((x) => x.id === editingToolId);
+    if (!t) return;
+    const eq = compileScript($('te-equip').value, t.id + ':equip');
+    const ac = compileScript($('te-activate').value, t.id + ':activate');
+    if (eq === null || ac === null) {
+        $('te-err').textContent = 'Syntax error — see console.';
+        return;
+    }
+    t.name = $('te-name').value || t.name;
+    t.description = $('te-desc').value;
+    t.color = $('te-color').value;
+    t.equipCode = $('te-equip').value;
+    t.activateCode = $('te-activate').value;
+    if (!manifest.startTools) manifest.startTools = [];
+    const si = manifest.startTools.indexOf(t.id);
+    if ($('te-start').checked && si === -1) manifest.startTools.push(t.id);
+    if (!$('te-start').checked && si >= 0) manifest.startTools.splice(si, 1);
+    $('te-err').textContent = 'Saved. Tool compiles OK.';
+    $('te-err').className = 'ok-line';
+    renderToolList();
+    log(`saved tool "${t.name}"`);
+});
+$('te-delete').addEventListener('click', () => {
+    if (!editingToolId) return;
+    manifest.tools = (manifest.tools || []).filter((x) => x.id !== editingToolId);
+    if (manifest.startTools) manifest.startTools = manifest.startTools.filter((x) => x !== editingToolId);
+    editingToolId = null;
+    $('tool-editor').style.display = 'none';
+    renderToolList();
+    log('tool deleted', 'warn');
+});
+
+// ── right tabs ───────────────────────────────────────────
+function switchTab(name) {
+    document.querySelectorAll('#rtabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('.rtab').forEach((t) => t.classList.toggle('active', t.id === 'rtab-' + name));
+}
+document.querySelectorAll('#rtabs button').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+
+// ── play mode ────────────────────────────────────────────
+function setMode(next) {
+    if (next === mode) return;
+    if (next === 'play') {
+        if (mode !== 'edit') return;
+        // snapshot for restore (script changes are discarded on stop)
+        playSnapshot = JSON.parse(JSON.stringify(manifest));
+        selectPart(null);
+        gizmo.detach();
+        if (selectionBox) selectionBox.visible = false;
+        gizmo.enabled = false;
+        orbit.enabled = false;
+        grid.visible = false;
+        axisX.visible = false;
+        axisZ.visible = false;
+        mode = 'play';
+        viewportEl.classList.add('playing');
+        $('tab-edit').classList.remove('active');
+        $('tab-play').classList.add('active');
+        $('st-mode').textContent = 'PLAY';
+        $('st-mode').classList.add('play');
+        document.querySelectorAll('.part-btn, #btn-delete, #btn-duplicate, #btn-add-script, #btn-add-tool').forEach((b) => { b.disabled = true; });
+        // same runtime instance — buildScene skips the meshes already in the scene
+        rt.start();
+        log('play mode started', 'info');
+    } else {
+        if (mode !== 'play') return;
+        const snap = playSnapshot;
+        playSnapshot = null;
+        loadManifest(snap); // disposes the runtime (stops it first) and rebuilds
+        mode = 'edit';
+        viewportEl.classList.remove('playing');
+        $('tab-edit').classList.add('active');
+        $('tab-play').classList.remove('active');
+        $('st-mode').textContent = 'EDIT';
+        $('st-mode').classList.remove('play');
+        gizmo.enabled = true;
+        gizmo.setMode('translate');
+        orbit.enabled = true;
+        camera.position.set(22, 16, 22);
+        orbit.target.set(0, 2, 0);
+        orbit.update();
+        grid.visible = true;
+        axisX.visible = true;
+        axisZ.visible = true;
+        document.querySelectorAll('.part-btn, #btn-delete, #btn-duplicate, #btn-add-script, #btn-add-tool').forEach((b) => { b.disabled = false; });
+        log('play mode stopped (script changes reverted)', 'warn');
+    }
+}
+$('tab-edit').addEventListener('click', () => setMode('edit'));
+$('tab-play').addEventListener('click', () => setMode('play'));
+
+// ── keyboard shortcuts ───────────────────────────────────
+window.addEventListener('keydown', (e) => {
+    const tag = e.target && e.target.tagName;
+    const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    if (e.key === 'Escape') {
+        if (document.querySelector('.modal-back.open')) {
+            document.querySelectorAll('.modal-back.open').forEach((m) => m.classList.remove('open'));
+            return;
+        }
+        if (mode === 'play') { setMode('edit'); return; }
+        if (!typing) selectPart(null);
+        return;
+    }
+    if (typing) return;
+    if (mode === 'play') return;
+    if (e.code === 'KeyW') gizmo.setMode('translate');
+    else if (e.code === 'KeyE') gizmo.setMode('rotate');
+    else if (e.code === 'KeyR') gizmo.setMode('scale');
+    else if (e.code === 'Delete' || e.code === 'Backspace') { e.preventDefault(); deleteSelected(); }
+    else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyD') { e.preventDefault(); duplicateSelected(); }
+    else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyS') { e.preventDefault(); openPublish(); }
+});
+
+// ══════════════════════════════════════════════════════════
+// STAGE 5 — publish into place_select's place list
+// ══════════════════════════════════════════════════════════
+
+function renderThumbnail() {
+    // render the scene from the current camera and downscale to 320x180 JPEG
+    renderer.render(scene, camera);
+    const src = renderer.domElement;
+    const c = document.createElement('canvas');
+    c.width = 320;
+    c.height = 180;
+    const g = c.getContext('2d');
+    const sw = src.width, sh = src.height;
+    const targetAR = 320 / 180;
+    const srcAR = sw / sh;
+    let sx = 0, sy = 0, cw = sw, ch = sh;
+    if (srcAR > targetAR) { cw = sh * targetAR; sx = (sw - cw) / 2; }
+    else { ch = sw / targetAR; sy = (sh - ch) / 2; }
+    try {
+        g.drawImage(src, sx, sy, cw, ch, 0, 0, 320, 180);
+        return c.toDataURL('image/jpeg', 0.72);
+    } catch (e) {
+        return null;
+    }
+}
+
+function openPublish() {
+    if (mode === 'play') { studioToast('Stop play mode before publishing'); return; }
+    $('pub-name').value = $('place-name').value || manifest.name;
+    $('pub-desc').value = manifest.description || '';
+    $('pub-result').textContent = '';
+    $('pub-open').style.display = 'none';
+    const thumb = renderThumbnail();
+    manifest.thumbnail = thumb;
+    $('pub-thumb').src = thumb || '';
+    $('publish-modal').classList.add('open');
+}
+$('btn-publish').addEventListener('click', openPublish);
+
+$('pub-do').addEventListener('click', () => {
+    manifest.name = $('pub-name').value.trim() || 'Untitled Place';
+    manifest.description = $('pub-desc').value.trim();
+    manifest.schema = manifest.schema || 'circuitstyle-place@1';
+    if (!manifest.thumbnail) manifest.thumbnail = renderThumbnail();
+    manifest.updatedAt = Date.now();
+    $('place-name').value = manifest.name;
+    try {
+        savePlace(manifest);
+        $('pub-result').textContent = 'Published! It is now listed under Games on the home page.';
+        $('pub-open').style.display = 'inline-block';
+        log(`published "${manifest.name}" (${manifest.id})`, 'info');
+    } catch (e) {
+        $('pub-result').textContent = 'Publish failed: ' + e.message;
+        $('pub-result').style.color = '#ff7a7a';
+        log('publish failed: ' + e.message, 'err');
+    }
+});
+$('pub-open').addEventListener('click', () => { window.open('./place_select.html', '_blank'); });
+
+// export / import JSON
+$('btn-export').addEventListener('click', () => {
+    if (mode === 'play') { studioToast('Stop play mode first'); return; }
+    const data = JSON.stringify(manifest, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (manifest.name || 'place').replace(/[^a-z0-9 _-]/gi, '').trim().replace(/\s+/g, '_') + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    log('exported place JSON');
+});
+$('btn-import').addEventListener('click', () => {
+    if (mode === 'play') { studioToast('Stop play mode first'); return; }
+    $('import-file').click();
+});
+$('import-file').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const data = JSON.parse(reader.result);
+            if (!Array.isArray(data.parts)) throw new Error('missing parts array');
+            loadManifest(data);
+            log('imported place "' + (data.name || 'unnamed') + '"');
+            studioToast('Place imported');
+        } catch (err) {
+            log('import failed: ' + err.message, 'err');
+            studioToast('Import failed: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+});
+
+function loadManifest(data) {
+    selectPart(null);
+    rt.dispose();
+    manifest = data;
+    if (!manifest.scripts) manifest.scripts = [];
+    if (!manifest.tools) manifest.tools = [];
+    if (!manifest.startTools) manifest.startTools = [];
+    $('place-name').value = manifest.name || 'My Place';
+    rt = makeRuntime();
+    rt.buildScene();
+    refreshHierarchy();
+    refreshPropsUI();
+    renderScriptList();
+    renderToolList();
+    updateStatus();
+}
+
+// place-name binds to manifest
+$('place-name').addEventListener('input', () => { manifest.name = $('place-name').value; });
+
+// modals close wiring
+document.querySelectorAll('[data-close]').forEach((el) => {
+    el.addEventListener('click', () => {
+        const m = document.getElementById(el.dataset.close);
+        if (m) m.classList.remove('open');
+    });
+});
+document.querySelectorAll('.modal-back').forEach((back) => {
+    back.addEventListener('pointerdown', (e) => { if (e.target === back) back.classList.remove('open'); });
+});
+$('btn-help').addEventListener('click', () => $('help-modal').classList.add('open'));
+
+// console toggle
+$('console-toggle').addEventListener('click', () => $('console-drawer').classList.toggle('open'));
+
+// ── resize + render loop ─────────────────────────────────
+function resize() {
+    const w = viewportEl.clientWidth;
+    const h = viewportEl.clientHeight;
+    if (w === 0 || h === 0) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+
+const clock = new THREE.Clock();
+function frame() {
+    requestAnimationFrame(frame);
+    const dt = clock.getDelta();
+    if (mode === 'edit') {
+        orbit.update();
+    } else if (mode === 'play' && rt && rt.running) {
+        try { rt.update(dt * 1000); } catch (e) { log('runtime error: ' + e.message, 'err'); console.error(e); rt.update = () => {}; }
+    }
+    if (selectionBox && selectionBox.visible) selectionBox.update();
+    renderer.render(scene, camera);
+}
+frame();
+
+// ── boot ─────────────────────────────────────────────────
+$('place-name').value = manifest.name;
+refreshHierarchy();
+refreshPropsUI();
+renderScriptList();
+renderToolList();
+updateStatus();
+if (placeId) log(`loaded place "${manifest.name}" from URL (id: ${placeId})`, 'info');
+else log('new place created — add parts, script them, then Publish');
+window.studio = { get manifest() { return manifest; }, get runtime() { return rt; }, selectPart, addPart };
+</script>
+</body>
+</html>
