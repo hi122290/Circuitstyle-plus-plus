@@ -13,7 +13,7 @@ import { setupMobileControls, isMobile } from './modules/mobile_controls.js';
 import { appendChatMessage } from './modules/safechat.js';
 import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost, deleteBlockByMesh, deleteBlockById, findBlockAtPoint, stampBuild, toggleSaveMenu, closeSaveMenu } from './modules/build.js';
 import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js';
-import { PlaceRuntime, getPlace } from './modules/place_runtime.js?v=1';
+import { PlaceRuntime, getPlace } from './modules/place_runtime.js?v=2';
 
 
 window.THREE_REF = THREE;
@@ -853,6 +853,19 @@ async function init() {
 
     world = setupWorld(scene);
 
+    // ── Published place mode (?place=<id>): the place brings its own geometry,
+    //    so strip the default baseplate + spawn pads. Not every game is a baseplate. ──
+    const placeIdParam = new URLSearchParams(window.location.search).get('place');
+    const placeManifest = placeIdParam ? getPlace(placeIdParam) : null;
+    if (placeManifest) {
+        for (const m of world.collidables.slice()) {
+            if (m && m.parent) m.parent.remove(m);
+        }
+        world.collidables.length = 0;
+        world.ground = null;
+        console.info('[Place] default baseplate/spawn pads removed for published place:', placeManifest.name);
+    }
+
     // once upon a time... the world exisisted... just tweak the shadow cam. so it actually covers the plate and doesn’t randomly cut off edges, also i'm almost finished eating it was yummy indeed
     try {
         if (directionalLight && directionalLight.shadow && world) {
@@ -975,9 +988,7 @@ async function init() {
 
     // ── Published place loading (?place=<id>, listed on place_select.html) ──
     try {
-        const placeIdParam = new URLSearchParams(window.location.search).get('place');
         if (placeIdParam) {
-            const placeManifest = getPlace(placeIdParam);
             if (placeManifest) {
                 const pdims = PlayerModule.getConfig().dimensions || {};
                 const pScale = 0.028; // matches resolvePhysics AABB scale

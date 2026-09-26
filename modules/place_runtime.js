@@ -523,6 +523,12 @@ export class PlaceRuntime {
             created.push(entry);
         }
         for (const entry of created) this._resolveParent(entry.mesh, entry.def);
+        // register with the game's physics so loaded parts are solid
+        if (this.mode === 'game' && this.adapter && this.adapter.registerCollider) {
+            for (const entry of created) {
+                if (entry.def.collidable !== false) this.adapter.registerCollider(entry.mesh);
+            }
+        }
     }
 
     refreshScene() {
@@ -557,7 +563,7 @@ export class PlaceRuntime {
         const entry = this.buildPart(def);
         this.parts.set(def.id, entry);
         this._resolveParent(entry.mesh, def);
-        if (this.mode === 'game' && this.adapter && this.adapter.registerCollider) this.adapter.registerCollider(entry.mesh);
+        if (this.mode === 'game' && def.collidable !== false && this.adapter && this.adapter.registerCollider) this.adapter.registerCollider(entry.mesh);
         // give the manifest a record so serializations see runtime spawns
         if (!this.manifest.parts) this.manifest.parts = [];
         this.manifest.parts.push(def);
@@ -639,7 +645,6 @@ export class PlaceRuntime {
                 }
                 if (rt.owned.indexOf(toolId) !== -1) return false;
                 rt.owned.push(toolId);
-                rt._renderHotbar();
                 if (rt.owned.length === 1) inventory.equip(toolId);
                 rt.log(`inventory.give("${toolId}")`);
                 return true;
@@ -649,7 +654,6 @@ export class PlaceRuntime {
                 if (i === -1) return false;
                 rt.owned.splice(i, 1);
                 if (rt.equippedId === toolId) rt._equipTool(null);
-                rt._renderHotbar();
                 rt.log(`inventory.remove("${toolId}")`);
                 return true;
             },
@@ -793,7 +797,6 @@ export class PlaceRuntime {
         this.equippedId = toolId;
         const rec = toolId ? this.tools.get(toolId) : null;
         if (rec && rec.onEquip) runScript(rec.onEquip, [this.gameObject, rec.def, this._playerObject()], `tool:${rec.def.id}:equip`);
-        this._renderHotbar();
         if (rec) this.log(`equipped "${rec.def.name}"`);
         return true;
     }
@@ -852,16 +855,11 @@ export class PlaceRuntime {
         const st = document.createElement('style');
         st.id = 'cs-place-runtime-style';
         st.textContent = `
-#cs-hotbar{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);display:flex;gap:6px;z-index:40000;pointer-events:auto}
-#cs-hotbar .cs-tool{background:rgba(20,22,26,0.92);border:2px solid #555;color:#ddd;font:11px Tahoma,Verdana,sans-serif;padding:6px 9px;min-width:64px;text-align:center;cursor:pointer;border-radius:3px;box-shadow:0 2px 6px rgba(0,0,0,0.5)}
-#cs-hotbar .cs-tool.sel{border-color:#4ad06a;background:rgba(30,60,36,0.95);color:#bff0c8}
-#cs-hotbar .cs-tool .k{display:block;font-size:9px;color:#888;margin-top:2px}
 #cs-toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);background:rgba(18,20,24,0.94);border:1px solid #666;color:#fff;font:13px Tahoma,sans-serif;padding:8px 18px;border-radius:3px;z-index:40001;opacity:0;transition:opacity 0.25s;pointer-events:none}
 #cs-playhealth{position:fixed;left:12px;top:52px;width:180px;z-index:40000;font:11px Tahoma,sans-serif;color:#eee}
 #cs-playhealth .bar{height:14px;background:rgba(0,0,0,0.6);border:1px solid #111;border-radius:2px;overflow:hidden}
 #cs-playhealth .fill{height:100%;background:linear-gradient(#5ad36a,#2f9e44);transition:width 0.2s}
 #cs-playhealth .lbl{margin-bottom:3px;text-shadow:0 1px 2px #000}
-#cs-toolhint{position:fixed;right:12px;bottom:12px;color:#cfcfcf;font:11px Tahoma,sans-serif;background:rgba(0,0,0,0.55);padding:5px 9px;border-radius:3px;z-index:40000;pointer-events:none}
 `;
         document.head.appendChild(st);
     }
@@ -869,15 +867,10 @@ export class PlaceRuntime {
     _createHud() {
         this._ensureStyle();
         this.removeHud();
-        const bar = document.createElement('div');
-        bar.id = 'cs-hotbar';
-        if (this.mode === 'game') bar.style.bottom = '96px'; // clear the game backpack
-        document.body.appendChild(bar);
-        this._hud = { bar };
         const toast = document.createElement('div');
         toast.id = 'cs-toast';
         document.body.appendChild(toast);
-        this._hud.toast = toast;
+        this._hud = { toast };
         if (this.mode === 'studio') {
             const hp = document.createElement('div');
             hp.id = 'cs-playhealth';
@@ -885,13 +878,6 @@ export class PlaceRuntime {
             document.body.appendChild(hp);
             this._hud.hp = hp;
         }
-        const hint = document.createElement('div');
-        hint.id = 'cs-toolhint';
-        hint.textContent = 'WASD move · Space jump · 1-9 tools · F use · ESC stop';
-        if (this.mode === 'game') hint.textContent = '1-9 equip tool · F use tool';
-        document.body.appendChild(hint);
-        this._hud.hint = hint;
-        this._renderHotbar();
         this._renderHealth();
     }
 
@@ -901,24 +887,6 @@ export class PlaceRuntime {
             if (el && el.parentNode) el.parentNode.removeChild(el);
         });
         this._hud = null;
-    }
-
-    _renderHotbar() {
-        if (!this._hud || !this._hud.bar) return;
-        const bar = this._hud.bar;
-        bar.innerHTML = '';
-        if (this.owned.length === 0) { bar.style.display = 'none'; return; }
-        bar.style.display = 'flex';
-        this.owned.forEach((tid, i) => {
-            const rec = this.tools.get(tid);
-            const div = document.createElement('div');
-            div.className = 'cs-tool' + (this.equippedId === tid ? ' sel' : '');
-            div.style.borderColor = this.equippedId === tid ? '#4ad06a' : (rec ? rec.def.color || '#555' : '#555');
-            div.innerHTML = `${(rec ? rec.def.name : tid)}<span class="k">[${i + 1}]</span>`;
-            div.title = rec && rec.def.description ? rec.def.description : (rec ? rec.def.name : tid);
-            div.addEventListener('click', () => this._equipTool(tid));
-            bar.appendChild(div);
-        });
     }
 
     _renderHealth() {
