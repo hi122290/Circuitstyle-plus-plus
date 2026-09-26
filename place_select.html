@@ -539,14 +539,14 @@ headLoader.load('./head.glb', (gltf) => {
     });
     try {
         const faceTex = new THREE.TextureLoader().load('./face.png');
-        head.traverse(n => {
-            if (n.isMesh) {
-                const overlay = n.clone();
-                overlay.material = new THREE.MeshBasicMaterial({ map: faceTex, transparent: true, opacity: 0.9, depthWrite: false });
-                overlay.scale.set(1.01, 1.01, 1.01);
-                n.add(overlay);
-            }
-        });
+        const headMeshes = [];
+        head.traverse(n => { if (n.isMesh) headMeshes.push(n); });
+        for (const n of headMeshes) {
+            const overlay = n.clone();
+            overlay.material = new THREE.MeshBasicMaterial({ map: faceTex, transparent: true, opacity: 0.9, depthWrite: false });
+            overlay.scale.set(1.01, 1.01, 1.01);
+            n.parent.add(overlay);
+        }
     } catch(e) {}
     charGroup.add(head);
     parts.head = head;
@@ -615,14 +615,14 @@ function renderPlayerHead(canvasEl, colorHex) {
         });
         try {
             const faceTex = new THREE.TextureLoader().load('./face.png');
-            head.traverse(n => {
-                if (n.isMesh) {
-                    const overlay = n.clone();
-                    overlay.material = new THREE.MeshBasicMaterial({ map: faceTex, transparent: true, opacity: 0.9, depthWrite: false });
-                    overlay.scale.set(1.01, 1.01, 1.01);
-                    n.add(overlay);
-                }
-            });
+            const headMeshes = [];
+            head.traverse(n => { if (n.isMesh) headMeshes.push(n); });
+            for (const n of headMeshes) {
+                const overlay = n.clone();
+                overlay.material = new THREE.MeshBasicMaterial({ map: faceTex, transparent: true, opacity: 0.9, depthWrite: false });
+                overlay.scale.set(1.01, 1.01, 1.01);
+                n.parent.add(overlay);
+            }
         } catch(e) {}
         grp.add(head);
     }, undefined, () => {
