@@ -16,6 +16,60 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
     let velocityY = 0;
     let _headNode = null;
     let _headLocalBox = null;
+    let _bombLoadPromise = null;
+
+    function attachBombModel(host) {
+        if (!host) return Promise.resolve(null);
+        if (!_bombLoadPromise) {
+            _bombLoadPromise = new GLTFLoader().loadAsync('./timebomb.glb').then((gltf) => {
+                const base = gltf.scene;
+                const box = new THREE.Box3().setFromObject(base);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                const maxDim = Math.max(size.x, size.y, size.z) || 1;
+                base.scale.setScalar(0.65 / maxDim);
+                base.traverse((n) => {
+                    if (n.isMesh) {
+                        n.castShadow = true;
+                        n.receiveShadow = true;
+                    }
+                });
+                return base;
+            }).catch((err) => {
+                console.warn('[Bomb] timebomb.glb load failed:', err);
+                _bombLoadPromise = null;
+                return null;
+            });
+        }
+        return _bombLoadPromise.then((base) => {
+            if (!host) return null;
+            if (base) {
+                host.add(base.clone(true));
+            } else {
+                host.add(new THREE.Mesh(
+                    new THREE.SphereGeometry(0.28, 12, 12),
+                    new THREE.MeshStandardMaterial({ color: 0x121212, emissive: 0x330000, roughness: 0.5 })
+                ));
+            }
+            return host;
+        });
+    }
+
+    function createRedCircleBoom() {
+        const boom = new THREE.Group();
+        boom.add(new THREE.Mesh(
+            new THREE.CircleGeometry(2.0, 48),
+            new THREE.MeshBasicMaterial({ color: 0xe61c1c, transparent: true, opacity: 1, side: THREE.DoubleSide, depthWrite: false })
+        ));
+        const edge = new THREE.Mesh(
+            new THREE.RingGeometry(2.0, 2.35, 48),
+            new THREE.MeshBasicMaterial({ color: 0x8f0f0f, transparent: true, opacity: 1, side: THREE.DoubleSide, depthWrite: false })
+        );
+        edge.position.z = -0.012;
+        boom.add(edge);
+        return boom;
+    }
+
     // gravity will be sourced from PlayerModule configuration (allows live tuning)
     // Use PlayerModule.getConfig().gravity where needed so changes propagate
     let onGround = true;
@@ -1431,7 +1485,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                 const progress = 1 - Math.max(0, projectile.life) / projectile.maxLife;
                 const scale = 0.35 + progress * 1.35;
                 projectile.mesh.scale.setScalar(scale);
-                projectile.mesh.rotation.y += 0.08;
+                projectile.mesh.lookAt(camera.position);
                 projectile.mesh.traverse((part) => {
                     if (part.material && typeof part.material.opacity === 'number') {
                         part.material.opacity = Math.max(0, 1 - progress);
@@ -1441,24 +1495,9 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
 
             if (projectile.type === 'bomb' && projectile.life <= 0) {
                 const explosionPosition = projectile.mesh.position.clone();
-                const boom = new THREE.Group();
-                const ringMaterial = new THREE.MeshBasicMaterial({ color: 0xff5a16, transparent: true, opacity: 1 });
-                const flashMaterial = new THREE.MeshBasicMaterial({ color: 0xffe04b, transparent: true, opacity: 1 });
-                const smokeMaterial = new THREE.MeshBasicMaterial({ color: 0x46352f, transparent: true, opacity: 1 });
-
-                const ring = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.11, 10, 24), ringMaterial);
-                ring.rotation.x = Math.PI / 2;
-                boom.add(ring);
-                boom.add(new THREE.Mesh(new THREE.SphereGeometry(0.48, 12, 8), flashMaterial));
-                // Uneven smoke puffs keep the explosion playful and visibly cartoon-like.
-                for (let puffIndex = 0; puffIndex < 5; puffIndex++) {
-                    const puff = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 8), smokeMaterial);
-                    const angle = (puffIndex / 5) * Math.PI * 2;
-                    puff.position.set(Math.cos(angle) * 0.42, 0.12 + (puffIndex % 2) * 0.18, Math.sin(angle) * 0.42);
-                    puff.scale.set(1.1, 0.8, 1.1);
-                    boom.add(puff);
-                }
+                const boom = createRedCircleBoom();
                 boom.position.copy(explosionPosition);
+                boom.lookAt(camera.position);
                 scene.add(boom);
                 const explosionLife = 0.7;
                 activeItemProjectiles.push({
@@ -2324,14 +2363,10 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                 return true;
             }
             case 'bomb': {
-                const bomb = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.28, 12, 12),
-                    new THREE.MeshStandardMaterial({ color: 0x121212, emissive: 0x330000, roughness: 0.5 })
-                );
+                const bomb = new THREE.Object3D();
                 bomb.position.copy(origin).add(new THREE.Vector3(0, 0.06, 0));
-                bomb.castShadow = true;
-                bomb.receiveShadow = true;
                 scene.add(bomb);
+                attachBombModel(bomb);
                 activeItemProjectiles.push({ mesh: bomb, velocity: forward.clone().multiplyScalar(0.24), life: 1.15, type: 'bomb' });
                 return true;
             }
@@ -2649,6 +2684,8 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         updateModelAnimations,
         updateModelForcefield,
         reloadAccessory,
+        attachBombModel,
+        createRedCircleBoom,
         
         get model() { return model; },
         get isWalking() { return isWalking; },

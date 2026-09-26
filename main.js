@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { setupAudio, playSound, stopBackground, startBackground } from './modules/audio.js';
 import { setupWorld } from './modules/world.js';
-import { setupPlayer } from './modules/player.js?v=3';
+import { setupPlayer } from './modules/player.js?v=4';
 import { setupUI, renderPlayerList, updateUIElementPositions, renderHealthBar } from './modules/ui.js';
 import { setupGame } from './modules/game.js';
 import PlayerModule from './modules/PlayerModule.js';
@@ -1412,10 +1412,7 @@ function updateRemotePlayers() {
                                 );
                                 mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), vel.clone().normalize());
                             } else if (lp.projType === 'bomb') {
-                                mesh = new THREE.Mesh(
-                                    new THREE.SphereGeometry(0.28, 12, 12),
-                                    new THREE.MeshStandardMaterial({ color: 0x121212, emissive: 0x330000, roughness: 0.5 })
-                                );
+                                mesh = new THREE.Object3D();
                             } else if (lp.projType === 'marble') {
                                 // slingshot marble — white
                                 mesh = new THREE.Mesh(
@@ -1441,6 +1438,7 @@ function updateRemotePlayers() {
                             }
                             mesh.position.copy(origin);
                             scene.add(mesh);
+                            if (lp.projType === 'bomb' && player && player.attachBombModel) player.attachBombModel(mesh);
                             if (!window._remoteProjectiles) window._remoteProjectiles = [];
                             const projLife = lp.projType === 'bomb' ? 1.15 : 0.7;
                             window._remoteProjectiles.push({ mesh, velocity: vel, life: projLife, type: lp.projType, maxLife: projLife });
@@ -1486,22 +1484,9 @@ function updateRemotePlayers() {
                         const blastPos = new THREE.Vector3(exp.x, exp.y, exp.z);
                         // Spawn explosion visual for everyone
                         try {
-                            const boom = new THREE.Group();
-                            const ringMat = new THREE.MeshBasicMaterial({ color: 0xff5a16, transparent: true, opacity: 1 });
-                            const flashMat = new THREE.MeshBasicMaterial({ color: 0xffe04b, transparent: true, opacity: 1 });
-                            const smokeMat = new THREE.MeshBasicMaterial({ color: 0x46352f, transparent: true, opacity: 1 });
-                            const ring = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.11, 10, 24), ringMat);
-                            ring.rotation.x = Math.PI / 2;
-                            boom.add(ring);
-                            boom.add(new THREE.Mesh(new THREE.SphereGeometry(0.48, 12, 8), flashMat));
-                            for (let pi = 0; pi < 5; pi++) {
-                                const puff = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 8), smokeMat.clone());
-                                const ang = (pi / 5) * Math.PI * 2;
-                                puff.position.set(Math.cos(ang) * 0.42, 0.12 + (pi % 2) * 0.18, Math.sin(ang) * 0.42);
-                                puff.scale.set(1.1, 0.8, 1.1);
-                                boom.add(puff);
-                            }
+                            const boom = player.createRedCircleBoom();
                             boom.position.copy(blastPos);
+                            boom.lookAt(camera.position);
                             scene.add(boom);
                             if (!window._remoteProjectiles) window._remoteProjectiles = [];
                             window._remoteProjectiles.push({ mesh: boom, velocity: new THREE.Vector3(), life: 0.7, maxLife: 0.7, type: 'explosion' });
@@ -1789,7 +1774,7 @@ function animate(now) {
                 if (rp.type === 'explosion') {
                     const prog = 1 - Math.max(0, rp.life) / rp.maxLife;
                     rp.mesh.scale.setScalar(0.35 + prog * 1.35);
-                    rp.mesh.rotation.y += 0.08;
+                    rp.mesh.lookAt(camera.position);
                     rp.mesh.traverse(p => { if (p.material && typeof p.material.opacity === 'number') p.material.opacity = Math.max(0, 1 - prog); });
                 }
                 if (rp.type === 'effect') {
@@ -1816,10 +1801,9 @@ function animate(now) {
                     try { if (rp.mesh.parent) rp.mesh.parent.remove(rp.mesh); } catch(e) {}
                     window._remoteProjectiles.splice(ri, 1);
                     // spawn explosion visual
-                    const boom = new THREE.Group();
-                    boom.add(new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.11, 10, 24), new THREE.MeshBasicMaterial({ color: 0xff5a16, transparent: true, opacity: 1 })));
-                    boom.add(new THREE.Mesh(new THREE.SphereGeometry(0.48, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffe04b, transparent: true, opacity: 1 })));
+                    const boom = player.createRedCircleBoom();
                     boom.position.copy(blastPos);
+                    boom.lookAt(camera.position);
                     scene.add(boom);
                     window._remoteProjectiles.push({ mesh: boom, velocity: new THREE.Vector3(), life: 0.7, maxLife: 0.7, type: 'explosion' });
                     // damage local player
