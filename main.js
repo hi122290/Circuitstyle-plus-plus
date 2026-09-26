@@ -13,7 +13,7 @@ import { setupMobileControls, isMobile } from './modules/mobile_controls.js';
 import { appendChatMessage } from './modules/safechat.js';
 import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost, deleteBlockByMesh, deleteBlockById, findBlockAtPoint, stampBuild, toggleSaveMenu, closeSaveMenu } from './modules/build.js';
 import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js';
-import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=2';
+import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=3';
 import { fetchRemotePlace } from './modules/place_cloud.js?v=1';
 
 

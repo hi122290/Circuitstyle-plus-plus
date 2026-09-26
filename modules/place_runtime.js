@@ -714,6 +714,8 @@ export class PlaceRuntime {
                 all() { return Array.from(rt.tools.values()).map((t) => t.def); }
             },
             toast(msg) { rt._toast(String(msg)); },
+            text(str, opts) { return rt._text(str, opts); },
+            clearTexts() { rt._clearTexts(); },
             log(...args) { rt.log(args.join(' ')); },
             get mode() { return rt.mode; }
         };
@@ -860,6 +862,8 @@ export class PlaceRuntime {
 #cs-playhealth .bar{height:14px;background:rgba(0,0,0,0.6);border:1px solid #111;border-radius:2px;overflow:hidden}
 #cs-playhealth .fill{height:100%;background:linear-gradient(#5ad36a,#2f9e44);transition:width 0.2s}
 #cs-playhealth .lbl{margin-bottom:3px;text-shadow:0 1px 2px #000}
+#cs-textlayer{position:fixed;inset:0;pointer-events:none;z-index:39998}
+.cs-text-label{position:absolute;font:bold 40px Tahoma,Arial,sans-serif;color:#ffffe1;text-shadow:0 2px 4px rgba(0,0,0,0.85);white-space:nowrap;user-select:none}
 `;
         document.head.appendChild(st);
     }
@@ -882,7 +886,7 @@ export class PlaceRuntime {
     }
 
     removeHud() {
-        ['cs-hotbar', 'cs-toast', 'cs-playhealth', 'cs-toolhint'].forEach((id) => {
+        ['cs-hotbar', 'cs-toast', 'cs-playhealth', 'cs-toolhint', 'cs-textlayer'].forEach((id) => {
             const el = document.getElementById(id);
             if (el && el.parentNode) el.parentNode.removeChild(el);
         });
@@ -902,6 +906,62 @@ export class PlaceRuntime {
         t.style.opacity = '1';
         clearTimeout(this._toastTimer);
         this._toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 2200);
+    }
+
+    // ── persistent 2D screen text (game.text) ────────────────────────────
+    _ensureTextLayer() {
+        let layer = document.getElementById('cs-textlayer');
+        if (!layer) {
+            layer = document.createElement('div');
+            layer.id = 'cs-textlayer';
+            document.body.appendChild(layer);
+        }
+        return layer;
+    }
+
+    _text(str, opts) {
+        opts = opts || {};
+        const layer = this._ensureTextLayer();
+        const el = document.createElement('div');
+        el.className = 'cs-text-label';
+        el.textContent = (str === undefined || str === null) ? '' : String(str);
+        const size = Number(opts.size);
+        if (size > 0) el.style.fontSize = size + 'px';
+        if (opts.color) el.style.color = opts.color;
+        if (opts.bg) {
+            el.style.background = opts.bg;
+            el.style.padding = opts.padding || '4px 14px';
+            el.style.borderRadius = (opts.radius !== undefined) ? String(opts.radius) : '5px';
+        }
+        if (opts.bold === false) el.style.fontWeight = 'normal';
+        if (opts.x !== undefined) {
+            el.style.left = (typeof opts.x === 'number') ? opts.x + 'px' : String(opts.x);
+        } else {
+            el.style.left = '50%';
+            el.style.transform = 'translateX(-50%)';
+        }
+        if (opts.y !== undefined) el.style.top = (typeof opts.y === 'number') ? opts.y + 'px' : String(opts.y);
+        else el.style.top = '30%';
+        layer.appendChild(el);
+        return {
+            get element() { return el; },
+            get text() { return el.textContent; },
+            setText(v) { el.textContent = (v === undefined || v === null) ? '' : String(v); },
+            get visible() { return el.style.display !== 'none'; },
+            set visible(v) { el.style.display = (v === false) ? 'none' : ''; },
+            set color(v) { el.style.color = v; },
+            move(x, y) {
+                el.style.left = (typeof x === 'number') ? x + 'px' : String(x);
+                el.style.top = (typeof y === 'number') ? y + 'px' : String(y);
+                el.style.transform = 'none';
+            },
+            remove() { if (el.parentNode) el.parentNode.removeChild(el); }
+        };
+    }
+
+    _clearTexts() {
+        const layer = document.getElementById('cs-textlayer');
+        if (layer) layer.innerHTML = '';
     }
 
     // ── studio-mode player ─────────────────────────────────────────────────

@@ -819,6 +819,7 @@ body {
                             <option value="flash">Change color on touch</option>
                             <option value="spin">Spin every frame</option>
                             <option value="welcome">Welcome toast on start</option>
+                            <option value="show-text">Show 2D text ("spawn")</option>
                             <option value="round">Round timer + broadcast</option>
                             <option value="lava">Damage on touch</option>
                             <option value="give">Give a tool on start</option>
@@ -944,6 +945,10 @@ game.tools.define({ id: 'jet', name: 'Jetpack',
     onActivate() { player.teleport(player.position.x, 20, player.position.z) } })
 
 game.toast('message')       // on-screen banner
+game.text('spawn', { size: 48 }) // persistent 2D screen text (centered)
+    .setText('go!')              // handle: .setText() .visible .move(x,y)
+    .remove()                    // ...or remove it when you're done
+game.clearTexts()           // remove every 2D text label at once
 game.log('debug')           // to the console drawer</pre>
             <h3>Part API (the <code>part</code> argument)</h3>
 <pre>part.name / part.type / part.parent
@@ -977,7 +982,7 @@ import {
     PART_BASE_SIZES, PART_TYPE_NAMES, PART_COLOR_PRESETS,
     MATERIAL_PRESETS, ATLAS_KEYS, fileToTextureDataURL,
     listPlaces, getPlace, savePlace, compileScript
-} from './modules/place_runtime.js?v=2';
+} from './modules/place_runtime.js?v=3';
 import { pushPlace, fetchRemotePlace } from './modules/place_cloud.js?v=1';
 
 // ══════════════════════════════════════════════════════════
@@ -1552,12 +1557,21 @@ $('prop-spawn').addEventListener('change', () => {
 // ══════════════════════════════════════════════════════════
 
 const SCRIPT_TEMPLATES = {
-    flash: `// change color briefly when touched
-part.color = '#ff5050';
-game.after(0.4, () => { part.color = '#a3a3a3'; });`,
+    flash: `// change color briefly when touched — restores the part's REAL color
+if (!part.__flashing) {
+    part.__flashing = true;
+    const was = part.color;
+    part.color = '#ff5050';
+    game.after(0.4, () => { part.color = was; part.__flashing = false; });
+}`,
     spin: `// rotate a little every frame
 part.rotation.y += 0.03;`,
     welcome: `game.toast('Welcome!');`,
+    'show-text': `// show 2D screen text that says "spawn"
+const label = game.text('spawn', { size: 48, color: '#ffffe1' });
+// label.setText('something else')   // change it later
+// label.visible = false             // hide it
+// label.remove()                    // take it off screen`,
     round: `game.startRound(30);
 game.on('timer', (t) => { if (t <= 10) game.toast(t + ' seconds left!'); });
 game.on('roundEnd', () => game.toast('Round over!'));`,
