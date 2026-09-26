@@ -14,8 +14,6 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
     const keyboard = {};
     let model = null;
     let velocityY = 0;
-    let _headNode = null;
-    let _headLocalBox = null;
     let _bombLoadPromise = null;
 
     function attachBombModel(host) {
@@ -412,24 +410,37 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         scene.add(targetIndicator);
     }
 
-    function reloadAccessory() {
-        if (!_headNode) return;
-        _headNode.children
-            .filter(c => c.name && c.name.startsWith('Accessory_'))
-            .forEach(c => _headNode.remove(c));
-        const accId = getEquipped();
-        if (!accId) return;
+    function reloadAccessory(modelTarget, accId) {
+        const target = modelTarget || model;
+        if (!target) return;
+        if (accId === undefined) accId = getEquipped();
+        target.userData.__accId = accId;
+        const head = target.userData.__headNode;
+        if (!head) return; // head not loaded yet — its callback applies __accId
+        const existing = head.children.filter(c => c.name && c.name.startsWith('Accessory_'));
+        if (!accId) {
+            existing.forEach(c => head.remove(c));
+            target.userData.__accToken = (target.userData.__accToken || 0) + 1; // cancel in-flight load
+            return;
+        }
+        if (existing.length === 1 && existing[0].name === 'Accessory_' + accId) return; // already worn
+        existing.forEach(c => head.remove(c));
         const acc = getAccessoryById(accId);
         if (!acc) return;
+        const token = (target.userData.__accToken = (target.userData.__accToken || 0) + 1);
         new GLTFLoader().load(acc.model, (gltf) => {
+            if (target.userData.__accToken !== token) return; // superseded by a newer reload
+            const headNow = target.userData.__headNode;
+            if (!headNow || headNow.children.some(c => c.name === 'Accessory_' + accId)) return;
             const accModel = gltf.scene;
             const s = acc.scale ? acc.scale * 300 : 300;
             accModel.scale.setScalar(s);
             const accBox = new THREE.Box3().setFromObject(accModel);
             const accCenter = new THREE.Vector3();
             accBox.getCenter(accCenter);
-            const headTop = _headLocalBox ? _headLocalBox.max.y : 0;
-            const headCenter = _headLocalBox ? _headLocalBox.getCenter(new THREE.Vector3()) : new THREE.Vector3();
+            const headBox = target.userData.__headBox;
+            const headTop = headBox ? headBox.max.y : 0;
+            const headCenter = headBox ? headBox.getCenter(new THREE.Vector3()) : new THREE.Vector3();
             accModel.position.set(
                 -accCenter.x + headCenter.x + (acc.offset?.x || 0),
                 headTop - accBox.min.y + (acc.offset?.y || 0),
@@ -446,13 +457,13 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                 }
             });
             accModel.name = 'Accessory_' + accId;
-            _headNode.add(accModel);
+            headNow.add(accModel);
         }, undefined, (err) => {
             console.warn('[Accessory] load failed:', acc.model, err);
         });
     }
 
-    function createModel() {
+    function createModel(opts) {
         const pcfg = getPConfig();
         const pvisuals = pcfg.visuals;
         const pdims = pvisuals.dimensions;
@@ -485,6 +496,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         const charModel = new THREE.Group();
         charModel.name = 'player_root';
         charModel.position.y = 0;
+        charModel.userData.__accId = (opts && opts.accessoryId !== undefined) ? opts.accessoryId : getEquipped();
 
         // Create per-part glossy materials using configuration
         const torsoColor = new THREE.Color(pcolors.torso);
@@ -1162,11 +1174,11 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
 
                 headNode.name = 'Head';
                 charModel.add(headNode);
-                _headNode = headNode;
-                _headLocalBox = bbox.clone();
+                charModel.userData.__headNode = headNode;
+                charModel.userData.__headBox = bbox.clone();
 
-                // Load equipped accessory on top of head
-                reloadAccessory();
+                // Apply this model's accessory (local = equipped id, remote = presence-synced id)
+                reloadAccessory(charModel, charModel.userData.__accId);
             }, undefined, (err) => {
                 // swallow load errors so missing asset doesn't break runtime
                 console.warn('head.glb load failed', err);
@@ -2684,6 +2696,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         updateModelAnimations,
         updateModelForcefield,
         reloadAccessory,
+        getEquippedAccessory: getEquipped,
         attachBombModel,
         createRedCircleBoom,
         

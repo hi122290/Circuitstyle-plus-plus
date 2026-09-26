@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { setupAudio, playSound, stopBackground, startBackground } from './modules/audio.js';
 import { setupWorld } from './modules/world.js';
-import { setupPlayer } from './modules/player.js?v=4';
+import { setupPlayer } from './modules/player.js?v=5';
 import { setupUI, renderPlayerList, updateUIElementPositions, renderHealthBar } from './modules/ui.js';
 import { setupGame } from './modules/game.js';
 import PlayerModule from './modules/PlayerModule.js';
@@ -1442,7 +1442,7 @@ function updateRemotePlayers() {
             remoteGroup.name = `remote_${clientId}`;
             scene.add(remoteGroup);
 
-            const tempModel = player.createModel(); // also auto-adds to scene
+            const tempModel = player.createModel({ accessoryId: pData.acc }); // also auto-adds to scene
             scene.remove(tempModel); // unplug it and say bye bye
             remoteGroup.add(tempModel);
 
@@ -1471,6 +1471,14 @@ function updateRemotePlayers() {
                 // Sync the forcefield visibility and rainbow effect for remote players
                 if (player.updateModelForcefield) {
                     player.updateModelForcefield(remote.model, !!pData.ff, performance.now());
+                }
+
+                // Wear the hat THIS player has equipped (synced via presence) —
+                // never the observer's own localStorage hat.
+                const remoteAccId = pData.acc !== undefined ? pData.acc : null;
+                if (remote._accKey !== remoteAccId) {
+                    remote._accKey = remoteAccId;
+                    if (player.reloadAccessory) player.reloadAccessory(remote.model, remoteAccId);
                 }
 
                 // Check if this remote player sent a chat message
@@ -1774,6 +1782,7 @@ function animate(now) {
                     swordSwing: player.isSwordSwinging
                 },
                 ff: player.isForcefieldActive,
+                acc: (player.getEquippedAccessory ? player.getEquippedAccessory() : null),
                 kills: playerStats.kills,
                 wipeouts: playerStats.wipeouts
             };
