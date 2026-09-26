@@ -7,7 +7,7 @@ import PlayerModule from './PlayerModule.js';
 import Global from './Global.js';
 import { ITEM_DATA } from './backpack.js';
 import { getBuildSettings, placeBuild } from './build.js';
-import { getEquipped, getAccessoryById } from './accessories.js';
+import { getEquipped, getAccessoryById } from './accessories.js?v=3';
 
 
 export function setupPlayer(scene, camera, renderer, world, hooks = {}) {

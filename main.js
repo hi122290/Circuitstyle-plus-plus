@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { setupAudio, playSound, stopBackground, startBackground } from './modules/audio.js';
 import { setupWorld } from './modules/world.js';
-import { setupPlayer } from './modules/player.js';
+import { setupPlayer } from './modules/player.js?v=3';
 import { setupUI, renderPlayerList, updateUIElementPositions, renderHealthBar } from './modules/ui.js';
 import { setupGame } from './modules/game.js';
 import PlayerModule from './modules/PlayerModule.js';
