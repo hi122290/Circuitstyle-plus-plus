@@ -15,112 +15,153 @@
 <style>
 /* ============================================================
    Circuitstyle Studio — single-file level editor
+   Light skeuomorphic chrome ported from styles.css / place_select
    ============================================================ */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width: 100%; height: 100%; overflow: hidden; }
 body {
     font: 12px Tahoma, Verdana, Arial, sans-serif;
-    background: #1b1d21;
-    color: #d6d6d6;
+    background: #c0c4c8;
+    color: #222;
     display: flex;
     flex-direction: column;
     user-select: none;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* ── top bar ─────────────────────────────────────────────── */
+/* ── toolbar (like #app-bar) ────────────────────────────── */
 #topbar {
-    height: 40px;
-    background: linear-gradient(#3a3f47, #2c3037);
-    border-bottom: 1px solid #14161a;
+    height: 42px;
+    background: #e8eaec;
+    background: linear-gradient(to bottom, #f0f1f2, #ddDFe1 50%, #d4d6d8 51%, #e0e1e3);
+    border-bottom: 1px solid #999;
+    box-shadow: inset 0 1px 0 #fff, 0 1px 3px rgba(0,0,0,0.2);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 9px;
     padding: 0 10px;
     flex: 0 0 auto;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07);
     z-index: 20;
 }
 #topbar .logo {
     font-weight: bold;
-    font-size: 13px;
-    color: #7fb3ff;
-    letter-spacing: 0.4px;
+    font-size: 15px;
+    color: #444;
+    text-shadow: 0 1px 0 #fff;
+    letter-spacing: -0.3px;
     white-space: nowrap;
 }
 #place-name {
-    width: 180px;
-    background: #17191d;
-    border: 1px solid #565b63;
-    color: #eee;
+    width: 170px;
+    background: #fff;
+    border: 1px solid #888;
+    border-top-color: #666;
+    color: #222;
     padding: 5px 7px;
     font: 12px Tahoma, sans-serif;
     border-radius: 2px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    outline: none;
 }
-#place-name:focus { outline: 1px solid #4a90d9; }
-.sep { width: 1px; height: 22px; background: #16181c; border-right: 1px solid #4a4f57; }
-#mode-tabs { display: flex; border: 1px solid #565b63; border-radius: 3px; overflow: hidden; }
-#mode-tabs button {
-    background: #24272c;
-    border: 0;
-    color: #aaa;
-    font: 11px Tahoma, sans-serif;
-    padding: 6px 16px;
-    cursor: pointer;
+#place-name:focus {
+    border-color: #4a7aaa;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.07), 0 0 4px rgba(74,122,170,0.35);
 }
-#mode-tabs button.active { background: #2f6fb4; color: #fff; }
-#mode-tabs button.play.active { background: #2f9e44; }
-.snap-group { display: flex; align-items: center; gap: 4px; color: #b9bcc2; font-size: 11px; }
-.snap-group input[type="checkbox"] { accent-color: #4a90d9; }
+.sep {
+    width: 2px; height: 24px;
+    background: #fff;
+    border-right: 1px solid #999;
+    box-shadow: 1px 0 0 rgba(255,255,255,0.6);
+}
+.snap-group { display: flex; align-items: center; gap: 5px; color: #333; font-size: 11px; }
+.snap-group input[type="checkbox"] { accent-color: #6b8cae; }
 .snap-group input[type="number"] {
     width: 46px;
-    background: #17191d;
-    border: 1px solid #565b63;
-    color: #ddd;
+    background: #fff;
+    border: 1px solid #888;
+    border-top-color: #666;
+    color: #222;
     padding: 3px 4px;
     font-size: 11px;
     border-radius: 2px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    outline: none;
 }
 .topbtn {
-    background: linear-gradient(#42474f, #33373d);
-    border: 1px solid #14161a;
-    color: #d8dade;
-    font: 11px Tahoma, sans-serif;
-    padding: 6px 12px;
-    cursor: pointer;
+    display: inline-block;
+    padding: 5px 13px;
+    background: #e4e6e8;
+    background: linear-gradient(to bottom, #f4f5f6, #e0e1e3 50%, #d6d8da 51%, #e4e5e7);
+    border: 1px solid #888;
+    border-top-color: #bbb;
+    border-left-color: #bbb;
     border-radius: 3px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    color: #333;
+    font: bold 11px Tahoma, sans-serif;
+    cursor: pointer;
+    text-shadow: 0 1px 0 #fff;
+    box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,0.1);
+    white-space: nowrap;
 }
-.topbtn:hover { background: linear-gradient(#4c525b, #3a3f46); }
-.topbtn:active { background: #2c3036; }
-.topbtn.green { background: linear-gradient(#37924d, #2a7440); border-color: #14401f; }
-.topbtn.green:hover { background: linear-gradient(#42a85a, #318549); }
+.topbtn:hover {
+    background: linear-gradient(to bottom, #f8f9fa, #e8e9eb 50%, #dee0e2 51%, #ecedef);
+}
+.topbtn:active {
+    background: #d0d2d4;
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.15);
+    border-top-color: #888;
+    border-left-color: #888;
+    border-bottom-color: #bbb;
+    border-right-color: #bbb;
+}
+.topbtn.green {
+    background: #8aaa7a;
+    background: linear-gradient(to bottom, #a0c090, #88a878 50%, #7a9a6a 51%, #8aaa7a);
+    border-color: #6a8a5a;
+    border-top-color: #9abb8a;
+    border-left-color: #9abb8a;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+}
+.topbtn.green:hover {
+    background: linear-gradient(to bottom, #b0d0a0, #98b888 50%, #8aaa7a 51%, #9abb8a);
+}
 .spacer { flex: 1; }
 
 /* ── main layout ─────────────────────────────────────────── */
-#main { flex: 1; display: flex; min-height: 0; }
+#main { flex: 1; display: flex; min-height: 0; background: #c0c4c8; }
 
 #left, #right {
-    background: #24272c;
     display: flex;
     flex-direction: column;
     min-height: 0;
     z-index: 10;
 }
-#left { width: 210px; border-right: 1px solid #14161a; }
-#right { width: 300px; border-left: 1px solid #14161a; }
+#left { width: 222px; padding: 6px; gap: 6px; }
+#right { width: 306px; padding: 6px 6px 6px 0; }
 
-.panel-title {
-    background: linear-gradient(#3a3f47, #31353c);
-    border-bottom: 1px solid #14161a;
-    border-top: 1px solid #4a4f57;
-    color: #cfd2d8;
+/* panels (like .panel / .panel-titlebar) */
+.panel {
+    background: #f0f1f2;
+    border: 1px solid #999;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12), inset 0 1px 0 #fff;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.panel.grow { flex: 1; }
+.panel-titlebar {
+    background: #d4d6d8;
+    background: linear-gradient(to bottom, #dfe0e2, #d0d2d4 50%, #c8cacd 51%, #d4d6d8);
+    border-bottom: 1px solid #aaa;
+    padding: 6px 10px;
+    font-size: 12px;
     font-weight: bold;
-    font-size: 11px;
-    padding: 6px 9px;
-    letter-spacing: 0.3px;
+    color: #333;
+    text-shadow: 0 1px 0 #fff;
+    box-shadow: inset 0 1px 0 #fff;
     flex: 0 0 auto;
 }
-.panel-title:first-child { border-top: 0; }
 
 /* parts palette */
 #parts-palette {
@@ -131,267 +172,381 @@ body {
     flex: 0 0 auto;
 }
 .part-btn {
-    background: linear-gradient(#3d434b, #2f343a);
-    border: 1px solid #14161a;
-    color: #d4d7dc;
-    font: 11px Tahoma, sans-serif;
+    background: #e4e6e8;
+    background: linear-gradient(to bottom, #f4f5f6, #e0e1e3 50%, #d6d8da 51%, #e4e5e7);
+    border: 1px solid #888;
+    border-top-color: #bbb;
+    border-left-color: #bbb;
+    color: #333;
+    font: bold 11px Tahoma, sans-serif;
     padding: 9px 4px;
     cursor: pointer;
     border-radius: 3px;
     text-align: center;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07);
+    text-shadow: 0 1px 0 #fff;
+    box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,0.1);
 }
-.part-btn:hover { background: linear-gradient(#4a5159, #3a4047); border-color: #4a90d9; }
-.part-btn:active { background: #2a2e33; }
+.part-btn:hover {
+    background: linear-gradient(to bottom, #f8f9fa, #e8e9eb 50%, #dee0e2 51%, #ecedef);
+    border-color: #6b8cae;
+}
+.part-btn:active {
+    background: #d0d2d4;
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.15);
+}
 .part-btn .glyph {
     display: block;
     width: 22px; height: 16px;
     margin: 0 auto 5px;
     background: #8a919b;
-    border: 1px solid #22252a;
+    border: 1px solid #555;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .part-btn .glyph.sphere { border-radius: 50%; width: 18px; height: 18px; }
 .part-btn .glyph.cylinder { border-radius: 4px / 8px; }
 .part-btn .glyph.wedge { clip-path: polygon(0% 100%, 100% 100%, 100% 0%); }
 .part-btn .glyph.ground { height: 8px; width: 26px; background: #3ca040; }
 
-/* hierarchy */
+/* hierarchy (white list like .sidebar) */
 #hierarchy {
     flex: 1;
     overflow-y: auto;
-    padding: 4px 0;
     min-height: 60px;
+    background: #fff;
 }
 .hier-row {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 8px;
+    padding: 5px 8px;
     cursor: pointer;
-    color: #c3c6cc;
+    color: #333;
     white-space: nowrap;
     overflow: hidden;
     font-size: 11px;
+    border-bottom: 1px solid #eee;
+    box-shadow: inset 0 1px 0 #fff;
+    text-shadow: 0 1px 0 #fff;
 }
-.hier-row:hover { background: #2d3238; }
-.hier-row.sel { background: #2f5f96; color: #fff; }
+.hier-row:hover { background: #dce4ec; color: #222; }
+.hier-row.sel {
+    background: #6b8cae;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
+    border-bottom-color: #5a7a9a;
+}
 .hier-row .dot {
     width: 10px; height: 10px;
-    border: 1px solid #101214;
+    border: 1px solid #666;
     background: #a3a3a3;
     flex: 0 0 auto;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .hier-row .hier-name { overflow: hidden; text-overflow: ellipsis; }
-.hier-row .spawn-star { color: #ffd34d; font-size: 10px; }
+.hier-row .spawn-star { color: #b8860b; font-weight: bold; font-size: 10px; }
 
-/* viewport */
+/* viewport — sunken frame */
 #viewport {
     flex: 1;
     position: relative;
     min-width: 0;
-    background: #101114;
+    margin: 6px;
+    background: #9ab8cc;
+    border: 1px solid #777;
+    border-top-color: #555;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.22);
     overflow: hidden;
 }
 #gl { display: block; width: 100%; height: 100%; }
-#viewport.playing #gl { cursor: crosshair; }
-#play-banner {
-    position: absolute;
-    left: 50%; top: 10px;
-    transform: translateX(-50%);
-    background: rgba(20, 60, 30, 0.9);
-    border: 1px solid #2f9e44;
-    color: #bff0c8;
-    font-size: 11px;
-    padding: 5px 14px;
-    border-radius: 3px;
-    z-index: 50;
-    display: none;
-    pointer-events: none;
-}
-#viewport.playing #play-banner { display: block; }
 
-/* right tabs */
-#rtabs { display: flex; flex: 0 0 auto; border-bottom: 1px solid #14161a; }
-#rtabs button {
-    flex: 1;
-    background: #2a2e34;
-    border: 0;
-    border-right: 1px solid #14161a;
-    color: #9aa0a8;
-    font: 11px Tahoma, sans-serif;
-    padding: 8px 2px;
-    cursor: pointer;
+/* right tabs — Win7 folder tabs */
+#right-panel { overflow: hidden; }
+#rtabs {
+    display: flex;
+    gap: 2px;
+    padding: 5px 5px 0;
+    background: #f0f1f2;
+    border-bottom: 1px solid #aaa;
+    flex: 0 0 auto;
 }
-#rtabs button.active { background: #31353c; color: #fff; box-shadow: inset 0 -2px 0 #4a90d9; }
-#rtab-body { flex: 1; overflow-y: auto; padding: 10px; min-height: 0; }
+#rtabs button {
+    background: #e4e6e8;
+    background: linear-gradient(to bottom, #f4f5f6, #e0e1e3 50%, #d6d8da 51%, #e4e5e7);
+    border: 1px solid #999;
+    border-bottom: 0;
+    border-radius: 3px 3px 0 0;
+    color: #555;
+    font: bold 11px Tahoma, sans-serif;
+    text-shadow: 0 1px 0 #fff;
+    padding: 6px 9px;
+    cursor: pointer;
+    position: relative;
+    top: 1px;
+}
+#rtabs button:hover { color: #222; }
+#rtabs button.active {
+    background: #f0f1f2;
+    color: #222;
+    z-index: 2;
+    padding-bottom: 7px;
+    margin-bottom: -1px;
+    border-bottom: 1px solid #f0f1f2;
+    box-shadow: inset 0 1px 0 #fff;
+}
+#rtab-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    min-height: 0;
+    background: #f0f1f2;
+    color: #222;
+}
 .rtab { display: none; }
 .rtab.active { display: block; }
 
-/* form controls */
+/* form controls — inset like place_select inputs */
 .fld { margin-bottom: 9px; }
 .fld label {
     display: block;
-    color: #9ba1a9;
+    color: #666;
     font-size: 10px;
+    font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.4px;
     margin-bottom: 3px;
 }
 .fld input[type="text"], .fld input[type="number"], .fld select, .fld textarea {
     width: 100%;
-    background: #17191d;
-    border: 1px solid #565b63;
-    color: #e4e6ea;
+    background: #fff;
+    border: 1px solid #888;
+    border-top-color: #666;
+    color: #222;
     padding: 5px 6px;
     font: 12px Tahoma, sans-serif;
     border-radius: 2px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    outline: none;
 }
-.fld input:focus, .fld select:focus, .fld textarea:focus { outline: 1px solid #4a90d9; }
+.fld input:focus, .fld select:focus, .fld textarea:focus {
+    border-color: #4a7aaa;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.07), 0 0 4px rgba(74,122,170,0.35);
+}
 .fld textarea { font-family: Consolas, 'Courier New', monospace; font-size: 11px; resize: vertical; line-height: 1.45; }
 .vec { display: flex; gap: 5px; }
 .vec .axis { flex: 1; position: relative; }
 .vec .axis span {
     position: absolute; left: 5px; top: 50%; transform: translateY(-50%);
-    color: #6d747d; font-size: 10px; pointer-events: none;
+    color: #888; font-size: 10px; pointer-events: none;
 }
 .vec .axis input { padding-left: 15px !important; }
 .row { display: flex; gap: 6px; }
 .row > * { flex: 1; }
-.chk { display: flex; align-items: center; gap: 6px; color: #c8cbd1; font-size: 11px; margin-bottom: 7px; }
-.chk input { accent-color: #4a90d9; }
+.chk { display: flex; align-items: center; gap: 6px; color: #333; font-size: 11px; margin-bottom: 7px; }
+.chk input { accent-color: #6b8cae; width: 14px; height: 14px; }
+
+/* inset section header (inside panels) */
+.sub-head {
+    background: linear-gradient(to bottom, #e8eaec, #dcdfe1);
+    border: 1px solid #bbb;
+    border-bottom: none;
+    margin: 12px -10px 9px;
+    padding: 5px 10px;
+    font-weight: bold;
+    font-size: 11px;
+    color: #333;
+    text-shadow: 0 1px 0 #fff;
+}
 
 /* color swatches */
-#color-presets { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+#color-presets { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
 .swatch {
     width: 18px; height: 18px;
-    border: 1px solid #101214;
+    border: 1px solid #808080;
+    outline: 1px solid #fff;
+    outline-offset: -3px;
     cursor: pointer;
     border-radius: 2px;
 }
-.swatch:hover { transform: scale(1.15); border-color: #fff; }
+.swatch:hover { transform: scale(1.15); border-color: #333; }
 
 /* texture atlas */
-#texture-grid { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+#texture-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; margin-bottom: 20px; }
 .tex-btn {
     width: 44px; height: 44px;
-    border: 2px solid #101214;
-    background: #333;
+    border: 1px solid #888;
+    background: #ddd;
     cursor: pointer;
     padding: 0;
     background-size: cover;
     border-radius: 2px;
     position: relative;
+    box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,0.12);
 }
-.tex-btn.sel { border-color: #4ad06a; }
+.tex-btn.sel { border: 2px solid #6b8cae; box-shadow: 0 0 4px rgba(107,140,174,0.7); }
 .tex-btn span {
     position: absolute; left: 0; right: 0; bottom: -14px;
-    font-size: 8px; color: #8b9198; text-align: center;
+    font-size: 8px; color: #777; text-align: center;
 }
-#texture-grid { margin-bottom: 18px; }
 
 /* scripts / tools lists */
-.mini-list { border: 1px solid #3c4148; border-radius: 3px; margin-bottom: 8px; }
+.mini-list {
+    border: 1px solid #aaa;
+    background: #fff;
+    margin-bottom: 8px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+}
 .mini-row {
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 6px 8px;
     cursor: pointer;
-    border-bottom: 1px solid #30343a;
+    border-bottom: 1px solid #e8e8e8;
     font-size: 11px;
-    color: #c9ccd2;
+    color: #333;
 }
 .mini-row:last-child { border-bottom: 0; }
-.mini-row:hover { background: #2c3037; }
-.mini-row.sel { background: #2f5f96; color: #fff; }
+.mini-row:hover { background: #dce4ec; }
+.mini-row.sel {
+    background: #6b8cae;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
+}
 .mini-row .badge {
     font-size: 9px;
-    background: #444a52;
-    color: #cdd2d8;
+    background: #dcdfe2;
+    border: 1px solid #bbb;
+    color: #444;
     padding: 1px 5px;
     border-radius: 7px;
     flex: 0 0 auto;
+    text-shadow: 0 1px 0 #fff;
 }
-.mini-row .badge.ev-touched { background: #7a4a1d; }
-.mini-row .badge.ev-clicked { background: #1d5a7a; }
-.mini-row .badge.ev-update { background: #3d6b2a; }
-.mini-row .badge.ev-start { background: #5b2a7a; }
+.mini-row.sel .badge { background: rgba(255,255,255,0.2); border-color: rgba(0,0,0,0.2); color: #fff; text-shadow: none; }
+.mini-row .badge.ev-touched { background: #e8d0b0; border-color: #c0a070; color: #5a3a10; }
+.mini-row .badge.ev-clicked { background: #b8d8e8; border-color: #88b0c8; color: #10455e; }
+.mini-row .badge.ev-update { background: #c0dcb0; border-color: #90b078; color: #2a4a10; }
+.mini-row .badge.ev-start { background: #d0b8e0; border-color: #a888c0; color: #3a1a5a; }
 .mini-row .grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .addbtn {
     width: 100%;
-    background: linear-gradient(#3d434b, #2f343a);
-    border: 1px dashed #5a6069;
-    color: #b9bec5;
-    font: 11px Tahoma, sans-serif;
+    background: linear-gradient(to bottom, #f4f5f6, #e0e1e3 50%, #d6d8da 51%, #e4e5e7);
+    border: 1px dashed #999;
+    color: #444;
+    font: bold 11px Tahoma, sans-serif;
     padding: 7px;
     cursor: pointer;
     border-radius: 3px;
     margin-bottom: 9px;
+    text-shadow: 0 1px 0 #fff;
 }
-.addbtn:hover { border-color: #4a90d9; color: #fff; }
+.addbtn:hover { border-color: #6b8cae; color: #222; background: #ecedef; }
 .editor-box {
-    border: 1px solid #3c4148;
-    background: #1e2126;
-    border-radius: 3px;
-    padding: 8px;
+    border: 1px solid #aaa;
+    border-top-color: #888;
+    background: #e4e6e8;
+    padding: 9px;
     margin-bottom: 10px;
+    box-shadow: inset 0 1px 0 #fff;
 }
-.editor-box .box-title { font-weight: bold; font-size: 11px; color: #8fbaff; margin-bottom: 7px; }
+.editor-box .box-title { font-weight: bold; font-size: 11px; color: #3d6f9e; margin-bottom: 7px; text-shadow: 0 1px 0 #fff; }
 .minibtn {
-    background: linear-gradient(#42474f, #33373d);
-    border: 1px solid #14161a;
-    color: #d8dade;
-    font: 11px Tahoma, sans-serif;
-    padding: 5px 10px;
+    display: inline-block;
+    background: #e4e6e8;
+    background: linear-gradient(to bottom, #f4f5f6, #e0e1e3 50%, #d6d8da 51%, #e4e5e7);
+    border: 1px solid #888;
+    border-top-color: #bbb;
+    border-left-color: #bbb;
+    color: #333;
+    font: bold 11px Tahoma, sans-serif;
+    padding: 5px 12px;
     cursor: pointer;
     border-radius: 3px;
+    text-shadow: 0 1px 0 #fff;
+    box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,0.1);
 }
-.minibtn:hover { background: linear-gradient(#4c525b, #3a3f46); }
-.minibtn.danger { background: linear-gradient(#a03434, #7c2626); border-color: #401414; }
-.minibtn.blue { background: linear-gradient(#3572b3, #2a5a91); border-color: #16344f; }
+.minibtn:hover {
+    background: linear-gradient(to bottom, #f8f9fa, #e8e9eb 50%, #dee0e2 51%, #ecedef);
+}
+.minibtn:active {
+    background: #d0d2d4;
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.15);
+}
+.minibtn.danger {
+    background: #c88;
+    background: linear-gradient(to bottom, #d89a9a, #c08080 50%, #b47070 51%, #c88888);
+    border-color: #a06060;
+    border-top-color: #d09090;
+    border-left-color: #d09090;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+}
+.minibtn.danger:hover { background: linear-gradient(to bottom, #e0a8a8, #c88c8c 50%, #bc7c7c 51%, #d09494); }
+.minibtn.blue {
+    background: #6b8cae;
+    background: linear-gradient(to bottom, #86a4c2, #6b8cae 50%, #5d7e9e 51%, #7391b3);
+    border-color: #4a6a8a;
+    border-top-color: #93b0cc;
+    border-left-color: #93b0cc;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+}
+.minibtn.blue:hover { background: linear-gradient(to bottom, #94b0cc, #7999b6 50%, #6b8cae 51%, #81a0c0); }
+.minibtn:disabled, .minibtn[disabled] { opacity: 0.5; cursor: default; pointer-events: none; }
 .script-area { min-height: 150px; }
-.err-line { color: #ff7a7a; font-size: 11px; margin-top: 5px; min-height: 14px; }
-.ok-line { color: #6fd382; font-size: 11px; margin-top: 5px; min-height: 14px; }
+.err-line { color: #c00; font-weight: bold; font-size: 11px; margin-top: 5px; min-height: 14px; }
+.ok-line { color: #2a7440; font-weight: bold; font-size: 11px; margin-top: 5px; min-height: 14px; }
+.hint-text { color: #777; font-size: 10px; line-height: 1.5; }
 
-/* status bar + console */
+/* status bar (like place_select footer) */
 #statusbar {
-    height: 24px;
-    background: #24272c;
-    border-top: 1px solid #14161a;
+    height: 25px;
+    background: #e0e1e3;
+    background: linear-gradient(to bottom, #e0e1e3, #d0d2d4);
+    border-top: 1px solid #fff;
+    box-shadow: 0 -1px 0 #999;
     display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 0 10px;
-    font-size: 10px;
-    color: #8e949c;
+    align-items: stretch;
+    font-size: 11px;
+    color: #555;
     flex: 0 0 auto;
     z-index: 20;
 }
-#statusbar .st-mode { color: #7fb3ff; font-weight: bold; }
-#statusbar .st-mode.play { color: #6fd382; }
-#console-toggle { cursor: pointer; color: #b9bec5; }
-#console-toggle:hover { color: #fff; }
+#statusbar > span {
+    padding: 0 11px;
+    line-height: 24px;
+    border-right: 1px solid #bbb;
+    box-shadow: inset -1px 0 0 #fff;
+    white-space: nowrap;
+}
+#statusbar .spacer { border-right: 1px solid #bbb; box-shadow: inset -1px 0 0 #fff; }
+#statusbar .st-mode { color: #3d6f9e; font-weight: bold; }
+#console-toggle { cursor: pointer; border-right: 0 !important; box-shadow: none !important; }
+#console-toggle:hover { color: #0645ad; text-decoration: underline; }
 #console-drawer {
     height: 130px;
-    background: #14161a;
-    border-top: 1px solid #333;
+    background: #0c0c0c;
+    border-top: 1px solid #808589;
     overflow-y: auto;
     padding: 6px 10px;
     font: 11px Consolas, 'Courier New', monospace;
-    color: #9fd39f;
+    color: #cfcfcf;
     display: none;
     flex: 0 0 auto;
     z-index: 20;
+    user-select: text;
 }
 #console-drawer.open { display: block; }
 #console-drawer .c-err { color: #ff8080; }
 #console-drawer .c-warn { color: #e8c96a; }
-#console-drawer .c-info { color: #8fb6e8; }
+#console-drawer .c-info { color: #9dbfe8; }
 
-/* modals */
+/* modals — Win dialog chrome */
 .modal-back {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.35);
     display: none;
     align-items: center;
     justify-content: center;
@@ -399,94 +554,136 @@ body {
 }
 .modal-back.open { display: flex; }
 .modal {
-    background: #26292f;
-    border: 1px solid #101214;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+    background: #f0f1f2;
+    border: 1px solid #666;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4), inset 0 1px 0 #fff;
     width: 460px;
     max-width: 92vw;
     max-height: 86vh;
     display: flex;
     flex-direction: column;
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
 }
 .modal.wide { width: 640px; }
 .modal-head {
-    background: linear-gradient(#3a3f47, #31353c);
-    border-bottom: 1px solid #14161a;
-    padding: 9px 12px;
+    background: #d4d6d8;
+    background: linear-gradient(to bottom, #dfe0e2, #d0d2d4 50%, #c8cacd 51%, #d4d6d8);
+    border-bottom: 1px solid #aaa;
+    padding: 8px 12px;
     font-weight: bold;
     font-size: 12px;
-    color: #dfe2e7;
+    color: #333;
+    text-shadow: 0 1px 0 #fff;
+    box-shadow: inset 0 1px 0 #fff;
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
-.modal-head .x { cursor: pointer; color: #999; font-weight: normal; padding: 0 4px; }
-.modal-head .x:hover { color: #fff; }
-.modal-body { padding: 12px; overflow-y: auto; }
+.modal-head .x {
+    cursor: pointer;
+    color: #333;
+    font-weight: bold;
+    width: 20px; height: 18px;
+    line-height: 16px;
+    text-align: center;
+    background: linear-gradient(to bottom, #f4f5f6, #e0e1e3 50%, #d6d8da 51%, #e4e5e7);
+    border: 1px solid #888;
+    border-top-color: #bbb;
+    border-left-color: #bbb;
+    border-radius: 2px;
+    text-shadow: 0 1px 0 #fff;
+}
+.modal-head .x:hover { background: linear-gradient(to bottom, #f8f9fa, #e8e9eb 50%, #dee0e2 51%, #ecedef); }
+.modal-head .x:active { background: #d0d2d4; box-shadow: inset 0 2px 3px rgba(0,0,0,0.15); }
+.modal-body { padding: 12px; overflow-y: auto; background: #f0f1f2; }
 .modal-foot {
-    border-top: 1px solid #14161a;
+    border-top: 1px solid #aaa;
+    box-shadow: inset 0 1px 0 #fff;
     padding: 9px 12px;
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    background: #22252a;
+    background: #e0e1e3;
+    background: linear-gradient(to bottom, #e4e6e8, #d6d8da);
 }
 #pub-thumb {
     width: 100%;
     height: 170px;
-    background: #111;
-    border: 1px solid #101214;
+    background: #fff;
+    border: 1px solid #888;
+    border-top-color: #666;
     object-fit: cover;
     margin-bottom: 10px;
     border-radius: 2px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
 }
-.help-body { font-size: 12px; line-height: 1.55; color: #c9ccd2; user-select: text; }
-.help-body h3 { color: #7fb3ff; font-size: 12px; margin: 12px 0 4px; }
+.help-body { font-size: 12px; line-height: 1.55; color: #222; user-select: text; }
+.help-body h3 {
+    color: #3d6f9e;
+    font-size: 12px;
+    margin: 13px 0 4px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid #ccc;
+    text-shadow: 0 1px 0 #fff;
+}
 .help-body h3:first-child { margin-top: 0; }
+.help-body p { color: #333; }
 .help-body code {
-    background: #17191d;
-    border: 1px solid #3c4148;
+    background: #fff;
+    border: 1px solid #bbb;
     padding: 1px 4px;
     border-radius: 2px;
     font: 11px Consolas, monospace;
-    color: #a8e6a1;
+    color: #166916;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.06);
 }
 .help-body pre {
-    background: #17191d;
-    border: 1px solid #3c4148;
+    background: #fdfdfd;
+    border: 1px solid #bbb;
+    border-top-color: #999;
     padding: 7px 9px;
-    border-radius: 3px;
+    border-radius: 2px;
     font: 11px/1.5 Consolas, monospace;
-    color: #a8e6a1;
+    color: #166916;
     overflow-x: auto;
     margin: 5px 0;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
 }
-.help-body ul { padding-left: 18px; }
+.help-body ul { padding-left: 18px; color: #222; }
 
-/* studio toast */
+/* studio toast — classic tooltip balloon */
 #studio-toast {
     position: fixed;
-    left: 50%; top: 54px;
+    left: 50%; top: 56px;
     transform: translateX(-50%);
-    background: rgba(24, 27, 32, 0.96);
-    border: 1px solid #4a90d9;
-    color: #e8eef7;
-    font-size: 12px;
-    padding: 8px 18px;
-    border-radius: 3px;
+    background: #ffffe1;
+    border: 1px solid #767676;
+    color: #000;
+    font-size: 11px;
+    padding: 6px 14px;
     z-index: 90000;
     opacity: 0;
     transition: opacity 0.25s;
     pointer-events: none;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 #studio-toast.show { opacity: 1; }
 
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: #1a1c20; }
-::-webkit-scrollbar-thumb { background: #3d434b; border: 2px solid #1a1c20; border-radius: 5px; }
-::-webkit-scrollbar-thumb:hover { background: #4d545d; }
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-track { background: #f0f1f2; border-left: 1px solid #d0d2d4; }
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(to right, #f2f3f4, #d8dadc 50%, #c8cacd 51%, #dcdde0);
+    border: 1px solid #999;
+    box-shadow: inset 1px 1px 0 #fff;
+}
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(to right, #f8f9fa, #e0e2e4 50%, #d0d2d4 51%, #e4e5e7); }
+::-webkit-scrollbar-button {
+    background: linear-gradient(to bottom, #f4f5f6, #dcdfe1);
+    border: 1px solid #999;
+    height: 14px; width: 14px;
+    box-shadow: inset 0 1px 0 #fff;
+}
 </style>
 </head>
 <body>
@@ -495,11 +692,6 @@ body {
 <div id="topbar">
     <span class="logo">Circuitstyle Studio</span>
     <input id="place-name" type="text" value="My Place" spellcheck="false">
-    <div class="sep"></div>
-    <div id="mode-tabs">
-        <button id="tab-edit" class="active">Edit</button>
-        <button id="tab-play" class="play">Play</button>
-    </div>
     <div class="sep"></div>
     <div class="snap-group">
         <label><input type="checkbox" id="snap-move" checked> Move</label>
@@ -523,141 +715,146 @@ body {
 <div id="main">
     <!-- LEFT -->
     <div id="left">
-        <div class="panel-title">Parts</div>
-        <div id="parts-palette">
-            <button class="part-btn" data-type="box"><span class="glyph"></span>Box</button>
-            <button class="part-btn" data-type="sphere"><span class="glyph sphere"></span>Sphere</button>
-            <button class="part-btn" data-type="cylinder"><span class="glyph cylinder"></span>Cylinder</button>
-            <button class="part-btn" data-type="wedge"><span class="glyph wedge"></span>Wedge</button>
-            <button class="part-btn" data-type="ground" style="grid-column: span 2"><span class="glyph ground"></span>Terrain</button>
+        <div class="panel">
+            <div class="panel-titlebar">Parts</div>
+            <div id="parts-palette">
+                <button class="part-btn" data-type="box"><span class="glyph"></span>Box</button>
+                <button class="part-btn" data-type="sphere"><span class="glyph sphere"></span>Sphere</button>
+                <button class="part-btn" data-type="cylinder"><span class="glyph cylinder"></span>Cylinder</button>
+                <button class="part-btn" data-type="wedge"><span class="glyph wedge"></span>Wedge</button>
+                <button class="part-btn" data-type="ground" style="grid-column: span 2"><span class="glyph ground"></span>Terrain</button>
+            </div>
         </div>
-        <div class="panel-title">Hierarchy</div>
-        <div id="hierarchy"></div>
+        <div class="panel grow">
+            <div class="panel-titlebar">Hierarchy</div>
+            <div id="hierarchy"></div>
+        </div>
     </div>
 
     <!-- VIEWPORT -->
     <div id="viewport">
         <canvas id="gl"></canvas>
-        <div id="play-banner">PLAYING — Esc or Edit tab to stop</div>
     </div>
 
     <!-- RIGHT -->
     <div id="right">
-        <div id="rtabs">
-            <button data-tab="properties" class="active">Properties</button>
-            <button data-tab="scripts">Scripts</button>
-            <button data-tab="tools">Tools</button>
-        </div>
-        <div id="rtab-body">
-            <!-- PROPERTIES TAB -->
-            <div class="rtab active" id="rtab-properties">
-                <div id="props-empty" style="color:#777; font-size:11px; padding:8px 0;">Select a part to edit its properties.</div>
-                <div id="props-form" style="display:none;">
-                    <div class="fld"><label>Name</label><input type="text" id="prop-name"></div>
-                    <div class="fld"><label>Type</label><input type="text" id="prop-type" readonly style="color:#888"></div>
-                    <div class="fld"><label>Parent</label><select id="prop-parent"></select></div>
-                    <div class="fld"><label>Position</label>
-                        <div class="vec">
-                            <div class="axis"><span>X</span><input type="number" id="prop-px" step="0.5"></div>
-                            <div class="axis"><span>Y</span><input type="number" id="prop-py" step="0.5"></div>
-                            <div class="axis"><span>Z</span><input type="number" id="prop-pz" step="0.5"></div>
+        <div class="panel" id="right-panel">
+            <div id="rtabs">
+                <button data-tab="properties" class="active">Properties</button>
+                <button data-tab="scripts">Scripts</button>
+                <button data-tab="tools">Tools</button>
+            </div>
+            <div id="rtab-body">
+                <!-- PROPERTIES TAB -->
+                <div class="rtab active" id="rtab-properties">
+                    <div id="props-empty" style="color:#777; font-size:11px; padding:8px 0;">Select a part to edit its properties.</div>
+                    <div id="props-form" style="display:none;">
+                        <div class="fld"><label>Name</label><input type="text" id="prop-name"></div>
+                        <div class="fld"><label>Type</label><input type="text" id="prop-type" readonly style="color:#888"></div>
+                        <div class="fld"><label>Parent</label><select id="prop-parent"></select></div>
+                        <div class="fld"><label>Position</label>
+                            <div class="vec">
+                                <div class="axis"><span>X</span><input type="number" id="prop-px" step="0.5"></div>
+                                <div class="axis"><span>Y</span><input type="number" id="prop-py" step="0.5"></div>
+                                <div class="axis"><span>Z</span><input type="number" id="prop-pz" step="0.5"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="fld"><label>Rotation (deg)</label>
-                        <div class="vec">
-                            <div class="axis"><span>X</span><input type="number" id="prop-rx" step="15"></div>
-                            <div class="axis"><span>Y</span><input type="number" id="prop-ry" step="15"></div>
-                            <div class="axis"><span>Z</span><input type="number" id="prop-rz" step="15"></div>
+                        <div class="fld"><label>Rotation (deg)</label>
+                            <div class="vec">
+                                <div class="axis"><span>X</span><input type="number" id="prop-rx" step="15"></div>
+                                <div class="axis"><span>Y</span><input type="number" id="prop-ry" step="15"></div>
+                                <div class="axis"><span>Z</span><input type="number" id="prop-rz" step="15"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="fld"><label>Scale</label>
-                        <div class="vec">
-                            <div class="axis"><span>X</span><input type="number" id="prop-sx" step="0.25" min="0.05"></div>
-                            <div class="axis"><span>Y</span><input type="number" id="prop-sy" step="0.25" min="0.05"></div>
-                            <div class="axis"><span>Z</span><input type="number" id="prop-sz" step="0.25" min="0.05"></div>
+                        <div class="fld"><label>Scale</label>
+                            <div class="vec">
+                                <div class="axis"><span>X</span><input type="number" id="prop-sx" step="0.25" min="0.05"></div>
+                                <div class="axis"><span>Y</span><input type="number" id="prop-sy" step="0.25" min="0.05"></div>
+                                <div class="axis"><span>Z</span><input type="number" id="prop-sz" step="0.25" min="0.05"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="panel-title" style="margin:12px -10px 9px;">Material</div>
-                    <div class="fld"><label>Color</label><input type="color" id="prop-color" value="#a3a3a3" style="width:100%;height:28px;padding:1px;background:#17191d;border:1px solid #565b63;">
-                        <div id="color-presets"></div>
-                    </div>
-                    <div class="fld"><label>Finish</label><select id="prop-material"></select></div>
-                    <div class="fld"><label>Texture</label>
-                        <div id="texture-grid"></div>
-                        <button class="minibtn" id="btn-upload-tex" style="width:100%">Upload Image...</button>
-                        <input type="file" id="upload-tex-file" accept="image/*" style="display:none">
-                    </div>
-                    <div class="panel-title" style="margin:12px -10px 9px;">Behavior</div>
-                    <label class="chk"><input type="checkbox" id="prop-collidable" checked> Collidable</label>
-                    <label class="chk"><input type="checkbox" id="prop-visible" checked> Visible</label>
-                    <div class="fld"><label>Damage on touch</label><input type="number" id="prop-damage" value="0" step="5" min="0"></div>
-                    <label class="chk"><input type="checkbox" id="prop-spawn"> Player spawn point</label>
-                    <div class="row" style="margin-top:10px;">
-                        <button class="minibtn" id="btn-duplicate">Duplicate</button>
-                        <button class="minibtn danger" id="btn-delete">Delete</button>
+                        <div class="sub-head">Material</div>
+                        <div class="fld"><label>Color</label><input type="color" id="prop-color" value="#a3a3a3" style="width:100%;height:28px;padding:1px;background:#fff;border:1px solid #888;">
+                            <div id="color-presets"></div>
+                        </div>
+                        <div class="fld"><label>Finish</label><select id="prop-material"></select></div>
+                        <div class="fld"><label>Texture</label>
+                            <div id="texture-grid"></div>
+                            <button class="minibtn" id="btn-upload-tex" style="width:100%">Upload Image...</button>
+                            <input type="file" id="upload-tex-file" accept="image/*" style="display:none">
+                        </div>
+                        <div class="sub-head">Behavior</div>
+                        <label class="chk"><input type="checkbox" id="prop-collidable" checked> Collidable</label>
+                        <label class="chk"><input type="checkbox" id="prop-visible" checked> Visible</label>
+                        <div class="fld"><label>Damage on touch</label><input type="number" id="prop-damage" value="0" step="5" min="0"></div>
+                        <label class="chk"><input type="checkbox" id="prop-spawn"> Player spawn point</label>
+                        <div class="row" style="margin-top:10px;">
+                            <button class="minibtn" id="btn-duplicate">Duplicate</button>
+                            <button class="minibtn danger" id="btn-delete">Delete</button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- SCRIPTS TAB -->
-            <div class="rtab" id="rtab-scripts">
-                <button class="addbtn" id="btn-add-script">+ New Script</button>
-                <div class="mini-list" id="script-list"></div>
-                <div class="editor-box" id="script-editor" style="display:none;">
-                    <div class="box-title">Script Editor</div>
-                    <div class="fld"><label>Name</label><input type="text" id="se-name"></div>
-                    <div class="row">
-                        <div class="fld"><label>Event</label><select id="se-event">
-                            <option value="start">start (run once)</option>
-                            <option value="update">update (every frame)</option>
-                            <option value="touched">touched (on contact)</option>
-                            <option value="clicked">clicked (on click)</option>
+                <!-- SCRIPTS TAB -->
+                <div class="rtab" id="rtab-scripts">
+                    <button class="addbtn" id="btn-add-script">+ New Script</button>
+                    <div class="mini-list" id="script-list"></div>
+                    <div class="editor-box" id="script-editor" style="display:none;">
+                        <div class="box-title">Script Editor</div>
+                        <div class="fld"><label>Name</label><input type="text" id="se-name"></div>
+                        <div class="row">
+                            <div class="fld"><label>Event</label><select id="se-event">
+                                <option value="start">start (run once)</option>
+                                <option value="update">update (every frame)</option>
+                                <option value="touched">touched (on contact)</option>
+                                <option value="clicked">clicked (on click)</option>
+                            </select></div>
+                            <div class="fld"><label>Attach to</label><select id="se-part"></select></div>
+                        </div>
+                        <div class="fld"><label>Template</label><select id="se-template">
+                            <option value="">(blank)</option>
+                            <option value="flash">Change color on touch</option>
+                            <option value="spin">Spin every frame</option>
+                            <option value="welcome">Welcome toast on start</option>
+                            <option value="round">Round timer + broadcast</option>
+                            <option value="lava">Damage on touch</option>
+                            <option value="give">Give a tool on start</option>
+                            <option value="global-log">Log every collision (global)</option>
+                            <option value="bouncy">Launch the player on touch</option>
                         </select></div>
-                        <div class="fld"><label>Attach to</label><select id="se-part"></select></div>
+                        <div class="fld"><label>Code (JavaScript)</label><textarea id="se-code" class="script-area" spellcheck="false"></textarea></div>
+                        <div class="row">
+                            <button class="minibtn" id="se-save">Save Script</button>
+                            <button class="minibtn danger" id="se-delete">Delete</button>
+                        </div>
+                        <div id="se-err" class="err-line"></div>
                     </div>
-                    <div class="fld"><label>Template</label><select id="se-template">
-                        <option value="">(blank)</option>
-                        <option value="flash">Change color on touch</option>
-                        <option value="spin">Spin every frame</option>
-                        <option value="welcome">Welcome toast on start</option>
-                        <option value="round">Round timer + broadcast</option>
-                        <option value="lava">Damage on touch</option>
-                        <option value="give">Give a tool on start</option>
-                        <option value="global-log">Log every collision (global)</option>
-                        <option value="bouncy">Launch the player on touch</option>
-                    </select></div>
-                    <div class="fld"><label>Code (JavaScript)</label><textarea id="se-code" class="script-area" spellcheck="false"></textarea></div>
-                    <div class="row">
-                        <button class="minibtn blue" id="se-save">Save Script</button>
-                        <button class="minibtn danger" id="se-delete">Delete</button>
-                    </div>
-                    <div id="se-err" class="err-line"></div>
+                    <div class="hint-text">Scripts run when the place starts in game. Save to check syntax, then Publish and press Play on the Games page. See Help for the API.</div>
                 </div>
-                <div style="color:#777;font-size:10px;line-height:1.5;">Scripts run in Play mode and in published places. See Help for the game API.</div>
-            </div>
 
-            <!-- TOOLS TAB -->
-            <div class="rtab" id="rtab-tools">
-                <button class="addbtn" id="btn-add-tool">+ New Tool</button>
-                <div class="mini-list" id="tool-list"></div>
-                <div class="editor-box" id="tool-editor" style="display:none;">
-                    <div class="box-title">Tool Editor</div>
-                    <div class="row">
-                        <div class="fld"><label>Name</label><input type="text" id="te-name"></div>
-                        <div class="fld"><label>ID</label><input type="text" id="te-id" readonly style="color:#888"></div>
+                <!-- TOOLS TAB -->
+                <div class="rtab" id="rtab-tools">
+                    <button class="addbtn" id="btn-add-tool">+ New Tool</button>
+                    <div class="mini-list" id="tool-list"></div>
+                    <div class="editor-box" id="tool-editor" style="display:none;">
+                        <div class="box-title">Tool Editor</div>
+                        <div class="row">
+                            <div class="fld"><label>Name</label><input type="text" id="te-name"></div>
+                            <div class="fld"><label>ID</label><input type="text" id="te-id" readonly style="color:#888"></div>
+                        </div>
+                        <div class="fld"><label>Description</label><input type="text" id="te-desc"></div>
+                        <div class="fld"><label>Chip color</label><input type="color" id="te-color" value="#4a90d9" style="width:100%;height:26px;padding:1px;background:#fff;border:1px solid #888;"></div>
+                        <div class="fld"><label>onEquip code (runs when equipped)</label><textarea id="te-equip" class="script-area" style="min-height:70px" spellcheck="false"></textarea></div>
+                        <div class="fld"><label>onActivate code (runs when used — F key)</label><textarea id="te-activate" class="script-area" style="min-height:90px" spellcheck="false"></textarea></div>
+                        <label class="chk"><input type="checkbox" id="te-start"> Give to player when place starts</label>
+                        <div class="row">
+                            <button class="minibtn" id="te-save">Save Tool</button>
+                            <button class="minibtn danger" id="te-delete">Delete</button>
+                        </div>
+                        <div id="te-err" class="err-line"></div>
                     </div>
-                    <div class="fld"><label>Description</label><input type="text" id="te-desc"></div>
-                    <div class="fld"><label>Chip color</label><input type="color" id="te-color" value="#4a90d9" style="width:100%;height:26px;padding:1px;background:#17191d;border:1px solid #565b63;"></div>
-                    <div class="fld"><label>onEquip code (runs when equipped)</label><textarea id="te-equip" class="script-area" style="min-height:70px" spellcheck="false"></textarea></div>
-                    <div class="fld"><label>onActivate code (runs when used — F key)</label><textarea id="te-activate" class="script-area" style="min-height:90px" spellcheck="false"></textarea></div>
-                    <label class="chk"><input type="checkbox" id="te-start"> Give to player when place starts</label>
-                    <div class="row">
-                        <button class="minibtn blue" id="te-save">Save Tool</button>
-                        <button class="minibtn danger" id="te-delete">Delete</button>
-                    </div>
-                    <div id="te-err" class="err-line"></div>
+                    <div class="hint-text">In game, tools sit in the player hotbar: press 1-9 to equip, F to activate. Scripts can also manage them with <code>game.inventory</code>.</div>
                 </div>
-                <div style="color:#777;font-size:10px;line-height:1.5;">Tools live in the player hotbar. Press 1-9 to equip, F to activate. Scripts can also manage them with <code style="color:#a8e6a1">game.inventory</code>.</div>
             </div>
         </div>
     </div>
@@ -682,12 +879,12 @@ body {
             <img id="pub-thumb" alt="Place thumbnail">
             <div class="fld"><label>Place name</label><input type="text" id="pub-name"></div>
             <div class="fld"><label>Description</label><textarea id="pub-desc" style="min-height:60px" spellcheck="false"></textarea></div>
-            <div id="pub-result" style="font-size:11px;color:#6fd382;min-height:16px;"></div>
+            <div id="pub-result" style="font-size:11px;color:#2a7440;font-weight:bold;min-height:16px;"></div>
         </div>
         <div class="modal-foot">
             <button class="minibtn" data-close="publish-modal">Cancel</button>
             <button class="minibtn blue" id="pub-open" style="display:none">Open Games Page</button>
-            <button class="minibtn" id="pub-do" style="background:linear-gradient(#37924d,#2a7440);border-color:#14401f;">Save &amp; Publish</button>
+            <button class="minibtn" id="pub-do" style="background:linear-gradient(to bottom,#a0c090,#88a878 50%,#7a9a6a 51%,#8aaa7a);border-color:#6a8a5a;border-top-color:#9abb8a;border-left-color:#9abb8a;color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,0.3);">Save &amp; Publish</button>
         </div>
     </div>
 </div>
@@ -700,17 +897,17 @@ body {
             <h3>Editing</h3>
             <ul>
                 <li>Click parts in the viewport or hierarchy to select. Drag the gizmo to move/rotate/scale.</li>
-                <li>Keys: <code>W</code> move, <code>E</code> rotate, <code>R</code> scale, <code>Ctrl+D</code> duplicate, <code>Delete</code> remove, <code>Esc</code> deselect / stop play.</li>
+                <li>Keys: <code>W</code> move, <code>E</code> rotate, <code>R</code> scale, <code>Ctrl+D</code> duplicate, <code>Delete</code> remove, <code>Esc</code> deselect, <code>Ctrl+S</code> publish.</li>
                 <li>Orbit: left-drag. Pan: right-drag. Zoom: wheel.</li>
             </ul>
-            <h3>Play mode</h3>
-            <p>Play runs your scripts with a test player: <code>WASD</code> move, <code>Space</code> jump, right-drag look, <code>1-9</code> equip tools, <code>F</code> use tool, <code>Esc</code> stop. Changes made by scripts are discarded when you stop.</p>
+            <h3>Testing scripts</h3>
+            <p>Syntax is checked when you save a script or tool. Scripts run when the place starts in game — publish it, then press <b>Play</b> on the Games page (or open <code>index.html?place=&lt;id&gt;</code>).</p>
             <h3>Script events</h3>
             <ul>
                 <li><code>start</code> — once when the place starts (attach to a part or global).</li>
                 <li><code>update</code> — every frame.</li>
                 <li><code>touched</code> — when something hits the part (player, or a moved/spawned part).</li>
-                <li><code>clicked</code> — when the player clicks the part in Play mode.</li>
+                <li><code>clicked</code> — when the player clicks the part in game.</li>
             </ul>
             <h3>Global game API (all scripts)</h3>
 <pre>// objects
@@ -846,7 +1043,7 @@ scene.add(gizmo);
 let gizmoDragging = false;
 gizmo.addEventListener('dragging-changed', (e) => {
     gizmoDragging = !!e.value;
-    orbit.enabled = !e.value && mode === 'edit';
+    orbit.enabled = !e.value;
 });
 gizmo.addEventListener('objectChange', () => {
     if (selectedId) refreshPropsFromMesh();
@@ -856,9 +1053,7 @@ gizmo.addEventListener('objectChange', () => {
 // ── place / runtime state ────────────────────────────────
 let placeId = new URLSearchParams(location.search).get('place');
 let manifest = (placeId && getPlace(placeId)) || emptyManifest('My Place');
-let rt = null;                 // PlaceRuntime (edit-phase: built, not running)
-let mode = 'edit';             // 'edit' | 'play'
-let playSnapshot = null;
+let rt = null;                 // PlaceRuntime (scene manager for the editor)
 let selectedId = null;
 let selectionBox = null;
 
@@ -898,7 +1093,6 @@ function getEntry(id) { return rt.parts.get(id); }
 function selectedEntry() { return selectedId ? rt.parts.get(selectedId) : null; }
 
 function selectPart(id) {
-    if (mode !== 'edit') return;
     selectedId = id && rt.parts.has(id) ? id : null;
     const entry = selectedEntry();
     if (entry) {
@@ -931,7 +1125,7 @@ canvas.addEventListener('pointerdown', (e) => {
     downPos = { x: e.clientX, y: e.clientY };
 });
 canvas.addEventListener('pointerup', (e) => {
-    if (e.button !== 0 || !downPos || mode !== 'edit' || gizmoDragging) { downPos = null; return; }
+    if (e.button !== 0 || !downPos || gizmoDragging) { downPos = null; return; }
     const moved = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
     downPos = null;
     if (moved > 5) return;
@@ -983,7 +1177,6 @@ function uniqueName(base) {
 }
 
 function addPart(type) {
-    if (mode !== 'edit') return;
     const def = defaultPartDef(type);
     def.name = uniqueName(def.name);
     const size = PART_BASE_SIZES[type];
@@ -1014,7 +1207,6 @@ document.querySelectorAll('.part-btn').forEach((btn) => {
 });
 
 function deleteSelected() {
-    if (mode !== 'edit') return;
     const entry = selectedEntry();
     if (!entry) return;
     const id = entry.def.id;
@@ -1029,7 +1221,6 @@ function deleteSelected() {
 }
 
 function duplicateSelected() {
-    if (mode !== 'edit') return;
     const entry = selectedEntry();
     if (!entry) return;
     const def = JSON.parse(JSON.stringify(entry.def));
@@ -1073,7 +1264,7 @@ function refreshHierarchy() {
     const box = $('hierarchy');
     box.innerHTML = '';
     if (rt.parts.size === 0) {
-        box.innerHTML = '<div style="color:#666;font-size:10px;padding:8px 10px;">No parts yet. Add one above.</div>';
+        box.innerHTML = '<div style="color:#777;font-size:10px;padding:8px 10px;">No parts yet. Add one above.</div>';
         return;
     }
     for (const entry of orderedParts()) {
@@ -1153,13 +1344,13 @@ function refreshTextureGrid() {
         b.className = 'tex-btn' + (current === key ? ' sel' : '');
         b.title = key;
         if (key === 'none') {
-            b.style.background = 'linear-gradient(135deg,#555 45%,#777 55%)';
+            b.style.background = 'linear-gradient(135deg,#eee 45%,#ccc 55%)';
         } else {
             const tex = getAtlasTexture(key);
             if (tex && tex.image) {
                 b.style.backgroundImage = `url(${tex.image.toDataURL ? tex.image.toDataURL() : ''})`;
             } else {
-                b.style.background = '#444';
+                b.style.background = '#ccc';
             }
         }
         const lbl = document.createElement('span');
@@ -1352,7 +1543,7 @@ $('prop-spawn').addEventListener('change', () => {
 });
 
 // ══════════════════════════════════════════════════════════
-// STAGE 3 — scripting layer + play mode
+// STAGE 3 — scripting layer
 // ══════════════════════════════════════════════════════════
 
 const SCRIPT_TEMPLATES = {
@@ -1398,7 +1589,7 @@ function renderScriptList() {
     box.innerHTML = '';
     const scripts = manifest.scripts || [];
     if (scripts.length === 0) {
-        box.innerHTML = '<div class="mini-row" style="color:#666;cursor:default;">No scripts yet</div>';
+        box.innerHTML = '<div class="mini-row" style="color:#777;cursor:default;">No scripts yet</div>';
         return;
     }
     for (const s of scripts) {
@@ -1438,7 +1629,6 @@ function closeScriptEditor() {
 }
 
 $('btn-add-script').addEventListener('click', () => {
-    if (mode !== 'edit') { studioToast('Stop play mode first'); return; }
     const sel = selectedEntry();
     const s = {
         id: genId('script'),
@@ -1533,7 +1723,7 @@ function renderToolList() {
     box.innerHTML = '';
     const tools = manifest.tools || [];
     if (tools.length === 0) {
-        box.innerHTML = '<div class="mini-row" style="color:#666;cursor:default;">No tools yet</div>';
+        box.innerHTML = '<div class="mini-row" style="color:#777;cursor:default;">No tools yet</div>';
         return;
     }
     for (const t of tools) {
@@ -1541,7 +1731,7 @@ function renderToolList() {
         row.className = 'mini-row' + (t.id === editingToolId ? ' sel' : '');
         const startMark = (manifest.startTools || []).includes(t.id) ? '<span class="badge">start</span>' : '';
         row.innerHTML =
-            `<span class="dot" style="width:10px;height:10px;background:${t.color || '#4a90d9'};border:1px solid #111;"></span>` +
+            `<span class="dot" style="width:10px;height:10px;background:${t.color || '#4a90d9'};border:1px solid #666;"></span>` +
             `<span class="grow">${escapeHtml(t.name)}</span>` +
             `<span class="badge">${escapeHtml(t.id)}</span>` + startMark;
         row.addEventListener('click', () => openToolEditor(t.id));
@@ -1569,7 +1759,6 @@ function openToolEditor(id) {
 }
 
 $('btn-add-tool').addEventListener('click', () => {
-    if (mode !== 'edit') { studioToast('Stop play mode first'); return; }
     const base = 'tool' + ((manifest.tools || []).length + 1);
     const t = {
         id: genId(base).replace(/[^a-z0-9_]/gi, '').toLowerCase(),
@@ -1625,58 +1814,6 @@ function switchTab(name) {
 }
 document.querySelectorAll('#rtabs button').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
-// ── play mode ────────────────────────────────────────────
-function setMode(next) {
-    if (next === mode) return;
-    if (next === 'play') {
-        if (mode !== 'edit') return;
-        // snapshot for restore (script changes are discarded on stop)
-        playSnapshot = JSON.parse(JSON.stringify(manifest));
-        selectPart(null);
-        gizmo.detach();
-        if (selectionBox) selectionBox.visible = false;
-        gizmo.enabled = false;
-        orbit.enabled = false;
-        grid.visible = false;
-        axisX.visible = false;
-        axisZ.visible = false;
-        mode = 'play';
-        viewportEl.classList.add('playing');
-        $('tab-edit').classList.remove('active');
-        $('tab-play').classList.add('active');
-        $('st-mode').textContent = 'PLAY';
-        $('st-mode').classList.add('play');
-        document.querySelectorAll('.part-btn, #btn-delete, #btn-duplicate, #btn-add-script, #btn-add-tool').forEach((b) => { b.disabled = true; });
-        // same runtime instance — buildScene skips the meshes already in the scene
-        rt.start();
-        log('play mode started', 'info');
-    } else {
-        if (mode !== 'play') return;
-        const snap = playSnapshot;
-        playSnapshot = null;
-        loadManifest(snap); // disposes the runtime (stops it first) and rebuilds
-        mode = 'edit';
-        viewportEl.classList.remove('playing');
-        $('tab-edit').classList.add('active');
-        $('tab-play').classList.remove('active');
-        $('st-mode').textContent = 'EDIT';
-        $('st-mode').classList.remove('play');
-        gizmo.enabled = true;
-        gizmo.setMode('translate');
-        orbit.enabled = true;
-        camera.position.set(22, 16, 22);
-        orbit.target.set(0, 2, 0);
-        orbit.update();
-        grid.visible = true;
-        axisX.visible = true;
-        axisZ.visible = true;
-        document.querySelectorAll('.part-btn, #btn-delete, #btn-duplicate, #btn-add-script, #btn-add-tool').forEach((b) => { b.disabled = false; });
-        log('play mode stopped (script changes reverted)', 'warn');
-    }
-}
-$('tab-edit').addEventListener('click', () => setMode('edit'));
-$('tab-play').addEventListener('click', () => setMode('play'));
-
 // ── keyboard shortcuts ───────────────────────────────────
 window.addEventListener('keydown', (e) => {
     const tag = e.target && e.target.tagName;
@@ -1686,12 +1823,10 @@ window.addEventListener('keydown', (e) => {
             document.querySelectorAll('.modal-back.open').forEach((m) => m.classList.remove('open'));
             return;
         }
-        if (mode === 'play') { setMode('edit'); return; }
         if (!typing) selectPart(null);
         return;
     }
     if (typing) return;
-    if (mode === 'play') return;
     if (e.code === 'KeyW') gizmo.setMode('translate');
     else if (e.code === 'KeyE') gizmo.setMode('rotate');
     else if (e.code === 'KeyR') gizmo.setMode('scale');
@@ -1727,7 +1862,6 @@ function renderThumbnail() {
 }
 
 function openPublish() {
-    if (mode === 'play') { studioToast('Stop play mode before publishing'); return; }
     $('pub-name').value = $('place-name').value || manifest.name;
     $('pub-desc').value = manifest.description || '';
     $('pub-result').textContent = '';
@@ -1753,7 +1887,7 @@ $('pub-do').addEventListener('click', () => {
         log(`published "${manifest.name}" (${manifest.id})`, 'info');
     } catch (e) {
         $('pub-result').textContent = 'Publish failed: ' + e.message;
-        $('pub-result').style.color = '#ff7a7a';
+        $('pub-result').style.color = '#c00';
         log('publish failed: ' + e.message, 'err');
     }
 });
@@ -1761,7 +1895,6 @@ $('pub-open').addEventListener('click', () => { window.open('./place_select.html
 
 // export / import JSON
 $('btn-export').addEventListener('click', () => {
-    if (mode === 'play') { studioToast('Stop play mode first'); return; }
     const data = JSON.stringify(manifest, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const a = document.createElement('a');
@@ -1774,7 +1907,6 @@ $('btn-export').addEventListener('click', () => {
     log('exported place JSON');
 });
 $('btn-import').addEventListener('click', () => {
-    if (mode === 'play') { studioToast('Stop play mode first'); return; }
     $('import-file').click();
 });
 $('import-file').addEventListener('change', (e) => {
@@ -1844,15 +1976,9 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-const clock = new THREE.Clock();
 function frame() {
     requestAnimationFrame(frame);
-    const dt = clock.getDelta();
-    if (mode === 'edit') {
-        orbit.update();
-    } else if (mode === 'play' && rt && rt.running) {
-        try { rt.update(dt * 1000); } catch (e) { log('runtime error: ' + e.message, 'err'); console.error(e); rt.update = () => {}; }
-    }
+    orbit.update();
     if (selectionBox && selectionBox.visible) selectionBox.update();
     renderer.render(scene, camera);
 }
