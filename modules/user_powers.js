@@ -569,25 +569,11 @@ function _spawnGrappleVFX(pos, scene, time) {
 function _spawnGrappleImpactVFX(pos, scene) {
     const flash = new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 12, 8),
-        new THREE.MeshBasicMaterial({ color: 0xff4444, transparent: true, opacity: 1 })
+        new THREE.MeshBasicMaterial({ color: 0xff4444, transparent: true, opacity: 0.7 })
     );
     flash.position.copy(pos);
     flash.position.y += 1.2;
     scene.add(flash);
-
-    for (let i = 0; i < 4; i++) {
-        const spark = new THREE.Mesh(
-            new THREE.SphereGeometry(0.12, 6, 4),
-            new THREE.MeshBasicMaterial({ color: 0xff8844, transparent: true, opacity: 1 })
-        );
-        const angle = (i / 4) * Math.PI * 2;
-        spark.position.set(
-            pos.x + Math.cos(angle) * 0.4,
-            pos.y + 1.2 + Math.sin(angle) * 0.4,
-            pos.z + Math.sin(angle) * 0.4
-        );
-        scene.add(spark);
-    }
 
     const startTime = performance.now();
     const tick = () => {
@@ -597,7 +583,7 @@ function _spawnGrappleImpactVFX(pos, scene) {
             return;
         }
         flash.scale.setScalar(1 + p);
-        flash.material.opacity = 1 - p;
+        flash.material.opacity = 0.7 * (1 - p);
         requestAnimationFrame(tick);
     };
     tick();
@@ -738,33 +724,23 @@ function _spawnHeadFlingVFX(pos, scene) {
 }
 
 function _spawnChokeAuraVFX(pos, scene) {
-    const aura = new THREE.Mesh(
-        new THREE.TorusGeometry(0.8, 0.05, 8, 24),
-        new THREE.MeshBasicMaterial({ color: 0x6600cc, transparent: true, opacity: 0.8 })
+    const ring = new THREE.Mesh(
+        new THREE.RingGeometry(0.6, 0.85, 24),
+        new THREE.MeshBasicMaterial({ color: 0x4a1f7a, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false })
     );
-    aura.position.set(pos.x, pos.y + 1.2, pos.z);
-    scene.add(aura);
-
-    const glow = new THREE.Mesh(
-        new THREE.SphereGeometry(1, 12, 8),
-        new THREE.MeshBasicMaterial({ color: 0x8800ff, transparent: true, opacity: 0.25 })
-    );
-    glow.position.set(pos.x, pos.y + 1.2, pos.z);
-    scene.add(glow);
+    ring.position.set(pos.x, pos.y + 0.08, pos.z);
+    ring.rotation.x = -Math.PI / 2;
+    scene.add(ring);
 
     const startTime = performance.now();
     const tick = () => {
-        const p = (performance.now() - startTime) / 2000;
+        const p = (performance.now() - startTime) / 550;
         if (p >= 1) {
-            if (aura.parent) aura.parent.remove(aura);
-            if (glow.parent) glow.parent.remove(glow);
+            if (ring.parent) ring.parent.remove(ring);
             return;
         }
-        aura.rotation.z += 0.05;
-        aura.rotation.x = Math.PI / 2 + Math.sin(p * Math.PI * 4) * 0.3;
-        aura.material.opacity = 0.8 * (1 - p * 0.5);
-        glow.scale.setScalar(1 + Math.sin(p * Math.PI * 6) * 0.15);
-        glow.material.opacity = 0.25 * (1 - p * 0.5);
+        ring.scale.setScalar(1 + p * 1.5);
+        ring.material.opacity = 0.45 * (1 - p);
         requestAnimationFrame(tick);
     };
     tick();

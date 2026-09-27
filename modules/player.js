@@ -53,18 +53,52 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         });
     }
 
+    let _puffTexture = null;
+    function _getPuffTexture() {
+        if (_puffTexture) return _puffTexture;
+        try {
+            const size = 128;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+            grad.addColorStop(0, 'rgba(255,255,255,1)');
+            grad.addColorStop(0.4, 'rgba(255,255,255,0.8)');
+            grad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, size, size);
+            _puffTexture = new THREE.CanvasTexture(canvas);
+        } catch (e) {
+            _puffTexture = null;
+        }
+        return _puffTexture;
+    }
+
     function createRedCircleBoom() {
         const boom = new THREE.Group();
-        boom.add(new THREE.Mesh(
-            new THREE.CircleGeometry(2.0, 48),
-            new THREE.MeshBasicMaterial({ color: 0xe61c1c, transparent: true, opacity: 1, side: THREE.DoubleSide, depthWrite: false })
-        ));
-        const edge = new THREE.Mesh(
-            new THREE.RingGeometry(2.0, 2.35, 48),
-            new THREE.MeshBasicMaterial({ color: 0x8f0f0f, transparent: true, opacity: 1, side: THREE.DoubleSide, depthWrite: false })
-        );
-        edge.position.z = -0.012;
-        boom.add(edge);
+        const tex = _getPuffTexture();
+        const puffs = [
+            { color: 0xffe2b0, opacity: 0.85, scale: 1.7, x: 0, y: 0, z: 0 },
+            { color: 0x8f8f8f, opacity: 0.5, scale: 2.1, x: -0.5, y: 0.25, z: 0 },
+            { color: 0x7a7a7a, opacity: 0.45, scale: 1.8, x: 0.55, y: 0.1, z: 0.1 },
+            { color: 0x9c9c9c, opacity: 0.4, scale: 1.5, x: 0.1, y: -0.35, z: -0.15 },
+            { color: 0x6e6e6e, opacity: 0.35, scale: 1.3, x: -0.2, y: 0.55, z: 0.2 }
+        ];
+        for (const p of puffs) {
+            const mat = new THREE.SpriteMaterial({
+                map: tex,
+                color: p.color,
+                transparent: true,
+                opacity: p.opacity,
+                depthWrite: false
+            });
+            mat.userData.baseOpacity = p.opacity;
+            const sprite = new THREE.Sprite(mat);
+            sprite.scale.setScalar(p.scale);
+            sprite.position.set(p.x, p.y, p.z);
+            boom.add(sprite);
+        }
         return boom;
     }
 
@@ -1500,7 +1534,8 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                 projectile.mesh.lookAt(camera.position);
                 projectile.mesh.traverse((part) => {
                     if (part.material && typeof part.material.opacity === 'number') {
-                        part.material.opacity = Math.max(0, 1 - progress);
+                        const base = part.material.userData && part.material.userData.baseOpacity;
+                        part.material.opacity = Math.max(0, (typeof base === 'number' ? base : 1) * (1 - progress));
                     }
                 });
             }
@@ -2277,10 +2312,8 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                 new THREE.SphereGeometry(size, 12, 12),
                 new THREE.MeshStandardMaterial({
                     color,
-                    emissive: color,
-                    emissiveIntensity: 0.45,
-                    roughness: 0.35,
-                    metalness: 0.15
+                    roughness: 0.45,
+                    metalness: 0.05
                 })
             );
             proj.castShadow = true;
@@ -2321,15 +2354,6 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         switch (itemId) {
             case 'sword': {
                 swordSwingStartTime = now;
-                const slash = new THREE.Mesh(
-                    new THREE.TorusGeometry(0.8, 0.06, 8, 24),
-                    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
-                );
-                slash.position.copy(origin).add(forward.clone().multiplyScalar(0.8));
-                slash.rotation.x = Math.PI / 2;
-                slash.rotation.z = Math.PI / 2;
-                scene.add(slash);
-                activeItemProjectiles.push({ mesh: slash, velocity: new THREE.Vector3(0, 0, 0), life: 0.18, type: 'effect' });
                 playSound('click');
                 return true;
             }
@@ -2384,7 +2408,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
             }
             case 'marbles': {
                 // Big bouncy studded ball — spawns from right arm, physics-based bounce
-                const MARBLE_COLORS = [0xff3333, 0x33aaff, 0xffdd00, 0x44ee44, 0xff88ff, 0xff8800, 0x00ffee];
+                const MARBLE_COLORS = [0xdd3333, 0x3366cc, 0xf0c020, 0x33aa55, 0xffffff];
                 const ballColor = MARBLE_COLORS[Math.floor(Math.random() * MARBLE_COLORS.length)];
                 const ballRadius = 0.32;
 
@@ -2403,10 +2427,8 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                 const ballGeo = new THREE.SphereGeometry(ballRadius, 16, 16);
                 const ballMat = new THREE.MeshStandardMaterial({
                     color: ballColor,
-                    emissive: ballColor,
-                    emissiveIntensity: 0.12,
-                    roughness: 0.45,
-                    metalness: 0.08
+                    roughness: 0.5,
+                    metalness: 0.05
                 });
                 // overlay stud pattern
                 try {

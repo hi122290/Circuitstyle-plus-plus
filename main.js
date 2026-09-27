@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { setupAudio, playSound, stopBackground, startBackground } from './modules/audio.js';
 import { setupWorld } from './modules/world.js';
-import { setupPlayer } from './modules/player.js?v=5';
+import { setupPlayer } from './modules/player.js?v=6';
 import { setupUI, renderPlayerList, updateUIElementPositions, renderHealthBar } from './modules/ui.js';
 import { setupGame } from './modules/game.js';
 import PlayerModule from './modules/PlayerModule.js';
@@ -12,7 +12,7 @@ import { registerStencilHelper } from './modules/stencil_shadows_adapter.js';
 import { setupMobileControls, isMobile } from './modules/mobile_controls.js';
 import { appendChatMessage } from './modules/safechat.js';
 import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost, deleteBlockByMesh, deleteBlockById, findBlockAtPoint, stampBuild, toggleSaveMenu, closeSaveMenu } from './modules/build.js';
-import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js';
+import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js?v=2';
 import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=3';
 import { fetchRemotePlace } from './modules/place_cloud.js?v=1';
 
@@ -1513,13 +1513,13 @@ function updateRemotePlayers() {
                                 // slingshot marble — white
                                 mesh = new THREE.Mesh(
                                     new THREE.SphereGeometry(0.12, 10, 10),
-                                    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.45 })
+                                    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 })
                                 );
                             } else if (lp.projType === 'marbles' || lp.projType === 'superball') {
                                 // big bouncy superball — random color + stud texture
-                                const MARBLE_COLORS = [0xff3333, 0x33aaff, 0xffdd00, 0x44ee44, 0xff88ff, 0xff8800, 0x00ffee];
+                                const MARBLE_COLORS = [0xdd3333, 0x3366cc, 0xf0c020, 0x33aa55, 0xffffff];
                                 const ballColor = MARBLE_COLORS[Math.floor(Math.random() * MARBLE_COLORS.length)];
-                                const ballMat = new THREE.MeshStandardMaterial({ color: ballColor, emissive: ballColor, emissiveIntensity: 0.12, roughness: 0.45, metalness: 0.08 });
+                                const ballMat = new THREE.MeshStandardMaterial({ color: ballColor, roughness: 0.5, metalness: 0.05 });
                                 try {
                                     const t = new THREE.TextureLoader().load('./Studs_Texture.png', (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3,3); t.needsUpdate = true; });
                                     ballMat.map = t;
@@ -1529,7 +1529,7 @@ function updateRemotePlayers() {
                             } else {
                                 mesh = new THREE.Mesh(
                                     new THREE.SphereGeometry(0.12, 10, 10),
-                                    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.4 })
+                                    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 })
                                 );
                             }
                             mesh.position.copy(origin);
@@ -1542,26 +1542,12 @@ function updateRemotePlayers() {
                     }
                 }
 
-                // Check if this remote player sword-hit near us — spawn slash FX and deal damage
+                // Check if this remote player sword-hit near us — deal damage (no slash FX)
                 if (pData.lastSwordHit && player.model) {
                     const sh = pData.lastSwordHit;
                     const shKey = `${clientId}_sword_${sh.t}`;
                     if (!remote._lastSwordHitKey || remote._lastSwordHitKey !== shKey) {
                         remote._lastSwordHitKey = shKey;
-                        // Spawn visible slash arc at the hit position for everyone to see
-                        try {
-                            const hitPos = new THREE.Vector3(sh.x, sh.y, sh.z);
-                            const slash = new THREE.Mesh(
-                                new THREE.TorusGeometry(0.8, 0.06, 8, 24),
-                                new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 })
-                            );
-                            slash.position.copy(hitPos);
-                            slash.rotation.x = Math.PI / 2;
-                            slash.rotation.z = Math.PI / 2;
-                            scene.add(slash);
-                            if (!window._remoteProjectiles) window._remoteProjectiles = [];
-                            window._remoteProjectiles.push({ mesh: slash, velocity: new THREE.Vector3(), life: 0.18, type: 'effect', maxLife: 0.18 });
-                        } catch (e) {}
                         // Damage: check distance from the broadcast hit position (not lerped remote.group)
                         if (!isDead && !player.isForcefieldActive) {
                             const hitPos = new THREE.Vector3(sh.x, sh.y, sh.z);
@@ -1873,13 +1859,12 @@ function animate(now) {
                     const prog = 1 - Math.max(0, rp.life) / rp.maxLife;
                     rp.mesh.scale.setScalar(0.35 + prog * 1.35);
                     rp.mesh.lookAt(camera.position);
-                    rp.mesh.traverse(p => { if (p.material && typeof p.material.opacity === 'number') p.material.opacity = Math.max(0, 1 - prog); });
-                }
-                if (rp.type === 'effect') {
-                    try {
-                        const mat = rp.mesh.material;
-                        if (mat && typeof mat.opacity === 'number') mat.opacity = Math.max(0, mat.opacity - 0.025);
-                    } catch (e) {}
+                    rp.mesh.traverse(p => {
+                        if (p.material && typeof p.material.opacity === 'number') {
+                            const base = p.material.userData && p.material.userData.baseOpacity;
+                            p.material.opacity = Math.max(0, (typeof base === 'number' ? base : 1) * (1 - prog));
+                        }
+                    });
                 }
                 // Bullet / marble / superball hit check against local player
                 if ((rp.type === 'bullet' || rp.type === 'marble' || rp.type === 'marbles' || rp.type === 'superball') && playerBox && !isDead && !player.isForcefieldActive) {
