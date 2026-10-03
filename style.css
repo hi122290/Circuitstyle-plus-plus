@@ -1111,6 +1111,30 @@ button, .safechat-option, #safechat-current-phrase, #place-spawn, #hat-button,
 /* Make sure these buttons don't affect page layout when not positioned */
 #canvas-top-left-buttons.hidden { display: none !important; }
 
+/* "N players online" counter under the top-left buttons (real players + NPCs) */
+#online-count {
+    display: block;
+    width: 120px;
+    height: 26px;
+    line-height: 24px;
+    margin-top: 4px;
+    box-sizing: border-box;
+    text-align: center;
+    background: rgba(190, 190, 190, 0.60);
+    color: #333;
+    font-family: Verdana, sans-serif !important;
+    font-size: 11px;
+    font-weight: normal !important;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    text-shadow: none;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: default;
+    pointer-events: none;
+}
+
 /* HELP BOX (match leaderboard color/opacity, centered over canvas when shown) */
 #help-box {
     position: fixed;

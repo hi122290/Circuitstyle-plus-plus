@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { setupAudio, playSound, stopBackground, startBackground } from './modules/audio.js';
 import { setupWorld } from './modules/world.js';
-import { setupPlayer } from './modules/player.js?v=6';
+import { setupPlayer } from './modules/player.js?v=7';
 import { setupUI, renderPlayerList, updateUIElementPositions, renderHealthBar } from './modules/ui.js';
 import { setupGame } from './modules/game.js';
 import PlayerModule from './modules/PlayerModule.js';
@@ -15,6 +15,7 @@ import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGho
 import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js?v=2';
 import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=3';
 import { fetchRemotePlace } from './modules/place_cloud.js?v=1';
+import { initNpcs, updateNpcs, getNpcRows, damageNpcsInBlast } from './modules/npcs.js?v=1';
 
 
 window.THREE_REF = THREE;
@@ -936,6 +937,9 @@ async function init() {
         },
         onDamage: (amount) => {
             if (window._onDamageCallback) window._onDamageCallback(amount);
+        },
+        onExplosion: (pos, radius, maxDmg) => {
+            try { damageNpcsInBlast(pos, radius, maxDmg); } catch (e) {}
         }
     });
 
@@ -1331,6 +1335,20 @@ async function init() {
         }
     }
 
+    // NPCs populate each game — crowd size follows how good the map looks
+    try {
+        initNpcs({
+            scene, world, player,
+            getManifest: () => placeManifest,
+            pcfg: () => PlayerModule.getConfig(),
+            damagePlayer: (d) => { if (window._onDamageCallback) window._onDamageCallback(d); },
+            isPlayerDead: () => isDead,
+            onPlayerKill: () => { playerStats.kills += 1; updateMultiplayerPlayerList(); },
+            onChanged: () => updateMultiplayerPlayerList(),
+            playHit: () => playSound('oof')
+        });
+    } catch (e) { console.warn('npcs failed to start:', e); }
+
     animate();
 }
 
@@ -1341,7 +1359,14 @@ function updateMultiplayerPlayerList() {
         kills: room.presence[id]?.kills || 0,
         wipeouts: room.presence[id]?.wipeouts || 0
     }));
-    renderPlayerList(players);
+    let npcRows = [];
+    try { npcRows = getNpcRows(); } catch (e) {}
+    const all = players.concat(npcRows);
+    renderPlayerList(all);
+    const onlineEl = document.getElementById('online-count');
+    if (onlineEl) {
+        onlineEl.textContent = all.length + ' player' + (all.length === 1 ? '' : 's') + ' online';
+    }
 }
 
 function updateRemotePlayers() {
@@ -1702,6 +1727,7 @@ function animate(now) {
         try { player.update(FIXED_STEP); } catch (e) { player.update(); }
         try { game.updateGameLogic(FIXED_STEP); } catch (e) { game.updateGameLogic(); }
         try { if (window._placeRuntime && window._placeRuntime.running) window._placeRuntime.update(FIXED_STEP); } catch (e) {}
+        try { updateNpcs(FIXED_STEP); } catch (e) {}
         animate._accumulator -= FIXED_STEP;
     }
 

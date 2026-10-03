@@ -1563,6 +1563,8 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                     const damage = distance <= 2.1 ? 100 : Math.round(100 * (1 - distance / blastRadius));
                     hooks.onDamage(Math.max(1, damage));
                 }
+                // let outside systems (NPCs) react to the blast too
+                if (hooks.onExplosion) hooks.onExplosion(explosionPosition, blastRadius, 100);
                 // Broadcast explosion position via presence so other players receive blast damage
                 try {
                     if (window._pendingPresence) {
@@ -2706,6 +2708,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         getPosition, getCameraAngle,
         setHeldItem, // New tool setter
         useHeldItem,
+        getItemProjectiles: () => activeItemProjectiles,
         lockInput, // New setter
         applyExternalMovement, // New setter
         externalJump, // exported new jump method
