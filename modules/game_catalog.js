@@ -47,6 +47,36 @@ export const GENRE_TOOLS = {
     'escape': 'slingshot'
 };
 
+// npc: calm = nobody fights (friends + neutrals only), attack = combat heavy
+// items: the ONLY backpack items granted in that genre ('' = nothing)
+// teams/ball/money: sports teams + ball physics, tycoon cash pads
+export const GENRE_PLAY = {
+    'roleplay': { npc: 'calm', items: ['brick'] },
+    'fps': { npc: 'attack', items: ['missile', 'marbles', 'bomb', 'sword', 'slingshot'] },
+    'wild-west': { npc: 'attack', items: ['missile', 'slingshot', 'sword'] },
+    'obby': { npc: 'calm', items: [] },
+    'tycoon': { npc: 'calm', items: ['brick'], money: true },
+    'horror': { npc: 'attack', items: ['slingshot', 'bomb'] },
+    'racing': { npc: 'calm', items: [] },
+    'fighting': { npc: 'attack', items: ['sword'] },
+    'adventure': { npc: 'calm', items: ['slingshot', 'sword'] },
+    'sandbox': { npc: 'calm', items: ['brick', 'sword', 'slingshot', 'marbles'] },
+    'tower-defense': { npc: 'attack', items: ['missile', 'slingshot'] },
+    'medieval': { npc: 'attack', items: ['sword'] },
+    'scifi': { npc: 'attack', items: ['missile', 'marbles', 'bomb'] },
+    'survival': { npc: 'attack', items: ['sword', 'slingshot'] },
+    'military': { npc: 'attack', items: ['missile', 'bomb', 'marbles', 'sword'] },
+    'escape': { npc: 'attack', items: [] },
+    'comedy': { npc: 'calm', items: ['brick', 'marbles'] },
+    'sports': { npc: 'calm', items: [], teams: true, ball: true },
+    'music': { npc: 'calm', items: [] },
+    'building': { npc: 'calm', items: ['brick'] }
+};
+
+export function getGenrePlay(genre) {
+    return GENRE_PLAY[genre] || null;
+}
+
 export const CATALOG_SIZE = 3000;
 
 function mulberry32(a) {
@@ -445,7 +475,7 @@ function layoutFor(genre, rng) {
                 parts.push(P('box', [i * 5, 3.1, -7], [2, 0.9, 2], '#5577d9'));
                 parts.push(P('box', [i * 5, 0.5, -2], [2, 0.4, 4.4], '#444444'));
             }
-            parts.push(P('box', [7, 0.35, 5], [3, 0.35, 3], '#55d970', { material: 'Neon' }));
+            parts.push(P('box', [7, 0.35, 5], [3, 0.35, 3], '#55d970', { material: 'Neon', special: 'cash' }));
             parts.push(P('box', [-7, 2, 6], [2.6, 2, 1.6], '#d9b060'));
             parts.push(...scatter(P, rng, ['#9a9a9a', '#d9b060'], 4));
             break;
@@ -647,10 +677,14 @@ function layoutFor(genre, rng) {
                 parts.push(P('box', [3, 1.6, z], [0.3, 1.6, 0.3], '#f0f0e0'));
                 parts.push(P('box', [0, 3.2, z], [3.2, 0.3, 0.3], '#f0f0e0'));
             }
-            parts.push(P('sphere', [0, 1, 0], [0.5, 0.5, 0.5], '#f0f0e0'));
             parts.push(P('box', [-9, 0.8, -18], [8, 0.6, 2], '#8a7f6a'));
             parts.push(P('box', [-9, 1.6, -19], [8, 0.4, 1.4], '#7a6f5a'));
             parts.push(P('box', [14, 0.3, 14], [2.6, 0.3, 2.6], '#5577d9', { spawn: true }));
+            parts.push(P('sphere', [0, 0.75, 0], [0.5, 0.5, 0.5], '#f0f0f0', { special: 'ball', collidable: false }));
+            parts.push(P('box', [0, 2, -14.3], [1.75, 2, 0.4], '#ff00ff',
+                { special: 'goal-red', collidable: false, visible: false }));
+            parts.push(P('box', [0, 2, 14.3], [1.75, 2, 0.4], '#00ffff',
+                { special: 'goal-blue', collidable: false, visible: false }));
             break;
         }
         case 'music': {

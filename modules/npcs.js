@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { ITEM_DATA } from './backpack.js';
 import { ACCESSORIES } from './accessories.js?v=3';
+import { getGenrePlay } from './game_catalog.js?v=2';
 
 const WEAPONS = ['sword', 'sword', 'sword', 'missile', 'missile', 'slingshot', 'bomb'];
 
@@ -42,6 +43,11 @@ let opts = null;
 let inited = false;
 let respawns = [];
 let prevSwordSwing = false;
+let play = null;
+
+function playOf() {
+    return play;
+}
 const ray = new THREE.Raycaster();
 const _v = new THREE.Vector3();
 
@@ -83,7 +89,7 @@ function fillNameQueue() {
 }
 
 // ── name tag sprite ─────────────────────────────────────────────────────────
-function makeTag(name, faction) {
+function makeTag(name, faction, color) {
     const c = document.createElement('canvas');
     const font = 'bold 34px Arial, sans-serif';
     let ctx = c.getContext('2d');
@@ -99,7 +105,7 @@ function makeTag(name, faction) {
     ctx.lineWidth = 6;
     ctx.strokeStyle = 'rgba(0,0,0,0.85)';
     ctx.strokeText(name, w / 2, h / 2);
-    ctx.fillStyle = FACTION_COLOR[faction];
+    ctx.fillStyle = color || FACTION_COLOR[faction];
     ctx.fillText(name, w / 2, h / 2);
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({
         map: new THREE.CanvasTexture(c),
@@ -179,11 +185,25 @@ function spawnPoint() {
 function spawnNpc(forcedFaction, forcedPos) {
     if (!inited || !opts.player) return null;
     const name = pickName();
+    const profile = playOf();
+    const mood = profile ? profile.npc : 'normal';
     let faction = forcedFaction;
     if (!faction) {
         const roll = Math.random() * 100;
-        faction = roll < 51 ? 'friend' : roll < 96 ? 'hostile' : 'neutral';
+        if (mood === 'calm') faction = roll < 75 ? 'friend' : 'neutral';
+        else if (mood === 'attack') faction = roll < 30 ? 'friend' : roll < 90 ? 'hostile' : 'neutral';
+        else faction = roll < 51 ? 'friend' : roll < 96 ? 'hostile' : 'neutral';
     }
+    if (mood === 'calm' && faction === 'hostile') faction = 'friend';
+    let team = null;
+    if (profile && profile.teams) {
+        const reds = npcs.filter((x) => x.team === 'red').length;
+        team = reds * 2 <= npcs.length ? 'red' : 'blue';
+    }
+    const pool = profile && profile.items
+        ? profile.items.filter((id) => ITEM_DATA[id] && ITEM_DATA[id].model)
+        : WEAPONS;
+    const heldItem = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
     const group = new THREE.Group();
     group.name = 'npc_' + name;
     opts.scene.add(group);
@@ -195,15 +215,15 @@ function spawnNpc(forcedFaction, forcedPos) {
     opts.scene.remove(model);
     group.add(model);
 
-    const tag = makeTag(name, faction);
+    const tag = makeTag(name, faction, team === 'red' ? '#ff6666' : team === 'blue' ? '#6699ff' : null);
     group.add(tag);
 
     const pos = forcedPos ? forcedPos.clone() : spawnPoint();
     group.position.copy(pos);
 
     const npc = {
-        group, model, tag, name, faction,
-        heldItem: WEAPONS[Math.floor(Math.random() * WEAPONS.length)],
+        group, model, tag, name, faction, team,
+        heldItem,
         heldItemModel: null,
         hp: 100, kills: 0, deaths: 0,
         target: null, targetIsPlayer: false, retargetAt: 0,
@@ -308,6 +328,7 @@ function hurt(npc, dmg, killer) {
 function retarget(npc, playerPos, now) {
     npc.target = null;
     npc.targetIsPlayer = false;
+    if (playOf() && playOf().npc === 'calm') return;
     if (npc.faction === 'neutral') return;
 
     const enemies = [];
@@ -341,6 +362,10 @@ function retarget(npc, playerPos, now) {
 
 function goalOf(npc, playerPos, now) {
     if (npc.blockUntil > now) return null;
+    if (window._sports && window._sports.ballPos) {
+        const bp = window._sports.ballPos();
+        if (bp) return bp;
+    }
     if (npc.targetIsPlayer) return playerPos;
     if (npc.target && npcs.includes(npc.target) && npc.target.hp > 0) return npc.target.group.position;
     return null;
@@ -555,6 +580,7 @@ export function initNpcs(o) {
     if (inited) return;
     opts = o;
     inited = true;
+    play = o.getManifest ? getGenrePlay((o.getManifest() || {}).genre) : null;
     fillNameQueue();
     targetPop = popFor(scoreGame(opts.getManifest ? opts.getManifest() : null));
     for (let i = 0; i < targetPop; i++) spawnNpc();
@@ -566,6 +592,7 @@ export function initNpcs(o) {
             kills: n.kills, deaths: n.deaths, pos: n.group.position.toArray(),
             heldItem: n.heldItem || null,
             hasTool: !!n.heldItemModel,
+            team: n.team || null,
             rotY: n.group.rotation.y
         })),
         spawnNear: (faction) => {

@@ -15,8 +15,10 @@ import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGho
 import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js?v=2';
 import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=3';
 import { fetchRemotePlace } from './modules/place_cloud.js?v=1';
-import { initNpcs, updateNpcs, getNpcRows, damageNpcsInBlast } from './modules/npcs.js?v=2';
-import { GENRE_LABELS, GENRE_TOOLS } from './modules/game_catalog.js?v=1';
+import { initNpcs, updateNpcs, getNpcRows, damageNpcsInBlast } from './modules/npcs.js?v=3';
+import { GENRE_LABELS, GENRE_TOOLS, getGenrePlay } from './modules/game_catalog.js?v=2';
+import { initSports, updateSports } from './modules/sports.js?v=1';
+import { addCurrency } from './modules/accessories.js?v=3';
 
 
 window.THREE_REF = THREE;
@@ -1104,8 +1106,12 @@ async function init() {
     backpack.init();
     initBuildUI();
 
-    // Give all items to the player immediately on spawn
-    Object.keys(ITEM_DATA).forEach(itemId => backpack.addItem(itemId));
+    // items depend on the genre of place you're in — default game gets everything
+    const playProfile = placeManifest ? getGenrePlay(placeManifest.genre) : null;
+    const grantedItems = playProfile && playProfile.items
+        ? playProfile.items.filter((id) => ITEM_DATA[id])
+        : Object.keys(ITEM_DATA);
+    grantedItems.forEach(itemId => backpack.addItem(itemId));
     // Auto-select slot 0 so they have something in hand right away
     backpack.selectSlot(0);
     if (player && player.setHeldItem) player.setHeldItem(backpack.getSelectedItem());
@@ -1115,10 +1121,26 @@ async function init() {
         const genreTool = GENRE_TOOLS[placeManifest.genre];
         if (genreTool) {
             const gi = backpack.slots.indexOf(genreTool);
-            if (gi >= 0) backpack.selectSlot(gi);
+            if (gi >= 0 && gi !== backpack.selectedIndex) backpack.selectSlot(gi);
         }
         if (placeManifest.mainMenu !== false) showPlaceMenu(placeManifest);
     }
+
+    // sports (ball/goals/teams) + tycoon cash pads only run in their genres
+    try {
+        initSports({
+            manifest: placeManifest,
+            getPlayerPos: () => (player && player.model ? player.model.position : null),
+            getNpcPositions: () => {
+                try {
+                    return (window._npcs && window._npcs.list ? window._npcs.list() : [])
+                        .map((n) => ({ x: n.pos[0], y: n.pos[1], z: n.pos[2] }));
+                } catch (e) { return []; }
+            },
+            text: (s, o) => (window._placeRuntime ? window._placeRuntime._text(s, o) : null),
+            addCurrency
+        });
+    } catch (e) {}
 
     // item holding thing so you know um players will see the item you are selecting
     const originalSelectSlot = backpack.selectSlot.bind(backpack);
@@ -1766,6 +1788,7 @@ function animate(now) {
         try { game.updateGameLogic(FIXED_STEP); } catch (e) { game.updateGameLogic(); }
         try { if (window._placeRuntime && window._placeRuntime.running) window._placeRuntime.update(FIXED_STEP); } catch (e) {}
         try { updateNpcs(FIXED_STEP); } catch (e) {}
+        try { updateSports(FIXED_STEP); } catch (e) {}
         animate._accumulator -= FIXED_STEP;
     }
 
