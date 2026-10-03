@@ -7,7 +7,11 @@
 // Hostiles gang up on you AND on your NPC friends; friends fight back.
 
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { ITEM_DATA } from './backpack.js';
 import { ACCESSORIES } from './accessories.js?v=3';
+
+const WEAPONS = ['sword', 'sword', 'sword', 'missile', 'missile', 'slingshot', 'bomb'];
 
 const HUMAN_NAMES = [
     'builderman42', 'xX_Sniper_Xx', 'DarkKnight99', 'coolguy123', 'SuperBuilder07',
@@ -199,6 +203,8 @@ function spawnNpc(forcedFaction, forcedPos) {
 
     const npc = {
         group, model, tag, name, faction,
+        heldItem: WEAPONS[Math.floor(Math.random() * WEAPONS.length)],
+        heldItemModel: null,
         hp: 100, kills: 0, deaths: 0,
         target: null, targetIsPlayer: false, retargetAt: 0,
         wanderPoint: null, wanderAt: 0, blockUntil: 0,
@@ -209,6 +215,7 @@ function spawnNpc(forcedFaction, forcedPos) {
         noWander: !!forcedPos   // debug spawns hold their ground
     };
     npcs.push(npc);
+    attachNpcHeldItem(npc);
     measureTag(npc);
     setTimeout(() => { if (npcs.includes(npc)) measureTag(npc); }, 900);
     if (opts.onChanged) opts.onChanged();
@@ -220,6 +227,46 @@ function measureTag(npc) {
         const bb = new THREE.Box3().setFromObject(npc.model);
         const h = Math.max(1.6, bb.max.y - npc.group.position.y);
         npc.tag.position.y = h + 0.45;
+    } catch (e) {}
+}
+
+// load the item GLB and force it into the NPC's right arm (same attach
+// logic the multiplayer remote-player tools use)
+function attachNpcHeldItem(npc) {
+    try {
+        const itemId = npc.heldItem;
+        if (!itemId || !ITEM_DATA[itemId] || !ITEM_DATA[itemId].model) return;
+        new GLTFLoader().load(ITEM_DATA[itemId].model, (gltf) => {
+            try {
+                if (!npcs.includes(npc) || npc.hp <= 0) return;
+                const itemMesh = gltf.scene;
+                itemMesh.userData = itemMesh.userData || {};
+                itemMesh.userData._npcTool = true;
+
+                const parts = npc.model.userData && npc.model.userData.animationParts;
+                const rightArmPivot = parts && parts.rightArmPivot;
+                const rightArmMesh = rightArmPivot ? rightArmPivot.getObjectByName('RightArmMesh') : null;
+
+                const pdims = opts.pcfg().visuals.dimensions;
+                const bbox = new THREE.Box3().setFromObject(itemMesh);
+                const size = new THREE.Vector3();
+                bbox.getSize(size);
+                const maxDim = Math.max(size.x || 1, size.y || 1, size.z || 1);
+                itemMesh.scale.setScalar((pdims.armW * 0.85) / maxDim);
+
+                if (rightArmMesh) {
+                    itemMesh.position.set(0, -pdims.armH / 2, 0);
+                    itemMesh.rotation.set(Math.PI / 2, 0, 0);
+                    rightArmMesh.add(itemMesh);
+                } else {
+                    npc.group.add(itemMesh);
+                }
+                itemMesh.traverse((n) => {
+                    if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; }
+                });
+                npc.heldItemModel = itemMesh;
+            } catch (e) {}
+        }, undefined, () => {});
     } catch (e) {}
 }
 
@@ -352,8 +399,12 @@ function checkProjectileList(list) {
             p.mesh.position, new THREE.Vector3(info.s, info.s, info.s)
         );
         for (const n of npcs.slice()) {
-            const nb = new THREE.Box3().setFromObject(n.model);
-            if (nb.intersectsBox(box)) {
+            // body-only hitbox: center of the character, not arms/weapons
+            const body = new THREE.Box3().setFromCenterAndSize(
+                new THREE.Vector3(n.group.position.x, n.group.position.y + 1.05, n.group.position.z),
+                new THREE.Vector3(0.9, 2.1, 0.9)
+            );
+            if (body.intersectsBox(box)) {
                 hurt(n, info.dmg, opts.player);
                 try { if (p.mesh.parent) p.mesh.parent.remove(p.mesh); } catch (e) {}
                 list.splice(i, 1);
@@ -415,7 +466,8 @@ export function updateNpcs(dtMs) {
             const isCombatGoal = goal === playerPos || goal === (npc.target && npc.target.group.position);
             const inRange = isCombatGoal && dist <= ATTACK_RANGE;
 
-            const desiredAngle = Math.atan2(dx, dz);
+            // model's visual front is -Z (matches the local player's lookAt movement convention)
+            const desiredAngle = Math.atan2(-dx, -dz);
             let da = desiredAngle - npc.group.rotation.y;
             da = Math.atan2(Math.sin(da), Math.cos(da));
             npc.group.rotation.y += da * Math.min(1, dt * 8);
@@ -480,7 +532,7 @@ export function updateNpcs(dtMs) {
                 isWalking: moving,
                 animationTime: npc.animTime,
                 onGround: true,
-                heldItem: null,
+                heldItem: npc.heldItem || null,
                 swordSwing: now < npc.swingUntil
             }, pcfg);
         } catch (e) {}
@@ -511,12 +563,27 @@ export function initNpcs(o) {
         rows: getNpcRows,
         list: () => npcs.map((n) => ({
             name: n.name, faction: n.faction, hp: n.hp,
-            kills: n.kills, deaths: n.deaths, pos: n.group.position.toArray()
+            kills: n.kills, deaths: n.deaths, pos: n.group.position.toArray(),
+            heldItem: n.heldItem || null,
+            hasTool: !!n.heldItemModel,
+            rotY: n.group.rotation.y
         })),
         spawnNear: (faction) => {
             const p = opts.player.model.position;
             const n = spawnNpc(faction || 'hostile', new THREE.Vector3(p.x + 1.9, p.y, p.z));
             return n ? n.name : null;
+        },
+        send: (name, dx, dz) => {
+            const n = npcs.find((x) => x.name === name);
+            if (!n) return false;
+            n.noWander = false;
+            n.target = null;
+            n.targetIsPlayer = false;
+            n.retargetAt = Date.now() + 10000;
+            n.blockUntil = 0;
+            n.wanderPoint = n.group.position.clone().add(new THREE.Vector3(dx, 0, dz));
+            n.wanderAt = Date.now() + 10000;
+            return true;
         },
         blast: (pos, r, d) => damageNpcsInBlast(pos, r, d)
     };

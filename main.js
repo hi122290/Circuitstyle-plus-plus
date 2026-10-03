@@ -15,7 +15,7 @@ import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGho
 import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js?v=2';
 import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=3';
 import { fetchRemotePlace } from './modules/place_cloud.js?v=1';
-import { initNpcs, updateNpcs, getNpcRows, damageNpcsInBlast } from './modules/npcs.js?v=1';
+import { initNpcs, updateNpcs, getNpcRows, damageNpcsInBlast } from './modules/npcs.js?v=2';
 
 
 window.THREE_REF = THREE;
