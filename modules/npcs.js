@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { ITEM_DATA } from './backpack.js';
 import { ACCESSORIES } from './accessories.js?v=3';
-import { getGenrePlay } from './game_catalog.js?v=2';
+import { getGenrePlay } from './game_catalog.js?v=3';
 
 const WEAPONS = ['sword', 'sword', 'sword', 'missile', 'missile', 'slingshot', 'bomb'];
 
@@ -47,6 +47,57 @@ let play = null;
 
 function playOf() {
     return play;
+}
+
+// ── NPC kinds: themed, colored NPCs UGC maps can spawn from marker parts ────
+// colors override the player-config palette (head base follows limbs too)
+export const NPC_KINDS = {
+    villager: { label: 'Villager', hat: true, names: null },
+    zombie: {
+        label: 'Zombie', hat: false,
+        colors: { torso: '#4c7a3f', limbs: '#6f9c5a', legs: '#3c5a33' },
+        names: ['Rot', 'Gnaw', 'Moldy', 'Gore', 'Munch', 'Braineater']
+    },
+    ghost: {
+        label: 'Ghost', hat: false, opacity: 0.55, float: true,
+        colors: { torso: '#e8f4ff', limbs: '#dfeefc', legs: '#cfe4f7' },
+        names: ['Wisp', 'Haunt', 'Banshee', 'Shade', 'Moan', 'Phantom']
+    },
+    skeleton: {
+        label: 'Skeleton', hat: false,
+        colors: { torso: '#dcd8cf', limbs: '#e8e4dc', legs: '#c9c5bd' },
+        names: ['Bones', 'Rattle', 'Skully', 'Ribbs', 'Clatter', 'Marrow']
+    },
+    knight: {
+        label: 'Knight', hat: false,
+        colors: { torso: '#8b93a5', limbs: '#aab2c4', legs: '#5d6474' },
+        names: ['Sir Aldric', 'Boldrin', 'Lance', 'Gallant', 'Rowan', 'Kael']
+    },
+    cowboy: {
+        label: 'Cowboy', hat: false,
+        colors: { torso: '#a5673f', limbs: '#c98d5f', legs: '#6f4a2f' },
+        names: ['Dusty', 'Wyatt', 'Buck', 'Rustler', 'Clay', 'Ranger']
+    },
+    soldier: {
+        label: 'Soldier', hat: false,
+        colors: { torso: '#5f6f4f', limbs: '#7d8d6a', legs: '#4a5540' },
+        names: ['Sgt Rourke', 'Pvt Weller', 'Cpl Diaz', 'Rook', 'Scout', 'Tango']
+    },
+    robot: {
+        label: 'Robot', hat: false,
+        colors: { torso: '#7d8794', limbs: '#9aa5b3', legs: '#5c6673' },
+        names: ['R0-7', 'Unit 40', 'Bolt', 'Gearbox', 'Servo', 'Chip']
+    }
+};
+
+function pickKindName(KIND) {
+    if (!KIND.names) return pickName();
+    for (let i = 0; i < 12; i++) {
+        const base = KIND.names[Math.floor(Math.random() * KIND.names.length)];
+        const name = base + (base.indexOf(' ') === -1 ? ' ' + (10 + Math.floor(Math.random() * 89)) : '');
+        if (!npcs.some((n) => n.name === name)) return name;
+    }
+    return pickName();
 }
 const ray = new THREE.Raycaster();
 const _v = new THREE.Vector3();
@@ -182,10 +233,13 @@ function spawnPoint() {
 }
 
 // ── spawn one NPC ───────────────────────────────────────────────────────────
-function spawnNpc(forcedFaction, forcedPos) {
+function spawnNpc(forcedFaction, forcedPos, forcedKind) {
     if (!inited || !opts.player) return null;
-    const name = pickName();
     const profile = playOf();
+    const kindKey = forcedKind || (profile && profile.npcKind) || 'villager';
+    const KIND = NPC_KINDS[kindKey] || NPC_KINDS.villager;
+    const kind = NPC_KINDS[kindKey] ? kindKey : 'villager';
+    const name = pickKindName(KIND);
     const mood = profile ? profile.npc : 'normal';
     let faction = forcedFaction;
     if (!faction) {
@@ -208,10 +262,14 @@ function spawnNpc(forcedFaction, forcedPos) {
     group.name = 'npc_' + name;
     opts.scene.add(group);
 
-    const hatId = Math.random() < 0.25 && ACCESSORIES.length
+    const hatId = KIND.hat !== false && Math.random() < 0.25 && ACCESSORIES.length
         ? ACCESSORIES[Math.floor(Math.random() * ACCESSORIES.length)].id
         : null;
-    const model = opts.player.createModel({ accessoryId: hatId });
+    const model = opts.player.createModel({
+        accessoryId: hatId,
+        colors: KIND.colors || undefined,
+        opacity: KIND.opacity || undefined
+    });
     opts.scene.remove(model);
     group.add(model);
 
@@ -223,6 +281,10 @@ function spawnNpc(forcedFaction, forcedPos) {
 
     const npc = {
         group, model, tag, name, faction, team,
+        kind,
+        floats: !!KIND.float,
+        lastFy: pos.y,
+        respawnPos: forcedPos ? forcedPos.clone() : null,
         heldItem,
         heldItemModel: null,
         hp: 100, kills: 0, deaths: 0,
@@ -306,7 +368,11 @@ function killNpc(npc, killer) {
         opts.scene.remove(npc.group);
     } catch (e) {}
     if (aliveCount() + respawns.length < targetPop) {
-        respawns.push(Date.now() + 7000 + Math.random() * 6000);
+        respawns.push({
+            t: Date.now() + 7000 + Math.random() * 6000,
+            pos: npc.respawnPos || null,
+            kind: npc.kind || null
+        });
     }
     if (opts.onChanged) opts.onChanged();
 }
@@ -458,12 +524,13 @@ export function updateNpcs(dtMs) {
     const anim = pcfg.animation || {};
     const playerPos = opts.player.model.position;
 
-    // staggered respawns keep the crowd topped up
+    // staggered respawns keep the crowd topped up (spawner NPCs come back on their marker)
     if (respawns.length) {
         for (let i = respawns.length - 1; i >= 0; i--) {
-            if (respawns[i] <= now) {
-                respawns.splice(i, 1);
-                spawnNpc();
+            if (respawns[i].t <= now) {
+                const r = respawns.splice(i, 1)[0];
+                const back = spawnNpc(null, r.pos || null, r.kind || null);
+                if (back && r.pos) back.noWander = false;
             }
         }
     }
@@ -506,6 +573,7 @@ export function updateNpcs(dtMs) {
                     if (fy !== null) {
                         npc.group.position.x = nx;
                         npc.group.position.z = nz;
+                        npc.lastFy = fy;
                         npc.group.position.y += (fy - npc.group.position.y) * Math.min(1, dt * 10);
                         moving = true;
                     } else {
@@ -552,6 +620,10 @@ export function updateNpcs(dtMs) {
 
         // anim (phase advances per fixed step, matching presence-driven remotes)
         npc.animTime += moving ? (anim.walkSpeed || 0.18) : (anim.idleSpeed || 0.015);
+        // ghosts hover above the floor instead of walking on it
+        if (npc.floats) {
+            npc.group.position.y = npc.lastFy + 0.55 + Math.sin(npc.animTime * 2.2) * 0.16;
+        }
         try {
             opts.player.updateModelAnimations(npc.model, {
                 isWalking: moving,
@@ -584,20 +656,49 @@ export function initNpcs(o) {
     fillNameQueue();
     targetPop = popFor(scoreGame(opts.getManifest ? opts.getManifest() : null));
     for (let i = 0; i < targetPop; i++) spawnNpc();
+    // UGC marker parts (`special:'npc'`) fill their map with themed NPCs
+    try {
+        const man = opts.getManifest ? opts.getManifest() : null;
+        const spawners = ((man && man.parts) || []).filter((p) => p.special === 'npc');
+        for (const s of spawners) {
+            if (!s.position || !s.position.length) continue;
+            const n = Math.max(1, Math.min(8, Number(s.npcCount) || 2));
+            const at = new THREE.Vector3(s.position[0], s.position[1], s.position[2]);
+            for (let i = 0; i < n; i++) {
+                const off = new THREE.Vector3((Math.random() - 0.5) * 2.6, 0, (Math.random() - 0.5) * 2.6);
+                const spawned = spawnNpc(null, at.clone().add(off), s.npcKind || null);
+                if (spawned) spawned.noWander = false;
+            }
+        }
+    } catch (e) {}
     // debug/test hook (harmless; used by npc_test.js)
     window._npcs = {
         rows: getNpcRows,
-        list: () => npcs.map((n) => ({
-            name: n.name, faction: n.faction, hp: n.hp,
-            kills: n.kills, deaths: n.deaths, pos: n.group.position.toArray(),
-            heldItem: n.heldItem || null,
-            hasTool: !!n.heldItemModel,
-            team: n.team || null,
-            rotY: n.group.rotation.y
-        })),
-        spawnNear: (faction) => {
+        list: () => npcs.map((n) => {
+            let opacity = 1;
+            try {
+                n.model.traverse((m) => {
+                    // skip the forcefield cage — it is not part of the body palette
+                    if (m.isMesh && m.visible !== false && !(m.userData && m.userData.isForcefieldPart) &&
+                        m.material && typeof m.material.opacity === 'number' && m.material.opacity < opacity) {
+                        opacity = m.material.opacity;
+                    }
+                });
+            } catch (e) {}
+            return {
+                name: n.name, faction: n.faction, hp: n.hp,
+                kills: n.kills, deaths: n.deaths, pos: n.group.position.toArray(),
+                heldItem: n.heldItem || null,
+                hasTool: !!n.heldItemModel,
+                team: n.team || null,
+                kind: n.kind || 'villager',
+                opacity: Math.round(opacity * 100) / 100,
+                rotY: n.group.rotation.y
+            };
+        }),
+        spawnNear: (faction, kind) => {
             const p = opts.player.model.position;
-            const n = spawnNpc(faction || 'hostile', new THREE.Vector3(p.x + 1.9, p.y, p.z));
+            const n = spawnNpc(faction || 'hostile', new THREE.Vector3(p.x + 1.9, p.y, p.z), kind || null);
             return n ? n.name : null;
         },
         send: (name, dx, dz) => {

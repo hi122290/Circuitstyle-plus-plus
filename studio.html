@@ -129,6 +129,21 @@ body {
 .topbtn.green:hover {
     background: linear-gradient(to bottom, #b0d0a0, #98b888 50%, #8aaa7a 51%, #9abb8a);
 }
+.topbtn.on {
+    background: #5b8fd0;
+    background: linear-gradient(to bottom, #6f9fe0, #5b8fd0 50%, #4a7dc0 51%, #5b8fd0);
+    border-color: #3a6ba8;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.25);
+}
+.topbtn.playing {
+    background: #c85a4a;
+    background: linear-gradient(to bottom, #d96c5c, #c85a4a 50%, #b04a3a 51%, #c85a4a);
+    border-color: #9a3a2c;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.25);
+}
+.topbtn:disabled { opacity: 0.45; cursor: default; }
 .spacer { flex: 1; }
 
 /* ── main layout ─────────────────────────────────────────── */
@@ -706,7 +721,15 @@ body {
     </div>
     <div class="sep"></div>
     <button class="topbtn" id="btn-space" title="Gizmo coordinate space">World</button>
+    <div class="sep"></div>
+    <button class="topbtn on" id="btn-gizmo-move" title="Move mode (W)">Move</button>
+    <button class="topbtn" id="btn-gizmo-rot" title="Rotate mode (E)">Rotate</button>
+    <button class="topbtn" id="btn-gizmo-scale" title="Scale mode (R)">Scale</button>
+    <div class="sep"></div>
+    <button class="topbtn" id="btn-undo" title="Undo (Ctrl+Z)">Undo</button>
+    <button class="topbtn" id="btn-redo" title="Redo (Ctrl+Y)">Redo</button>
     <div class="spacer"></div>
+    <button class="topbtn green" id="btn-play" title="Play-test the place (Esc to stop)">Play</button>
     <button class="topbtn" id="btn-export" title="Download place as JSON">Export</button>
     <button class="topbtn" id="btn-import" title="Import place from JSON">Import</button>
     <input type="file" id="import-file" accept=".json,application/json" style="display:none">
@@ -725,6 +748,7 @@ body {
                 <button class="part-btn" data-type="sphere"><span class="glyph sphere"></span>Sphere</button>
                 <button class="part-btn" data-type="cylinder"><span class="glyph cylinder"></span>Cylinder</button>
                 <button class="part-btn" data-type="wedge"><span class="glyph wedge"></span>Wedge</button>
+                <button class="part-btn" data-type="npc" style="grid-column: span 2"><span class="glyph"></span>NPC Spawner</button>
                 <button class="part-btn" data-type="ground" style="grid-column: span 2"><span class="glyph ground"></span>Terrain</button>
             </div>
         </div>
@@ -791,6 +815,20 @@ body {
                         <label class="chk"><input type="checkbox" id="prop-visible" checked> Visible</label>
                         <div class="fld"><label>Damage on touch</label><input type="number" id="prop-damage" value="0" step="5" min="0"></div>
                         <label class="chk"><input type="checkbox" id="prop-spawn"> Player spawn point</label>
+                        <div id="npc-fields" style="display:none;">
+                            <div class="sub-head">NPC</div>
+                            <div class="fld"><label>Kind</label><select id="prop-npc-kind">
+                                <option value="villager">Villager</option>
+                                <option value="zombie">Zombie</option>
+                                <option value="ghost">Ghost</option>
+                                <option value="skeleton">Skeleton</option>
+                                <option value="knight">Knight</option>
+                                <option value="cowboy">Cowboy</option>
+                                <option value="soldier">Soldier</option>
+                                <option value="robot">Robot</option>
+                            </select></div>
+                            <div class="fld"><label>Count</label><input type="number" id="prop-npc-count" min="1" max="8" value="3"></div>
+                        </div>
                         <div class="row" style="margin-top:10px;">
                             <button class="minibtn" id="btn-duplicate">Duplicate</button>
                             <button class="minibtn danger" id="btn-delete">Delete</button>
@@ -833,7 +871,7 @@ body {
                         </div>
                         <div id="se-err" class="err-line"></div>
                     </div>
-                    <div class="hint-text">Scripts run when the place starts in game. Save to check syntax, then Publish and press Play on the Games page. See Help for the API.</div>
+                    <div class="hint-text">Scripts run when the place starts. Press <b>Play</b> in the top bar to test them right here; Publish when ready. See Help for the API.</div>
                 </div>
 
                 <!-- TOOLS TAB -->
@@ -847,6 +885,12 @@ body {
                             <div class="fld"><label>ID</label><input type="text" id="te-id" readonly style="color:#888"></div>
                         </div>
                         <div class="fld"><label>Description</label><input type="text" id="te-desc"></div>
+                        <div class="fld"><label>Quick template</label><select id="te-template">
+                            <option value="">(keep current code)</option>
+                            <option value="bomb">Exploding box</option>
+                            <option value="heal">Heal +25</option>
+                            <option value="rocket">Rocket jump</option>
+                        </select></div>
                         <div class="fld"><label>Chip color</label><input type="color" id="te-color" value="#4a90d9" style="width:100%;height:26px;padding:1px;background:#fff;border:1px solid #888;"></div>
                         <div class="fld"><label>onEquip code (runs when equipped)</label><textarea id="te-equip" class="script-area" style="min-height:70px" spellcheck="false"></textarea></div>
                         <div class="fld"><label>onActivate code (runs when used — F key)</label><textarea id="te-activate" class="script-area" style="min-height:90px" spellcheck="false"></textarea></div>
@@ -902,11 +946,13 @@ body {
             <h3>Editing</h3>
             <ul>
                 <li>Click parts in the viewport or hierarchy to select. Drag the gizmo to move/rotate/scale.</li>
-                <li>Keys: <code>W</code> move, <code>E</code> rotate, <code>R</code> scale, <code>Ctrl+D</code> duplicate, <code>Delete</code> remove, <code>Esc</code> deselect, <code>Ctrl+S</code> publish.</li>
+                <li>Keys: <code>W</code> move, <code>E</code> rotate, <code>R</code> scale, <code>Ctrl+D</code> duplicate, <code>Delete</code> remove, <code>Esc</code> deselect, <code>Ctrl+Z</code>/<code>Ctrl+Y</code> undo/redo, <code>Ctrl+S</code> quick-save.</li>
                 <li>Orbit: left-drag. Pan: right-drag. Zoom: wheel.</li>
             </ul>
+            <h3>Play-testing</h3>
+            <p>Press <b>Play</b> in the top bar to run the place right here: <code>WASD</code> move, right-drag to look around, <code>1-9</code> equip tools, click or <code>F</code> to use the equipped tool. Press <code>Esc</code> or <b>Stop</b> to return to editing. NPC spawners (green blocks) fill the place with their NPCs while playing.</p>
             <h3>Testing scripts</h3>
-            <p>Syntax is checked when you save a script or tool. Scripts run when the place starts in game — publish it, then press <b>Play</b> on the Games page (or open <code>index.html?place=&lt;id&gt;</code>).</p>
+            <p>Syntax is checked when you save a script or tool. Use <b>Play</b> above to test scripts and tools instantly — then Publish to share, or press <b>Play</b> on the Games page.</p>
             <h3>Script events</h3>
             <ul>
                 <li><code>start</code> — once when the place starts (attach to a part or global).</li>
@@ -983,9 +1029,9 @@ import {
     PART_BASE_SIZES, PART_TYPE_NAMES, PART_COLOR_PRESETS,
     MATERIAL_PRESETS, ATLAS_KEYS, fileToTextureDataURL,
     listPlaces, getPlace, savePlace, compileScript
-} from './modules/place_runtime.js?v=3';
+} from './modules/place_runtime.js?v=4';
 import { pushPlace, fetchRemotePlace } from './modules/place_cloud.js?v=1';
-import { GENRES, GENRE_LABELS } from './modules/game_catalog.js?v=2';
+import { GENRES, GENRE_LABELS } from './modules/game_catalog.js?v=3';
 
 // ══════════════════════════════════════════════════════════
 // STAGE 1 — viewport, primitives, gizmos, hierarchy
@@ -1054,7 +1100,8 @@ scene.add(gizmo);
 let gizmoDragging = false;
 gizmo.addEventListener('dragging-changed', (e) => {
     gizmoDragging = !!e.value;
-    orbit.enabled = !e.value;
+    orbit.enabled = !e.value && !(rt && rt.running);
+    if (!e.value) pushHistorySoon();
 });
 gizmo.addEventListener('objectChange', () => {
     if (selectedId) refreshPropsFromMesh();
@@ -1133,10 +1180,12 @@ function updateSelectionBox() {
 // viewport picking (click without drag)
 let downPos = null;
 canvas.addEventListener('pointerdown', (e) => {
+    if (rt && rt.running) return;
     if (e.button !== 0) return;
     downPos = { x: e.clientX, y: e.clientY };
 });
 canvas.addEventListener('pointerup', (e) => {
+    if (rt && rt.running) { downPos = null; return; }
     if (e.button !== 0 || !downPos || gizmoDragging) { downPos = null; return; }
     const moved = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
     downPos = null;
@@ -1179,7 +1228,92 @@ $('btn-space').addEventListener('click', () => {
     $('btn-space').textContent = gizmoSpace === 'world' ? 'World' : 'Local';
 });
 
+// ── gizmo mode buttons ────────────────────────────────────
+function setGizmoMode(mode) {
+    if (mode !== 'translate' && mode !== 'rotate' && mode !== 'scale') return;
+    gizmo.setMode(mode);
+    $('btn-gizmo-move').classList.toggle('on', mode === 'translate');
+    $('btn-gizmo-rot').classList.toggle('on', mode === 'rotate');
+    $('btn-gizmo-scale').classList.toggle('on', mode === 'scale');
+}
+$('btn-gizmo-move').addEventListener('click', () => setGizmoMode('translate'));
+$('btn-gizmo-rot').addEventListener('click', () => setGizmoMode('rotate'));
+$('btn-gizmo-scale').addEventListener('click', () => setGizmoMode('scale'));
+
+// ── undo / redo (snapshots of parts + scripts + tools) ────
+const HIST_LIMIT = 60;
+let histStack = [];
+let histIndex = -1;
+let histTimer = 0;
+
+function histSnapshot() {
+    return JSON.stringify({
+        parts: manifest.parts || [],
+        scripts: manifest.scripts || [],
+        tools: manifest.tools || [],
+        startTools: manifest.startTools || []
+    });
+}
+
+function updateHistBtns() {
+    const locked = !!(rt && rt.running);
+    $('btn-undo').disabled = locked || !(histIndex > 0);
+    $('btn-redo').disabled = locked || !(histIndex >= 0 && histIndex < histStack.length - 1);
+}
+
+function pushHistory() {
+    if (rt && rt.running) return;
+    const snap = histSnapshot();
+    if (histIndex >= 0 && histStack[histIndex] === snap) { updateHistBtns(); return; }
+    histStack = histStack.slice(0, histIndex + 1);
+    histStack.push(snap);
+    if (histStack.length > HIST_LIMIT) histStack.shift();
+    histIndex = histStack.length - 1;
+    updateHistBtns();
+}
+
+function pushHistorySoon() {
+    clearTimeout(histTimer);
+    histTimer = setTimeout(pushHistory, 400);
+}
+
+function applyHistoryAt(i) {
+    if (i < 0 || i >= histStack.length) return;
+    const data = JSON.parse(histStack[i]);
+    selectPart(null);
+    rt.dispose();
+    manifest.parts = data.parts;
+    manifest.scripts = data.scripts;
+    manifest.tools = data.tools;
+    manifest.startTools = data.startTools;
+    histIndex = i;
+    rt = makeRuntime();
+    rt.buildScene();
+    refreshHierarchy();
+    refreshPropsUI();
+    renderScriptList();
+    renderToolList();
+    updateStatus();
+    updateHistBtns();
+}
+
+function undoHistory() { if (histIndex > 0) { applyHistoryAt(histIndex - 1); log('undo'); } }
+function redoHistory() { if (histIndex < histStack.length - 1) { applyHistoryAt(histIndex + 1); log('redo'); } }
+$('btn-undo').addEventListener('click', undoHistory);
+$('btn-redo').addEventListener('click', redoHistory);
+
 // ── part creation ────────────────────────────────────────
+const NPC_KIND_META = {
+    villager: { label: 'Villager', color: '#d9b48a' },
+    zombie: { label: 'Zombie', color: '#4c7a3f' },
+    ghost: { label: 'Ghost', color: '#e8f4ff' },
+    skeleton: { label: 'Skeleton', color: '#dcd8cf' },
+    knight: { label: 'Knight', color: '#8b93a5' },
+    cowboy: { label: 'Cowboy', color: '#a5673f' },
+    soldier: { label: 'Soldier', color: '#5f6f4f' },
+    robot: { label: 'Robot', color: '#7d8794' }
+};
+
 function uniqueName(base) {
     const names = new Set(Array.from(rt.parts.values()).map((e) => e.def.name));
     if (!names.has(base)) return base;
@@ -1211,11 +1345,41 @@ function addPart(type) {
     refreshHierarchy();
     updateStatus();
     selectPart(def.id);
+    pushHistory();
     log(`added ${PART_TYPE_NAMES[type] || type} "${def.name}"`);
 }
 
+function addNpcSpawner() {
+    const kind = 'villager';
+    const meta = NPC_KIND_META[kind];
+    const def = defaultPartDef('box');
+    def.name = uniqueName('NPC: ' + meta.label);
+    def.special = 'npc';
+    def.npcKind = kind;
+    def.npcCount = 3;
+    def.color = meta.color;
+    def.material = 'Neon';
+    def.texture = 'none';
+    def.collidable = false;
+    def.visible = true;
+    const size = PART_BASE_SIZES.box;
+    const tx = Math.round(orbit.target.x * 2) / 2;
+    const tz = Math.round(orbit.target.z * 2) / 2;
+    def.position = [tx, size.h / 2, tz];
+    def.scale = [0.4, 1, 0.4];
+    rt.spawnPart(def);
+    refreshHierarchy();
+    updateStatus();
+    selectPart(def.id);
+    pushHistory();
+    log(`added NPC spawner "${def.name}" — NPCs spawn here when the place runs`);
+}
+
 document.querySelectorAll('.part-btn').forEach((btn) => {
-    btn.addEventListener('click', () => addPart(btn.dataset.type));
+    btn.addEventListener('click', () => {
+        if (btn.dataset.type === 'npc') addNpcSpawner();
+        else addPart(btn.dataset.type);
+    });
 });
 
 function deleteSelected() {
@@ -1229,6 +1393,7 @@ function deleteSelected() {
     refreshHierarchy();
     renderScriptList();
     updateStatus();
+    pushHistory();
     log(`deleted "${entry.def.name}"`, 'warn');
 }
 
@@ -1245,6 +1410,7 @@ function duplicateSelected() {
     refreshHierarchy();
     updateStatus();
     selectPart(def.id);
+    pushHistory();
 }
 
 $('btn-delete').addEventListener('click', deleteSelected);
@@ -1403,12 +1569,14 @@ function applyVisual(entry) {
     rt.applyPartVisual(entry.def.id);
     if (selectionBox && selectedId === entry.def.id) selectionBox.setFromObject(entry.mesh);
     refreshHierarchy();
+    pushHistorySoon();
 }
 
 const PROP_INPUT_IDS = ['prop-px', 'prop-py', 'prop-pz', 'prop-rx', 'prop-ry', 'prop-rz', 'prop-sx', 'prop-sy', 'prop-sz'];
 
 function refreshPropsUI() {
     const entry = selectedEntry();
+    refreshNpcFields(entry);
     $('props-empty').style.display = entry ? 'none' : 'block';
     $('props-form').style.display = entry ? 'block' : 'none';
     if (!entry) return;
@@ -1492,6 +1660,7 @@ function bindVec(inputIds, apply) {
             apply(entry, vals);
             syncDefFromMesh(entry);
             updateSelectionBox();
+            pushHistorySoon();
         });
     });
 }
@@ -1510,12 +1679,14 @@ $('prop-name').addEventListener('input', () => {
     entry.mesh.name = entry.def.name;
     refreshHierarchy();
     updateStatus();
+    pushHistorySoon();
 });
 $('prop-parent').addEventListener('change', () => {
     const entry = selectedEntry();
     if (!entry) return;
     rt.reparent(entry.def.id, $('prop-parent').value || null);
     refreshHierarchy();
+    pushHistory();
 });
 $('prop-color').addEventListener('input', () => {
     const entry = selectedEntry();
@@ -1532,6 +1703,7 @@ materialSelect.addEventListener('change', () => {
 $('prop-collidable').addEventListener('change', () => {
     const entry = selectedEntry();
     if (entry) entry.def.collidable = $('prop-collidable').checked;
+    pushHistory();
 });
 $('prop-visible').addEventListener('change', () => {
     const entry = selectedEntry();
@@ -1539,10 +1711,12 @@ $('prop-visible').addEventListener('change', () => {
     entry.def.visible = $('prop-visible').checked;
     entry.mesh.visible = $('prop-visible').checked;
     refreshHierarchy();
+    pushHistory();
 });
 $('prop-damage').addEventListener('input', () => {
     const entry = selectedEntry();
     if (entry) entry.def.damage = Math.max(0, parseFloat($('prop-damage').value) || 0);
+    pushHistorySoon();
 });
 $('prop-spawn').addEventListener('change', () => {
     const entry = selectedEntry();
@@ -1552,6 +1726,36 @@ $('prop-spawn').addEventListener('change', () => {
     entry.def.spawn = on;
     refreshHierarchy();
     refreshPropsUI();
+    pushHistory();
+});
+
+// ── NPC spawner properties ───────────────────────────────
+function refreshNpcFields(entry) {
+    const on = !!(entry && entry.def.special === 'npc');
+    $('npc-fields').style.display = on ? 'block' : 'none';
+    if (!on) return;
+    $('prop-npc-kind').value = entry.def.npcKind || 'villager';
+    $('prop-npc-count').value = entry.def.npcCount || 3;
+}
+$('prop-npc-kind').addEventListener('change', () => {
+    const entry = selectedEntry();
+    if (!entry || entry.def.special !== 'npc') return;
+    entry.def.npcKind = $('prop-npc-kind').value;
+    const meta = NPC_KIND_META[entry.def.npcKind] || NPC_KIND_META.villager;
+    entry.def.color = meta.color;
+    $('prop-color').value = meta.color;
+    entry.def.name = uniqueName('NPC: ' + meta.label);
+    entry.mesh.name = entry.def.name;
+    applyVisual(entry);
+    updateStatus();
+    refreshHierarchy();
+    pushHistory();
+});
+$('prop-npc-count').addEventListener('input', () => {
+    const entry = selectedEntry();
+    if (!entry || entry.def.special !== 'npc') return;
+    entry.def.npcCount = Math.max(1, Math.min(8, parseInt($('prop-npc-count').value, 10) || 3));
+    pushHistorySoon();
 });
 
 // ══════════════════════════════════════════════════════════
@@ -1661,6 +1865,7 @@ $('btn-add-script').addEventListener('click', () => {
     if (!manifest.scripts) manifest.scripts = [];
     manifest.scripts.push(s);
     openScriptEditor(s.id);
+    pushHistory();
     log(`created script "${s.name}"`);
 });
 
@@ -1704,12 +1909,14 @@ $('se-save').addEventListener('click', () => {
     $('se-err').textContent = 'Saved. Script compiles OK.';
     $('se-err').className = 'ok-line';
     renderScriptList();
+    pushHistory();
     log(`saved script "${s.name}" (${ev})`);
 });
 $('se-delete').addEventListener('click', () => {
     if (!editingScriptId) return;
     manifest.scripts = (manifest.scripts || []).filter((x) => x.id !== editingScriptId);
     closeScriptEditor();
+    pushHistory();
     log('script deleted', 'warn');
 });
 
@@ -1792,7 +1999,14 @@ $('btn-add-tool').addEventListener('click', () => {
     if (!manifest.tools) manifest.tools = [];
     manifest.tools.push(t);
     openToolEditor(t.id);
+    pushHistory();
     log(`created tool "${t.name}"`);
+});
+
+$('te-template').addEventListener('change', () => {
+    const key = $('te-template').value;
+    if (key && TOOL_TEMPLATES[key]) $('te-activate').value = TOOL_TEMPLATES[key];
+    $('te-template').value = '';
 });
 
 $('te-save').addEventListener('click', () => {
@@ -1816,6 +2030,7 @@ $('te-save').addEventListener('click', () => {
     $('te-err').textContent = 'Saved. Tool compiles OK.';
     $('te-err').className = 'ok-line';
     renderToolList();
+    pushHistory();
     log(`saved tool "${t.name}"`);
 });
 $('te-delete').addEventListener('click', () => {
@@ -1825,6 +2040,7 @@ $('te-delete').addEventListener('click', () => {
     editingToolId = null;
     $('tool-editor').style.display = 'none';
     renderToolList();
+    pushHistory();
     log('tool deleted', 'warn');
 });
 
@@ -1835,6 +2051,55 @@ function switchTab(name) {
 }
 document.querySelectorAll('#rtabs button').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
+// ── play-testing (run the place inside the studio) ───────
+let savedCam = null;
+
+function startPlay() {
+    if (rt.running) return;
+    selectPart(null);
+    savedCam = { pos: camera.position.clone(), tgt: orbit.target.clone() };
+    gizmo.detach();
+    gizmo.enabled = false;
+    orbit.enabled = false;
+    grid.visible = false;
+    axisX.visible = false;
+    axisZ.visible = false;
+    rt.start();
+    $('st-mode').textContent = 'PLAY';
+    $('st-mode').style.color = '#39ff14';
+    $('btn-play').textContent = 'Stop';
+    $('btn-play').classList.add('playing');
+    updateHistBtns();
+    log('play-test started — WASD move, right-drag look, 1-9 equip, F/click use, Esc stop', 'info');
+}
+
+function stopPlay() {
+    if (!rt.running) return;
+    rt.stop();
+    gizmo.enabled = true;
+    orbit.enabled = true;
+    grid.visible = true;
+    axisX.visible = true;
+    axisZ.visible = true;
+    if (savedCam) {
+        camera.position.copy(savedCam.pos);
+        orbit.target.copy(savedCam.tgt);
+        orbit.update();
+        savedCam = null;
+    }
+    $('st-mode').textContent = 'EDIT';
+    $('st-mode').style.color = '';
+    $('btn-play').textContent = 'Play';
+    $('btn-play').classList.remove('playing');
+    updateHistBtns();
+    log('play-test stopped — back in edit mode');
+}
+
+$('btn-play').addEventListener('click', () => {
+    if (rt.running) stopPlay();
+    else startPlay();
+});
+
 // ── keyboard shortcuts ───────────────────────────────────
 window.addEventListener('keydown', (e) => {
     const tag = e.target && e.target.tagName;
@@ -1844,16 +2109,27 @@ window.addEventListener('keydown', (e) => {
             document.querySelectorAll('.modal-back.open').forEach((m) => m.classList.remove('open'));
             return;
         }
+        if (rt && rt.running) { stopPlay(); return; }
         if (!typing) selectPart(null);
         return;
     }
+    if (rt && rt.running) return; // no editor shortcuts while play-testing
     if (typing) return;
-    if (e.code === 'KeyW') gizmo.setMode('translate');
-    else if (e.code === 'KeyE') gizmo.setMode('rotate');
-    else if (e.code === 'KeyR') gizmo.setMode('scale');
+    if (e.code === 'KeyW') setGizmoMode('translate');
+    else if (e.code === 'KeyE') setGizmoMode('rotate');
+    else if (e.code === 'KeyR') setGizmoMode('scale');
     else if (e.code === 'Delete' || e.code === 'Backspace') { e.preventDefault(); deleteSelected(); }
     else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyD') { e.preventDefault(); duplicateSelected(); }
-    else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyS') { e.preventDefault(); openPublish(); }
+    else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') { e.preventDefault(); if (e.shiftKey) redoHistory(); else undoHistory(); }
+    else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyY') { e.preventDefault(); redoHistory(); }
+    else if ((e.ctrlKey || e.metaKey) && e.code === 'KeyS') {
+        e.preventDefault();
+        manifest.updatedAt = Date.now();
+        savePlace(manifest);
+        $('place-name').value = manifest.name;
+        studioToast('Saved locally');
+        log('saved place locally (Ctrl+S — use Publish to share)', 'info');
+    }
 });
 
 // ══════════════════════════════════════════════════════════
@@ -1991,6 +2267,9 @@ function loadManifest(data) {
     renderScriptList();
     renderToolList();
     updateStatus();
+    histStack = [];
+    histIndex = -1;
+    pushHistory();
 }
 
 // place-name binds to manifest
@@ -2023,9 +2302,17 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+let lastFrameT = performance.now();
 function frame() {
     requestAnimationFrame(frame);
-    orbit.update();
+    const now = performance.now();
+    const dtMs = Math.min(100, now - lastFrameT);
+    lastFrameT = now;
+    if (rt && rt.running) {
+        try { rt.update(dtMs); } catch (e) { console.warn(e); stopPlay(); }
+    } else {
+        orbit.update();
+    }
     if (selectionBox && selectionBox.visible) selectionBox.update();
     renderer.render(scene, camera);
 }
@@ -2038,6 +2325,7 @@ refreshPropsUI();
 renderScriptList();
 renderToolList();
 updateStatus();
+pushHistory();
 if (localPlace) log(`loaded place "${manifest.name}" from this browser (id: ${placeId})`, 'info');
 else if (placeId) {
     log('place not in this browser — checking the cloud...', 'info');
@@ -2052,7 +2340,14 @@ else if (placeId) {
     }).catch((err) => log('cloud load failed: ' + err.message, 'err'));
 }
 else log('new place created — add parts, script them, then Publish');
-window.studio = { get manifest() { return manifest; }, get runtime() { return rt; }, selectPart, addPart };
+window.studio = {
+    get manifest() { return manifest; },
+    get runtime() { return rt; },
+    selectPart, addPart, addNpcSpawner,
+    startPlay, stopPlay,
+    undo: undoHistory, redo: redoHistory, pushHistory,
+    get playing() { return !!(rt && rt.running); }
+};
 </script>
 </body>
 </html>

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { setupAudio, playSound, stopBackground, startBackground } from './modules/audio.js';
 import { setupWorld } from './modules/world.js';
-import { setupPlayer } from './modules/player.js?v=7';
+import { setupPlayer } from './modules/player.js?v=8';
 import { setupUI, renderPlayerList, updateUIElementPositions, renderHealthBar } from './modules/ui.js';
 import { setupGame } from './modules/game.js';
 import PlayerModule from './modules/PlayerModule.js';
@@ -13,10 +13,10 @@ import { setupMobileControls, isMobile } from './modules/mobile_controls.js';
 import { appendChatMessage } from './modules/safechat.js';
 import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGhost, showGhost, hideGhost, deleteBlockByMesh, deleteBlockById, findBlockAtPoint, stampBuild, toggleSaveMenu, closeSaveMenu } from './modules/build.js';
 import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js?v=2';
-import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=3';
+import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=4';
 import { fetchRemotePlace } from './modules/place_cloud.js?v=1';
-import { initNpcs, updateNpcs, getNpcRows, damageNpcsInBlast } from './modules/npcs.js?v=3';
-import { GENRE_LABELS, GENRE_TOOLS, getGenrePlay } from './modules/game_catalog.js?v=2';
+import { initNpcs, updateNpcs, getNpcRows, damageNpcsInBlast } from './modules/npcs.js?v=4';
+import { GENRE_LABELS, GENRE_TOOLS, getGenrePlay } from './modules/game_catalog.js?v=3';
 import { initSports, updateSports } from './modules/sports.js?v=1';
 import { addCurrency } from './modules/accessories.js?v=3';
 
@@ -1077,6 +1077,13 @@ async function init() {
                                 const i = world.collidables.indexOf(m);
                                 if (i !== -1) world.collidables.splice(i, 1);
                             }
+                        },
+                        getPlayerModel: () => (player && player.model ? player.model : null),
+                        setToolHeld: (on) => {
+                            try {
+                                if (on) player.setHeldItem(null);
+                                else player.setHeldItem(backpack.getSelectedItem());
+                            } catch (e) {}
                         }
                     }
                 });
@@ -1126,6 +1133,13 @@ async function init() {
         if (placeManifest.mainMenu !== false) showPlaceMenu(placeManifest);
     }
 
+    // a place's UGC hotbar tool owns the hand — re-assert it after backpack grants
+    try {
+        if (window._placeRuntime && window._placeRuntime.equippedId && typeof window._placeRuntime._syncHeldTool === 'function') {
+            window._placeRuntime._syncHeldTool();
+        }
+    } catch (e) {}
+
     // sports (ball/goals/teams) + tycoon cash pads only run in their genres
     try {
         initSports({
@@ -1147,6 +1161,12 @@ async function init() {
     backpack.selectSlot = (index) => {
         originalSelectSlot(index);
         const selectedId = backpack.getSelectedItem();
+        // picking a backpack item puts the place's UGC hotbar tool away
+        if (selectedId) {
+            try {
+                if (window._placeRuntime && window._placeRuntime.equippedId) window._placeRuntime._equipTool(null);
+            } catch (e) {}
+        }
         if (player && player.setHeldItem) {
             player.setHeldItem(selectedId);
         }

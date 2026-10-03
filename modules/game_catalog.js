@@ -50,31 +50,99 @@ export const GENRE_TOOLS = {
 // npc: calm = nobody fights (friends + neutrals only), attack = combat heavy
 // items: the ONLY backpack items granted in that genre ('' = nothing)
 // teams/ball/money: sports teams + ball physics, tycoon cash pads
+// npcKind: what the place's NPCs look like (see NPC_KINDS in npcs.js)
 export const GENRE_PLAY = {
-    'roleplay': { npc: 'calm', items: ['brick'] },
-    'fps': { npc: 'attack', items: ['missile', 'marbles', 'bomb', 'sword', 'slingshot'] },
-    'wild-west': { npc: 'attack', items: ['missile', 'slingshot', 'sword'] },
-    'obby': { npc: 'calm', items: [] },
-    'tycoon': { npc: 'calm', items: ['brick'], money: true },
-    'horror': { npc: 'attack', items: ['slingshot', 'bomb'] },
-    'racing': { npc: 'calm', items: [] },
-    'fighting': { npc: 'attack', items: ['sword'] },
-    'adventure': { npc: 'calm', items: ['slingshot', 'sword'] },
-    'sandbox': { npc: 'calm', items: ['brick', 'sword', 'slingshot', 'marbles'] },
-    'tower-defense': { npc: 'attack', items: ['missile', 'slingshot'] },
-    'medieval': { npc: 'attack', items: ['sword'] },
-    'scifi': { npc: 'attack', items: ['missile', 'marbles', 'bomb'] },
-    'survival': { npc: 'attack', items: ['sword', 'slingshot'] },
-    'military': { npc: 'attack', items: ['missile', 'bomb', 'marbles', 'sword'] },
-    'escape': { npc: 'attack', items: [] },
-    'comedy': { npc: 'calm', items: ['brick', 'marbles'] },
-    'sports': { npc: 'calm', items: [], teams: true, ball: true },
-    'music': { npc: 'calm', items: [] },
-    'building': { npc: 'calm', items: ['brick'] }
+    'roleplay': { npc: 'calm', items: ['brick'], npcKind: 'villager' },
+    'fps': { npc: 'attack', items: ['missile', 'marbles', 'bomb', 'sword', 'slingshot'], npcKind: 'soldier' },
+    'wild-west': { npc: 'attack', items: ['missile', 'slingshot', 'sword'], npcKind: 'cowboy' },
+    'obby': { npc: 'calm', items: [], npcKind: 'villager' },
+    'tycoon': { npc: 'calm', items: ['brick'], money: true, npcKind: 'villager' },
+    'horror': { npc: 'attack', items: ['slingshot', 'bomb'], npcKind: 'ghost' },
+    'racing': { npc: 'calm', items: [], npcKind: 'villager' },
+    'fighting': { npc: 'attack', items: ['sword'], npcKind: 'villager' },
+    'adventure': { npc: 'calm', items: ['slingshot', 'sword'], npcKind: 'villager' },
+    'sandbox': { npc: 'calm', items: ['brick', 'sword', 'slingshot', 'marbles'], npcKind: 'villager' },
+    'tower-defense': { npc: 'attack', items: ['missile', 'slingshot'], npcKind: 'zombie' },
+    'medieval': { npc: 'attack', items: ['sword'], npcKind: 'knight' },
+    'scifi': { npc: 'attack', items: ['missile', 'marbles', 'bomb'], npcKind: 'robot' },
+    'survival': { npc: 'attack', items: ['sword', 'slingshot'], npcKind: 'zombie' },
+    'military': { npc: 'attack', items: ['missile', 'bomb', 'marbles', 'sword'], npcKind: 'soldier' },
+    'escape': { npc: 'attack', items: [], npcKind: 'zombie' },
+    'comedy': { npc: 'calm', items: ['brick', 'marbles'], npcKind: 'villager' },
+    'sports': { npc: 'calm', items: [], teams: true, ball: true, npcKind: 'villager' },
+    'music': { npc: 'calm', items: [], npcKind: 'villager' },
+    'building': { npc: 'calm', items: ['brick'], npcKind: 'villager' }
 };
 
 export function getGenrePlay(genre) {
     return GENRE_PLAY[genre] || null;
+}
+
+// ── signature custom weapons UGC games ship with ────────────────────────────
+const UCG_DEFS = {
+    bazooka: {
+        name: 'Bazooka', description: 'Fires a rocket that explodes downrange.',
+        color: '#ff6a2a',
+        equipCode: `game.toast(tool.name + ' ready — F to fire');`,
+        activateCode: `const p = game.localPlayer;
+const b = game.spawnPart({ type: 'box', name: 'Rocket', color: tool.color || '#ff6a2a',
+  position: [p.position.x, p.position.y + 1.2, p.position.z - 1.5],
+  scale: [0.25, 0.25, 0.6], collidable: false });
+game.toast(tool.name + ' — FIRE!');
+const iv = game.every(0.07, () => { b.translate(0, 0, -2.2); });
+game.after(0.55, () => {
+  game.cancel(iv);
+  b.color = '#ffd24a';
+  game.toast('BOOM!');
+  game.after(0.18, () => b.destroy());
+});`
+    },
+    medkit: {
+        name: 'Medkit', description: 'Patches you up for 25 health.',
+        color: '#3fd06a',
+        equipCode: `game.toast('Grabbed the ' + tool.name);`,
+        activateCode: `game.localPlayer.heal(25);
+game.toast(tool.name + ': +25 health');`
+    },
+    hammer: {
+        name: 'Golden Hammer', description: 'Drops a block in front of you.',
+        color: '#e8c547',
+        equipCode: `game.toast(tool.name + ' equipped');`,
+        activateCode: `const p = game.localPlayer;
+const b = game.spawnPart({ type: 'box', name: 'Block', color: tool.color || '#e8c547',
+  position: [p.position.x, p.position.y + 0.5, p.position.z - 2.5],
+  scale: [1, 0.5, 1] });
+game.toast('Placed a block!');
+game.after(3, () => b.destroy());`
+    },
+    swoosh: {
+        name: 'Iron Blade', description: 'A mighty swing.',
+        color: '#c9d2e0',
+        equipCode: `game.toast(tool.name + ' drawn');`,
+        activateCode: `game.text('SWOOSH!', { size: 44, color: '#ffffe1', y: 150 });
+game.toast(tool.name + ' swings!');
+game.after(0.7, () => game.clearTexts());`
+    },
+    snack: {
+        name: 'Snack', description: 'A quick bite: +15 health.',
+        color: '#ffb84d',
+        equipCode: `game.toast('Mmm, ' + tool.name);`,
+        activateCode: `game.localPlayer.heal(15);
+game.toast(tool.name + ': +15 health');`
+    }
+};
+
+const GENRE_UCG = {
+    'fps': 'bazooka', 'wild-west': 'bazooka', 'military': 'bazooka', 'scifi': 'bazooka',
+    'horror': 'medkit', 'survival': 'medkit', 'escape': 'medkit', 'tower-defense': 'medkit',
+    'medieval': 'swoosh', 'fighting': 'swoosh',
+    'tycoon': 'hammer'
+};
+
+export function genreUcgTool(genre) {
+    const key = GENRE_UCG[genre] || 'snack';
+    const def = UCG_DEFS[key];
+    return Object.assign({ id: 'ut_' + key }, def);
 }
 
 export const CATALOG_SIZE = 3000;
@@ -736,6 +804,39 @@ function layoutFor(genre, rng) {
 
 export function buildCatalogPlace(entry) {
     const rng = mulberry32(entry.seed * 1000003);
+    const parts = layoutFor(entry.genre, rng);
+    const play = GENRE_PLAY[entry.genre];
+    // haunted/survival/etc maps spawn their themed NPCs from marker parts
+    const kind = (play && play.npcKind) || 'villager';
+    if (kind !== 'villager') {
+        const n = 2 + Math.floor(rng() * 2);
+        for (let i = 0; i < n; i++) {
+            const x = Math.round((rng() * 2 - 1) * 10);
+            const z = Math.round((rng() * 2 - 1) * 10);
+            parts.push({
+                id: 'npcsp' + i,
+                name: 'NPC: ' + kind.charAt(0).toUpperCase() + kind.slice(1),
+                type: 'box',
+                parent: null,
+                position: [x, 1, z],
+                rotation: [0, 0, 0],
+                scale: [0.4, 1, 0.4],
+                color: '#7ae582',
+                texture: 'none',
+                material: 'Neon',
+                collidable: false,
+                visible: true,
+                damage: 0,
+                spawn: false,
+                special: 'npc',
+                npcKind: kind,
+                npcCount: 3,
+                scripts: []
+            });
+        }
+    }
+    // every catalog game ships one signature weapon so playing feels complete
+    const tool = genreUcgTool(entry.genre);
     return {
         schema: 'circuitstyle-place@1',
         id: entry.id,
@@ -748,9 +849,9 @@ export function buildCatalogPlace(entry) {
         createdAt: Date.now(),
         updatedAt: Date.now(),
         thumbnail: null,
-        parts: layoutFor(entry.genre, rng),
+        parts,
         scripts: [],
-        tools: [],
-        startTools: []
+        tools: [tool],
+        startTools: [tool.id]
     };
 }

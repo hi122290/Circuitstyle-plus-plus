@@ -503,7 +503,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         const pdims = pvisuals.dimensions;
         // expose convenient local names for dimensions to avoid ReferenceError (legH, torsoH, etc.)
         const { legW, legH, legD, torsoW, torsoH, torsoD, armW, armH, armD, headScale, modelScale } = pdims;
-        const pcolors = pvisuals.colors;
+        const pcolors = (opts && opts.colors) ? Object.assign({}, pvisuals.colors, opts.colors) : pvisuals.colors;
         const pmat = pvisuals.material;
 
         // Load Stud texture once for all parts
@@ -531,6 +531,16 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
         charModel.name = 'player_root';
         charModel.position.y = 0;
         charModel.userData.__accId = (opts && opts.accessoryId !== undefined) ? opts.accessoryId : getEquipped();
+
+        const applyOpacity = (root, op) => {
+            root.traverse((n) => {
+                if (n.isMesh && n.material) {
+                    n.material.transparent = true;
+                    n.material.opacity = op;
+                    n.material.depthWrite = false;
+                }
+            });
+        };
 
         // Create per-part glossy materials using configuration
         const torsoColor = new THREE.Color(pcolors.torso);
@@ -1210,6 +1220,7 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
                 charModel.add(headNode);
                 charModel.userData.__headNode = headNode;
                 charModel.userData.__headBox = bbox.clone();
+                if (charModel.userData.__opacity !== undefined) applyOpacity(charModel, charModel.userData.__opacity);
 
                 // Apply this model's accessory (local = equipped id, remote = presence-synced id)
                 reloadAccessory(charModel, charModel.userData.__accId);
@@ -1219,6 +1230,10 @@ export function setupPlayer(scene, camera, renderer, world, hooks = {}) {
             });
         } catch (e) {
             console.warn('head loader error', e);
+        }
+        if (opts && opts.opacity !== undefined && opts.opacity < 1) {
+            charModel.userData.__opacity = opts.opacity;
+            applyOpacity(charModel, opts.opacity);
         }
         return charModel;
     }

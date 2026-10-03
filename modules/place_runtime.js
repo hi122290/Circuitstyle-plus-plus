@@ -409,7 +409,7 @@ function makePartWrapper(entry, runtime) {
             } catch (e) {}
         },
         get texture() { return def.texture; },
-        set texture(v) { runtime.applyPartVisual(def.id); },
+        set texture(v) { def.texture = v; runtime.applyPartVisual(def.id); },
         get visible() { return mesh.visible; },
         set visible(v) { mesh.visible = !!v; def.visible = v !== false; },
         get collidable() { return def.collidable !== false; },
@@ -523,10 +523,16 @@ export class PlaceRuntime {
             created.push(entry);
         }
         for (const entry of created) this._resolveParent(entry.mesh, entry.def);
+        // NPC spawner markers are editor-facing only: hide them in game + keep them non-solid
+        if (this.mode === 'game') {
+            for (const entry of created) {
+                if (entry.def.special === 'npc') entry.mesh.visible = false;
+            }
+        }
         // register with the game's physics so loaded parts are solid
         if (this.mode === 'game' && this.adapter && this.adapter.registerCollider) {
             for (const entry of created) {
-                if (entry.def.collidable !== false) this.adapter.registerCollider(entry.mesh);
+                if (entry.def.collidable !== false && entry.def.special !== 'npc') this.adapter.registerCollider(entry.mesh);
             }
         }
     }
@@ -563,7 +569,7 @@ export class PlaceRuntime {
         const entry = this.buildPart(def);
         this.parts.set(def.id, entry);
         this._resolveParent(entry.mesh, def);
-        if (this.mode === 'game' && def.collidable !== false && this.adapter && this.adapter.registerCollider) this.adapter.registerCollider(entry.mesh);
+        if (this.mode === 'game' && def.collidable !== false && def.special !== 'npc' && this.adapter && this.adapter.registerCollider) this.adapter.registerCollider(entry.mesh);
         // give the manifest a record so serializations see runtime spawns
         if (!this.manifest.parts) this.manifest.parts = [];
         this.manifest.parts.push(def);
@@ -646,6 +652,7 @@ export class PlaceRuntime {
                 if (rt.owned.indexOf(toolId) !== -1) return false;
                 rt.owned.push(toolId);
                 if (rt.owned.length === 1) inventory.equip(toolId);
+                rt._renderHotbar();
                 rt.log(`inventory.give("${toolId}")`);
                 return true;
             },
@@ -654,6 +661,7 @@ export class PlaceRuntime {
                 if (i === -1) return false;
                 rt.owned.splice(i, 1);
                 if (rt.equippedId === toolId) rt._equipTool(null);
+                rt._renderHotbar();
                 rt.log(`inventory.remove("${toolId}")`);
                 return true;
             },
@@ -795,11 +803,13 @@ export class PlaceRuntime {
         if (toolId && !this.tools.has(toolId)) return false;
         if (this.equippedId === toolId) return true;
         const prev = this.equippedId ? this.tools.get(this.equippedId) : null;
-        if (prev && prev.onUnequip) runScript(prev.onUnequip, [this.gameObject, prev.def, this._playerObject()], `tool:${prev.def.id}:unequip`);
+        if (prev && prev.onUnequip) runScript(prev.onUnequip, [this.gameObject, null, null, this._playerObject(), prev.def, 'unequip'], `tool:${prev.def.id}:unequip`);
         this.equippedId = toolId;
         const rec = toolId ? this.tools.get(toolId) : null;
-        if (rec && rec.onEquip) runScript(rec.onEquip, [this.gameObject, rec.def, this._playerObject()], `tool:${rec.def.id}:equip`);
+        if (rec && rec.onEquip) runScript(rec.onEquip, [this.gameObject, null, null, this._playerObject(), rec.def, 'equip'], `tool:${rec.def.id}:equip`);
         if (rec) this.log(`equipped "${rec.def.name}"`);
+        this._syncHeldTool();
+        this._renderHotbar();
         return true;
     }
 
@@ -807,7 +817,7 @@ export class PlaceRuntime {
         if (!this.equippedId) return false;
         const rec = this.tools.get(this.equippedId);
         if (!rec) return false;
-        if (rec.onActivate) runScript(rec.onActivate, [this.gameObject, rec.def, this._playerObject()], `tool:${rec.def.id}:activate`);
+        if (rec.onActivate) runScript(rec.onActivate, [this.gameObject, null, null, this._playerObject(), rec.def, 'activate'], `tool:${rec.def.id}:activate`);
         return true;
     }
 
@@ -849,6 +859,7 @@ export class PlaceRuntime {
             runScript(rec.fns.start, [game, part, null, this._playerObject(), null, 'start'], rec.def.name || rec.def.id);
         }
         this.emit('playerSpawn', this._playerObject());
+        this._renderHotbar();
     }
 
     // ── HUD ────────────────────────────────────────────────────────────────
@@ -864,6 +875,13 @@ export class PlaceRuntime {
 #cs-playhealth .lbl{margin-bottom:3px;text-shadow:0 1px 2px #000}
 #cs-textlayer{position:fixed;inset:0;pointer-events:none;z-index:39998}
 .cs-text-label{position:absolute;font:bold 40px Tahoma,Arial,sans-serif;color:#ffffe1;text-shadow:0 2px 4px rgba(0,0,0,0.85);white-space:nowrap;user-select:none}
+#cs-hotbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:6px;z-index:40002;font:12px Tahoma,sans-serif}
+#cs-hotbar .slot{display:flex;align-items:center;gap:6px;background:rgba(18,20,24,0.92);border:1px solid #555;border-radius:4px;padding:6px 10px;color:#ddd;cursor:pointer;user-select:none}
+#cs-hotbar .slot:hover{border-color:#888}
+#cs-hotbar .slot.on{border-color:#39ff14;color:#fff;box-shadow:0 0 8px rgba(57,255,20,0.35)}
+#cs-hotbar .slot b{color:#888;font-size:10px;border:1px solid #444;border-radius:2px;padding:0 4px}
+#cs-hotbar .slot i{width:12px;height:12px;border-radius:2px;display:inline-block;flex:0 0 auto}
+#cs-toolhint{position:fixed;left:50%;bottom:56px;transform:translateX(-50%);color:#9fe8a0;font:12px Tahoma,sans-serif;text-shadow:0 1px 2px #000;z-index:40002;pointer-events:none}
 `;
         document.head.appendChild(st);
     }
@@ -883,6 +901,91 @@ export class PlaceRuntime {
             this._hud.hp = hp;
         }
         this._renderHealth();
+        this._renderHotbar();
+    }
+
+    // ── tool hotbar (owned UGC tools) ──────────────────────────────────────
+    _renderHotbar() {
+        const old = document.getElementById('cs-hotbar');
+        if (old && old.parentNode) old.parentNode.removeChild(old);
+        const hint = document.getElementById('cs-toolhint');
+        if (hint && hint.parentNode) hint.parentNode.removeChild(hint);
+        if (!this.owned || !this.owned.length) return;
+        const bar = document.createElement('div');
+        bar.id = 'cs-hotbar';
+        this.owned.forEach((tid, i) => {
+            const rec = this.tools.get(tid);
+            const def = (rec && rec.def) || { name: tid, color: '#4a90d9' };
+            const slot = document.createElement('div');
+            slot.className = 'slot' + (this.equippedId === tid ? ' on' : '');
+            slot.dataset.toolId = tid;
+            const nm = String(def.name || tid).replace(/[<>&"]/g, '');
+            slot.innerHTML = '<b>' + (i + 1) + '</b><i style="background:' +
+                (def.color || '#4a90d9') + '"></i><span>' + nm + '</span>';
+            slot.addEventListener('click', () => this._equipTool(tid));
+            bar.appendChild(slot);
+        });
+        document.body.appendChild(bar);
+        if (this.equippedId) {
+            const h = document.createElement('div');
+            h.id = 'cs-toolhint';
+            h.textContent = 'Click or press F to use';
+            document.body.appendChild(h);
+        }
+    }
+
+    // ── visible held model for an equipped UGC tool ────────────────────────
+    _syncHeldTool() {
+        this._clearHeldTool();
+        if (!this.equippedId) return;
+        const rec = this.tools.get(this.equippedId);
+        if (!rec) return;
+        const def = rec.def;
+        const grp = new THREE.Group();
+        grp.name = 'ucg-tool';
+        const col = new THREE.Color(def.color || '#4a90d9');
+        const grip = new THREE.Mesh(
+            new THREE.BoxGeometry(0.12, 0.5, 0.12),
+            new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.7 })
+        );
+        grip.position.y = -0.2;
+        const head = new THREE.Mesh(
+            new THREE.BoxGeometry(0.18, 0.34, 0.7),
+            new THREE.MeshStandardMaterial({ color: col, roughness: 0.35, metalness: 0.3 })
+        );
+        head.position.set(0, 0.1, -0.25);
+        grp.add(grip);
+        grp.add(head);
+        grp.rotation.y = 0.15;
+        let host = null;
+        if (this.mode === 'studio') {
+            host = this._studioPlayer ? this._studioPlayer.group : null;
+            grp.position.set(0.7, 1.55, -0.2);
+        } else if (this.adapter && this.adapter.getPlayerModel) {
+            host = this.adapter.getPlayerModel();
+            grp.position.set(0.62, 1.15, -0.35);
+        }
+        if (host) {
+            host.add(grp);
+            this._heldTool = grp;
+        }
+        if (this.adapter && this.adapter.setToolHeld) {
+            try { this.adapter.setToolHeld(true); } catch (e) {}
+        }
+    }
+
+    _clearHeldTool() {
+        if (this._heldTool) {
+            if (this._heldTool.parent) this._heldTool.parent.remove(this._heldTool);
+            this._heldTool.traverse((n) => {
+                if (n.geometry) n.geometry.dispose();
+                if (n.material && n.material.dispose) n.material.dispose();
+            });
+            this._heldTool = null;
+        }
+        if (this.adapter && this.adapter.setToolHeld) {
+            try { this.adapter.setToolHeld(false); } catch (e) {}
+        }
     }
 
     removeHud() {
@@ -1263,14 +1366,18 @@ export class PlaceRuntime {
         const onKeyDown = (e) => {
             const t = e.target;
             if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-            if (e.code === 'KeyF') this._activateTool();
-            if (/^Digit[1-9]$/.test(e.code)) {
+            if (e.code === 'KeyF') { this._activateTool(); return; }
+            // owned tools own the number keys (capture phase so the backpack never sees them)
+            if (/^Digit[1-9]$/.test(e.code) && this.owned && this.owned.length) {
                 const idx = parseInt(e.code.slice(5), 10) - 1;
-                if (this.owned[idx]) this._equipTool(this.owned[idx]);
+                if (this.owned[idx]) {
+                    this._equipTool(this.owned[idx]);
+                    e.stopImmediatePropagation();
+                }
             }
         };
-        window.addEventListener('keydown', onKeyDown);
-        this._gameKeyDispose = () => window.removeEventListener('keydown', onKeyDown);
+        window.addEventListener('keydown', onKeyDown, true);
+        this._gameKeyDispose = () => window.removeEventListener('keydown', onKeyDown, true);
     }
 
     update(dtMs) {
@@ -1322,9 +1429,10 @@ export class PlaceRuntime {
         this._createHud();
         this._hitPulse = new Set();
         this._touchPairs = new Set();
+        // studio player must exist before start scripts equip held tools
+        if (this.mode === 'studio') this._createStudioPlayer();
         this.runStartScripts();
         if (this.mode === 'studio') {
-            this._createStudioPlayer();
             this._bindStudioInput();
         } else {
             this._bindGameInput();
@@ -1343,6 +1451,9 @@ export class PlaceRuntime {
         this.running = false;
         if (this._studioInput) { this._studioInput.dispose(); this._studioInput = null; }
         if (this._gameKeyDispose) { this._gameKeyDispose(); this._gameKeyDispose = null; }
+        this._clearHeldTool();
+        this.owned = [];
+        this.equippedId = null;
         if (this._studioPlayer) {
             if (this._studioPlayer.group.parent) this._studioPlayer.group.parent.remove(this._studioPlayer.group);
             this._studioPlayer = null;
