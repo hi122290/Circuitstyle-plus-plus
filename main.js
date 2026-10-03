@@ -16,7 +16,8 @@ import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, h
 import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=4';
 import { fetchRemotePlace } from './modules/place_cloud.js?v=1';
 import { initNpcs, updateNpcs, getNpcRows, damageNpcsInBlast } from './modules/npcs.js?v=4';
-import { GENRE_LABELS, GENRE_TOOLS, getGenrePlay } from './modules/game_catalog.js?v=3';
+import { GENRE_LABELS, GENRE_TOOLS, getGenrePlay } from './modules/game_catalog.js?v=4';
+import { initGenre, updateGenre } from './modules/genres/index.js?v=1';
 import { initSports, updateSports } from './modules/sports.js?v=1';
 import { addCurrency } from './modules/accessories.js?v=3';
 
@@ -1156,6 +1157,22 @@ async function init() {
         });
     } catch (e) {}
 
+    // genre gameplay module (racing laps / horror monster / tycoon machines)
+    try {
+        initGenre({
+            scene, camera, renderer, player,
+            manifest: placeManifest,
+            getLights: () => ({ ambient: ambientLight, directional: directionalLight }),
+            getHealth: () => PlayerModule.getHealth(),
+            damage: (n) => { if (window._onDamageCallback) window._onDamageCallback(n); },
+            isDead: () => isDead,
+            respawn: (x, y, z) => { if (player && player.respawn) player.respawn(new THREE.Vector3(x, y, z)); },
+            playSound,
+            placeRuntime: () => window._placeRuntime,
+            text: (s, o) => (window._placeRuntime ? window._placeRuntime._text(s, o) : null)
+        });
+    } catch (e) { console.warn('genre system failed to start:', e); }
+
     // item holding thing so you know um players will see the item you are selecting
     const originalSelectSlot = backpack.selectSlot.bind(backpack);
     backpack.selectSlot = (index) => {
@@ -1809,6 +1826,7 @@ function animate(now) {
         try { if (window._placeRuntime && window._placeRuntime.running) window._placeRuntime.update(FIXED_STEP); } catch (e) {}
         try { updateNpcs(FIXED_STEP); } catch (e) {}
         try { updateSports(FIXED_STEP); } catch (e) {}
+        try { updateGenre(FIXED_STEP); } catch (e) {}
         animate._accumulator -= FIXED_STEP;
     }
 

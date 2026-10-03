@@ -2,6 +2,8 @@
 // Every game entry is deterministic from its seed so cards, thumbnails and
 // the generated place all stay stable between page loads.
 
+import { getGenreLayout } from './genres/index.js?v=1';
+
 export const GENRES = [
     'roleplay', 'fps', 'wild-west', 'obby', 'tycoon', 'horror', 'racing',
     'fighting', 'adventure', 'sandbox', 'tower-defense', 'medieval', 'scifi',
@@ -459,6 +461,13 @@ function tree(P, x, z, leafColor) {
 }
 
 function layoutFor(genre, rng) {
+    // genre modules own their map generator (see modules/genres/README list
+    // in the main README) — the switch below is only the fallback map
+    const custom = getGenreLayout(genre, rng);
+    if (custom) {
+        if (!custom.some((p) => p.spawn)) custom.push(spawnPad(makeHelpers(rng).P));
+        return custom;
+    }
     const { P } = makeHelpers(rng);
     const parts = [];
     const GROUND = {
