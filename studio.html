@@ -883,6 +883,7 @@ body {
             <img id="pub-thumb" alt="Place thumbnail">
             <div class="fld"><label>Place name</label><input type="text" id="pub-name"></div>
             <div class="fld"><label>Description</label><textarea id="pub-desc" style="min-height:60px" spellcheck="false"></textarea></div>
+            <div class="fld"><label>Genre</label><select id="pub-genre"></select></div>
             <div id="pub-result" style="font-size:11px;color:#2a7440;font-weight:bold;min-height:16px;"></div>
         </div>
         <div class="modal-foot">
@@ -984,6 +985,7 @@ import {
     listPlaces, getPlace, savePlace, compileScript
 } from './modules/place_runtime.js?v=3';
 import { pushPlace, fetchRemotePlace } from './modules/place_cloud.js?v=1';
+import { GENRES, GENRE_LABELS } from './modules/game_catalog.js?v=1';
 
 // ══════════════════════════════════════════════════════════
 // STAGE 1 — viewport, primitives, gizmos, hierarchy
@@ -1880,9 +1882,25 @@ function renderThumbnail() {
     }
 }
 
+(function fillGenreSelect() {
+    const sel = $('pub-genre');
+    if (!sel || sel.options.length) return;
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'No genre';
+    sel.appendChild(none);
+    for (const g of GENRES) {
+        const o = document.createElement('option');
+        o.value = g;
+        o.textContent = GENRE_LABELS[g];
+        sel.appendChild(o);
+    }
+})();
+
 function openPublish() {
     $('pub-name').value = $('place-name').value || manifest.name;
     $('pub-desc').value = manifest.description || '';
+    $('pub-genre').value = manifest.genre || '';
     $('pub-result').textContent = '';
     $('pub-open').style.display = 'none';
     const thumb = renderThumbnail();
@@ -1895,6 +1913,7 @@ $('btn-publish').addEventListener('click', openPublish);
 $('pub-do').addEventListener('click', async () => {
     manifest.name = $('pub-name').value.trim() || 'Untitled Place';
     manifest.description = $('pub-desc').value.trim();
+    manifest.genre = $('pub-genre').value || '';
     manifest.schema = manifest.schema || 'circuitstyle-place@1';
     if (!manifest.thumbnail) manifest.thumbnail = renderThumbnail();
     manifest.updatedAt = Date.now();

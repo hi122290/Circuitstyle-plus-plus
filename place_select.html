@@ -127,6 +127,11 @@
             <section id="working" class="panel">
                 <div class="panel-titlebar">Games</div>
                 <div class="panel-body">
+                    <div id="games-toolbar">
+                        <select id="games-genre-filter" title="Filter by genre"><option value="">All Genres</option></select>
+                        <input id="games-search" type="text" placeholder="Search games..." autocomplete="off">
+                        <span id="games-count" class="muted"></span>
+                    </div>
                     <div class="games-grid" id="games-grid">
                         <a class="game-card" href="./index.html">
                             <div class="game-card-thumb">
@@ -139,6 +144,7 @@
                             </div>
                         </a>
                     </div>
+                    <div id="games-more"><button id="games-more-btn" class="btn">Load more games</button></div>
                 </div>
             </section>
 
@@ -947,6 +953,13 @@ previewBackdrop.addEventListener('click', closePreview);
     var grid = document.getElementById('games-grid');
     if (!grid) return;
     var cards = {}; // place id -> card element
+    var GENRE_LABELS = {
+        roleplay: 'Roleplay', fps: 'FPS', 'wild-west': 'Wild West', obby: 'Obby',
+        tycoon: 'Tycoon', horror: 'Horror', racing: 'Racing', fighting: 'Fighting',
+        adventure: 'Adventure', sandbox: 'Sandbox', 'tower-defense': 'Tower Defense',
+        medieval: 'Medieval', scifi: 'Sci-Fi', survival: 'Survival', military: 'Military',
+        escape: 'Escape', comedy: 'Comedy', sports: 'Sports', music: 'Music', building: 'Building'
+    };
     function esc(s) {
         return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -956,13 +969,15 @@ previewBackdrop.addEventListener('click', closePreview);
         var card = document.createElement('div');
         card.className = 'game-card';
         card.dataset.placeId = p.id;
+        if (p.genre) card.dataset.genre = p.genre;
         var thumb = p.thumbnail || './Studs_Texture.png';
         var name = esc(p.name || 'Untitled Place');
+        var chip = p.genre ? '<span class="game-genre-chip">' + esc(GENRE_LABELS[p.genre] || p.genre) + '</span>' : '';
         card.innerHTML =
             '<div class="game-card-thumb"><img src="' + thumb + '" alt="' + name + '"></div>' +
             '<div class="card-body">' +
             '<h3>' + name + '</h3>' +
-            '<p>' + esc(p.description || 'A place made in Circuitstyle Studio.') + '</p>' +
+            '<p>' + chip + esc(p.description || 'A place made in Circuitstyle Studio.') + '</p>' +
             '<span style="display:inline-flex;gap:6px;align-items:center;">' +
             '<a class="btn btn-green btn-small" href="./index.html?place=' + encodeURIComponent(p.id) + '">Play</a>' +
             '<a class="btn btn-small" href="./studio.html?place=' + encodeURIComponent(p.id) + '" style="color:#333;">Edit in Studio</a>' +
@@ -971,6 +986,7 @@ previewBackdrop.addEventListener('click', closePreview);
     }
     function addCard(p, fromCloud) {
         if (!p || !p.id) return;
+        if (p.catalog) return;
         var existing = cards[p.id];
         if (existing) {
             // cloud copy wins over a stale local copy of the same place
@@ -979,6 +995,7 @@ previewBackdrop.addEventListener('click', closePreview);
                 fresh.dataset.fromCloud = '1';
                 existing.parentNode.replaceChild(fresh, existing);
                 cards[p.id] = fresh;
+                if (window.__csGamesRefresh) window.__csGamesRefresh();
             }
             return;
         }
@@ -986,6 +1003,7 @@ previewBackdrop.addEventListener('click', closePreview);
         if (fromCloud) card.dataset.fromCloud = '1';
         cards[p.id] = card;
         grid.insertBefore(card, grid.firstChild);
+        if (window.__csGamesRefresh) window.__csGamesRefresh();
     }
     var local = [];
     try { local = JSON.parse(localStorage.getItem('cs_places') || '[]') || []; } catch (e) { local = []; }
@@ -1000,6 +1018,111 @@ previewBackdrop.addEventListener('click', closePreview);
         }
     } catch (e) { console.warn('[places] cloud list error:', e); }
 })();
+</script>
+
+<script type="module">
+import { GENRES, GENRE_LABELS, getCatalog, getCatalogEntry, thumbDataUri, buildCatalogPlace } from './modules/game_catalog.js?v=1';
+import { savePlace } from './modules/place_runtime.js?v=3';
+
+const PAGE_SIZE = 24;
+const grid = document.getElementById('games-grid');
+const genreSel = document.getElementById('games-genre-filter');
+const searchInput = document.getElementById('games-search');
+const countEl = document.getElementById('games-count');
+const moreWrap = document.getElementById('games-more');
+const moreBtn = document.getElementById('games-more-btn');
+
+let filterGenre = '';
+let searchQ = '';
+let shown = PAGE_SIZE;
+
+for (const g of GENRES) {
+    const o = document.createElement('option');
+    o.value = g;
+    o.textContent = GENRE_LABELS[g];
+    genreSel.appendChild(o);
+}
+
+function entryMatches(e) {
+    if (filterGenre && e.genre !== filterGenre) return false;
+    if (searchQ) {
+        const hay = (e.title + ' ' + e.creator + ' ' + e.description).toLowerCase();
+        if (!hay.includes(searchQ)) return false;
+    }
+    return true;
+}
+
+function classicCardMatches(card) {
+    if (!filterGenre && !searchQ) return true;
+    const genre = card.dataset.genre || '';
+    if (filterGenre && genre !== filterGenre) return false;
+    if (searchQ && !card.textContent.toLowerCase().includes(searchQ)) return false;
+    return true;
+}
+
+function render() {
+    const all = getCatalog();
+    const visible = all.filter(entryMatches);
+    const page = visible.slice(0, shown);
+
+    grid.querySelectorAll('.game-card-catalog').forEach((el) => el.remove());
+    const frag = document.createDocumentFragment();
+    for (const e of page) {
+        const card = document.createElement('div');
+        card.className = 'game-card game-card-catalog';
+        card.dataset.genre = e.genre;
+        card.dataset.gameId = e.id;
+        card.innerHTML =
+            '<div class="game-card-thumb"><img src="' + thumbDataUri(e) + '" alt=""></div>' +
+            '<div class="card-body">' +
+            '<span class="game-genre-chip chip-' + e.genre + '">' + GENRE_LABELS[e.genre] + '</span>' +
+            '<h3>' + e.title + '</h3>' +
+            '<div class="game-by">by ' + e.creator + '</div>' +
+            '<p>' + e.description + '</p>' +
+            '<div class="game-meta">' +
+            '<span class="game-rating">&#9733; ' + e.rating + '%</span>' +
+            '<span class="game-playing">' + e.players + ' playing</span>' +
+            '</div>' +
+            '<a class="btn btn-green btn-small game-play" href="./index.html?place=' + encodeURIComponent(e.id) + '">Play</a>' +
+            '</div>';
+        frag.appendChild(card);
+    }
+    grid.appendChild(frag);
+
+    grid.querySelectorAll('.game-card:not(.game-card-catalog)').forEach((c) => {
+        c.style.display = classicCardMatches(c) ? '' : 'none';
+    });
+
+    countEl.textContent = 'Showing ' + page.length + ' of ' + visible.length.toLocaleString() + ' games';
+    moreWrap.style.display = shown < visible.length ? '' : 'none';
+}
+
+grid.addEventListener('click', (ev) => {
+    const link = ev.target.closest('.game-play');
+    if (!link) return;
+    ev.preventDefault();
+    const card = link.closest('.game-card-catalog');
+    const entry = card ? getCatalogEntry(card.dataset.gameId) : null;
+    if (!entry) { window.location.href = link.href; return; }
+    try {
+        if (!getPlaceExists(entry.id)) savePlace(buildCatalogPlace(entry));
+    } catch (err) {
+        console.warn('[games] could not save catalog place:', err);
+    }
+    window.location.href = link.href;
+});
+
+function getPlaceExists(id) {
+    try { return JSON.parse(localStorage.getItem('cs_places') || '[]').some((p) => p.id === id); }
+    catch (e) { return false; }
+}
+
+genreSel.addEventListener('change', () => { filterGenre = genreSel.value; shown = PAGE_SIZE; render(); });
+searchInput.addEventListener('input', () => { searchQ = searchInput.value.trim().toLowerCase(); shown = PAGE_SIZE; render(); });
+moreBtn.addEventListener('click', () => { shown += PAGE_SIZE; render(); });
+
+window.__csGamesRefresh = render;
+render();
 </script>
 </body>
 </html>

@@ -7,7 +7,7 @@
     <title>Circuitstyle!</title>
   
 
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
     <div id="container">
@@ -77,6 +77,19 @@
             <div class="safechat-menu level-1"></div>
             <div class="safechat-menu level-2 hidden"></div>
             <div class="safechat-menu level-3 hidden"></div>
+        </div>
+    </div>
+
+    <!-- GAME MAIN MENU (shown when entering most published games) -->
+    <div id="place-menu" class="hidden">
+        <div id="place-menu-box">
+            <div id="place-menu-titlebar">Circuitstyle</div>
+            <div id="place-menu-title">Game</div>
+            <div id="place-menu-by">by Someone</div>
+            <span id="place-menu-genre" class="hidden"></span>
+            <div id="place-menu-desc"></div>
+            <div id="place-menu-players"></div>
+            <button id="place-menu-play" type="button">Play</button>
         </div>
     </div>
     <!-- Safe Chat Display Bar (reusing old chat bar container ID) - Starts hidden -->
@@ -192,6 +205,6 @@
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script type="module" src="main.js?v=12"></script>
+    <script type="module" src="main.js?v=13"></script>
 </body>
 </html>

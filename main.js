@@ -16,6 +16,7 @@ import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, h
 import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=3';
 import { fetchRemotePlace } from './modules/place_cloud.js?v=1';
 import { initNpcs, updateNpcs, getNpcRows, damageNpcsInBlast } from './modules/npcs.js?v=2';
+import { GENRE_LABELS, GENRE_TOOLS } from './modules/game_catalog.js?v=1';
 
 
 window.THREE_REF = THREE;
@@ -667,6 +668,33 @@ async function loadLightingFromLua(path = './modules/lighting.lua') {
     }
 }
 
+function showPlaceMenu(manifest) {
+    const el = document.getElementById('place-menu');
+    if (!el || !manifest) return;
+    const set = (id, text) => {
+        const node = document.getElementById(id);
+        if (node) node.textContent = text;
+    };
+    set('place-menu-title', manifest.name || 'Game');
+    set('place-menu-by', 'by ' + (manifest.creator || 'unknown builder'));
+    set('place-menu-desc', manifest.description || '');
+    const online = document.getElementById('online-count');
+    set('place-menu-players', online ? online.textContent : '');
+    const genreEl = document.getElementById('place-menu-genre');
+    if (genreEl) {
+        const label = GENRE_LABELS[manifest.genre];
+        if (label) {
+            genreEl.textContent = label;
+            genreEl.classList.remove('hidden');
+        } else {
+            genreEl.classList.add('hidden');
+        }
+    }
+    el.classList.remove('hidden');
+    const play = document.getElementById('place-menu-play');
+    if (play) play.onclick = () => el.classList.add('hidden');
+}
+
 async function init() {
     await room.initialize();
 
@@ -1081,6 +1109,16 @@ async function init() {
     // Auto-select slot 0 so they have something in hand right away
     backpack.selectSlot(0);
     if (player && player.setHeldItem) player.setHeldItem(backpack.getSelectedItem());
+
+    // genre-aware start: put the right tool in hand + title screen for most games
+    if (placeManifest) {
+        const genreTool = GENRE_TOOLS[placeManifest.genre];
+        if (genreTool) {
+            const gi = backpack.slots.indexOf(genreTool);
+            if (gi >= 0) backpack.selectSlot(gi);
+        }
+        if (placeManifest.mainMenu !== false) showPlaceMenu(placeManifest);
+    }
 
     // item holding thing so you know um players will see the item you are selecting
     const originalSelectSlot = backpack.selectSlot.bind(backpack);

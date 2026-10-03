@@ -1924,3 +1924,102 @@ label {
 .save-btn:hover { background: #555; }
 .save-btn.danger { border-color: #a33; }
 .save-btn.danger:hover { background: #633; }
+
+/* ── Game main menu (title screen when entering a published game) ─────── */
+#place-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    font-family: Arial, Helvetica, sans-serif;
+}
+#place-menu.hidden { display: none; }
+#place-menu-box {
+    width: 400px;
+    max-width: 92vw;
+    background: linear-gradient(to bottom, #f4f6f8 0%, #dfe6ec 100%);
+    border: 2px solid #8899aa;
+    border-top-color: #c8d4e0;
+    border-left-color: #c8d4e0;
+    border-radius: 4px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    padding: 0 0 18px;
+    text-align: center;
+    color: #223;
+}
+#place-menu-titlebar {
+    background: linear-gradient(to bottom, #5a86b8, #3a6698 50%, #356191 51%, #3f6ca0);
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+    padding: 5px 10px;
+    text-align: left;
+    border-radius: 2px 2px 0 0;
+}
+#place-menu-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 18px 16px 2px;
+    line-height: 1.15;
+    word-wrap: break-word;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+#place-menu-by {
+    color: #557;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+#place-menu-genre {
+    display: inline-block;
+    background: #eeeeee;
+    border: 1px solid #aaaaaa;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #555;
+    padding: 2px 8px;
+    margin-bottom: 8px;
+}
+#place-menu-genre.hidden { display: none; }
+#place-menu-desc {
+    font-size: 13px;
+    color: #445;
+    margin: 4px 22px 0;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+#place-menu-players {
+    font-size: 12px;
+    color: #2a7440;
+    font-weight: bold;
+    margin-top: 8px;
+}
+#place-menu-play {
+    margin-top: 16px;
+    font-size: 17px;
+    font-weight: bold;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35);
+    background: linear-gradient(to bottom, #68c060 0%, #4aa844 50%, #3f9a3a 51%, #4ab044 100%);
+    border: 1px solid #2e7a2a;
+    border-top-color: #8eda86;
+    border-left-color: #8eda86;
+    border-radius: 4px;
+    padding: 9px 46px;
+    cursor: pointer;
+}
+#place-menu-play:hover {
+    background: linear-gradient(to bottom, #78d070 0%, #55b84f 50%, #4aaa44 51%, #55c04f 100%);
+}
+#place-menu-play:active {
+    background: linear-gradient(to bottom, #3f9a3a 0%, #4aa844 50%, #55b84f 51%, #78d070 100%);
+    border-top-color: #2e7a2a;
+    border-left-color: #2e7a2a;
+}
