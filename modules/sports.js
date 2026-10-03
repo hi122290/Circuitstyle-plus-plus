@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getGenrePlay } from './game_catalog.js?v=6';
+import { getGenrePlay } from './game_catalog.js?v=7';
 
 let opts = null;
 let profile = null;

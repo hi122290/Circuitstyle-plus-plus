@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { ITEM_DATA } from './backpack.js';
 import { ACCESSORIES } from './accessories.js?v=3';
-import { getGenrePlay } from './game_catalog.js?v=6';
+import { getGenrePlay } from './game_catalog.js?v=7';
 
 const WEAPONS = ['sword', 'sword', 'sword', 'missile', 'missile', 'slingshot', 'bomb'];
 

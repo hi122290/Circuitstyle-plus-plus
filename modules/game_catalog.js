@@ -2,7 +2,7 @@
 // Every game entry is deterministic from its seed so cards, thumbnails and
 // the generated place all stay stable between page loads.
 
-import { getGenreLayout } from './genres/index.js?v=3';
+import { getGenreLayout } from './genres/index.js?v=4';
 
 export const GENRES = [
     'roleplay', 'fps', 'wild-west', 'obby', 'tycoon', 'horror', 'racing',
