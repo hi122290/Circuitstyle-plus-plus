@@ -10,7 +10,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { ITEM_DATA } from './backpack.js';
 import { ACCESSORIES } from './accessories.js?v=3';
-import { getGenrePlay } from './game_catalog.js?v=3';
+import { getGenrePlay } from './game_catalog.js?v=5';
 
 const WEAPONS = ['sword', 'sword', 'sword', 'missile', 'missile', 'slingshot', 'bomb'];
 
@@ -699,6 +699,11 @@ export function initNpcs(o) {
         spawnNear: (faction, kind) => {
             const p = opts.player.model.position;
             const n = spawnNpc(faction || 'hostile', new THREE.Vector3(p.x + 1.9, p.y, p.z), kind || null);
+            return n ? n.name : null;
+        },
+        spawnAt: (x, y, z, faction, kind) => {
+            const n = spawnNpc(faction || 'hostile', new THREE.Vector3(x, y, z), kind || null);
+            if (n) n.noWander = false;
             return n ? n.name : null;
         },
         send: (name, dx, dz) => {

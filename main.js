@@ -15,10 +15,10 @@ import { initBuildUI, showBuildUI, hideBuildUI, spawnRemoteBuild, updateBuildGho
 import { hasPowers, getPowersForUser, activatePower, tickGrapple, isGrappling, handleRemotePowerEvent, tickChoke, getCooldownRemaining, getChokeData } from './modules/user_powers.js?v=2';
 import { PlaceRuntime, getPlace, savePlace } from './modules/place_runtime.js?v=4';
 import { fetchRemotePlace } from './modules/place_cloud.js?v=1';
-import { initNpcs, updateNpcs, getNpcRows, damageNpcsInBlast } from './modules/npcs.js?v=4';
-import { GENRE_LABELS, GENRE_TOOLS, getGenrePlay } from './modules/game_catalog.js?v=4';
-import { initGenre, updateGenre } from './modules/genres/index.js?v=1';
-import { initSports, updateSports } from './modules/sports.js?v=1';
+import { initNpcs, updateNpcs, getNpcRows, damageNpcsInBlast } from './modules/npcs.js?v=5';
+import { GENRE_LABELS, GENRE_TOOLS, getGenrePlay } from './modules/game_catalog.js?v=5';
+import { initGenre, updateGenre } from './modules/genres/index.js?v=2';
+import { initSports, updateSports } from './modules/sports.js?v=2';
 import { addCurrency } from './modules/accessories.js?v=3';
 
 

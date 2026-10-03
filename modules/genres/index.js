@@ -2,3 +2,4 @@ export { registerGenre, getGenreMod, getGenreLayout, listGenres, makeParts, init
 import './tycoon.js?v=1';
 import './racing.js?v=1';
 import './horror.js?v=1';
+import './fps.js?v=1';
